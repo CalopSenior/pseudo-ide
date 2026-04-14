@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pseudo-IDE</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,400;0,500;0,600;1,400&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- ===== HEADER ===== -->
+<header id="header">
+    <div class="header-left">
+        <div class="traffic-lights">
+            <span class="tl tl-red"></span>
+            <span class="tl tl-yellow"></span>
+            <span class="tl tl-green"></span>
+        </div>
+        <div class="app-brand">
+            <span class="app-icon">⌨</span>
+            <span class="app-title">Pseudo-IDE</span>
+            <span class="app-sub">v3.0</span>
+        </div>
+    </div>
+    <div class="header-center" id="algo-name-display">sem título</div>
+    <div class="header-right">
+        <button class="btn-icon" onclick="toggleHelp()" title="Documentação (F1)">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            Docs
+        </button>
+        <div class="btn-group">
+            <button class="btn-icon" onclick="abrirArquivo()" title="Abrir arquivo .ide">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+                Abrir
+            </button>
+            <button class="btn-icon" onclick="salvarArquivo()" title="Salvar como .ide">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                Salvar
+            </button>
+        </div>
+        <button class="btn-icon" onclick="limparConsole()" title="Limpar console (Ctrl+M)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+            Limpar
+        </button>
+        <button class="btn-run" onclick="executarCodigo()" title="Executar (Ctrl+S)">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            Executar
+        </button>
+    </div>
+</header>
+
+<!-- ===== METADATA BAR ===== -->
+<div id="metadata-bar" class="hidden">
+    <span id="meta-nome"   class="meta-item meta-name">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        <span class="meta-val"></span>
+    </span>
+    <span class="meta-sep">·</span>
+    <span id="meta-autor"  class="meta-item">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <span class="meta-val"></span>
+    </span>
+    <span class="meta-sep">·</span>
+    <span id="meta-versao" class="meta-item meta-version"><span class="meta-val"></span></span>
+    <span class="meta-sep">·</span>
+    <span id="meta-desc"   class="meta-item meta-desc"><span class="meta-val"></span></span>
+</div>
+
+<input type="file" id="file-import" accept=".ide,.txt,.pseudo" style="display:none">
+
+<!-- ===== MAIN ===== -->
+<main id="main-layout">
+
+    <!-- Editor -->
+    <section id="editor-panel">
+        <div class="panel-tab">
+            <span class="tab-dot"></span>
+            <span id="tab-filename">algoritmo.pseudo</span>
+        </div>
+        <div id="editor-container">
+            <div id="line-numbers" aria-hidden="true"></div>
+            <div id="editor-wrapper">
+                <pre id="highlight-layer" aria-hidden="true"></pre>
+                <textarea
+                    id="code-editor"
+                    spellcheck="false"
+                    wrap="off"
+                    autocomplete="off"
+                    autocorrect="off"
+                    autocapitalize="off"
+                    aria-label="Editor de código"
+                >meuAlgoritmo()
+{
+    // Olá! Escreva seu algoritmo aqui.
+    // Use Ctrl+S ou o botão Executar para rodar.
+
+    caracter nome = leia("Qual é o seu nome?");
+    imprima(f"Olá, {nome}! Bem-vindo à Pseudo-IDE.");
+}</textarea>
+            </div>
+        </div>
+    </section>
+
+    <!-- Resizer -->
+    <div id="resizer" title="Arraste para redimensionar"></div>
+
+    <!-- Console -->
+    <section id="console-panel">
+        <div class="panel-tab">
+            <span class="tab-dot tab-dot-console"></span>
+            Console de Saída
+            <span id="exec-status" class="exec-status"></span>
+        </div>
+        <div id="console-saida">
+            <div class="console-placeholder">
+                <span class="placeholder-icon">▶</span>
+                Execute seu algoritmo para ver os resultados aqui.
+            </div>
+        </div>
+    </section>
+
+</main>
+
+<!-- ===== AUTOCOMPLETE POPUP ===== -->
+<div id="autocomplete-popup" role="listbox" aria-label="Sugestões"></div>
+
+<!-- ===== HELP MODAL ===== -->
+<div id="help-modal" class="modal-overlay hidden" role="dialog" aria-modal="true">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h2>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+                Documentação — Pseudo-IDE v3.0
+            </h2>
+            <button class="modal-close" onclick="toggleHelp()">✕</button>
+        </div>
+
+        <div class="modal-tabs" role="tablist">
+            <button class="tab-btn active" onclick="switchTab('tab-geral',this)">Conceitos Gerais</button>
+            <button class="tab-btn" onclick="switchTab('tab-estruturas',this)">Estruturas</button>
+            <button class="tab-btn" onclick="switchTab('tab-funcoes',this)">Funções Tipadas</button>
+            <button class="tab-btn" onclick="switchTab('tab-mat',this)">Bib: mat</button>
+            <button class="tab-btn" onclick="switchTab('tab-metodos',this)">Bib: metodos</button>
+            <button class="tab-btn" onclick="switchTab('tab-tabular',this)">Bib: tabular</button>
+            <button class="tab-btn" onclick="switchTab('tab-calculo',this)">Bib: calculo</button>
+            <button class="tab-btn" onclick="switchTab('tab-estatistica',this)">Bib: estatistica</button>
+            <button class="tab-btn" onclick="switchTab('tab-atalhos',this)">Atalhos</button>
+        </div>
+
+        <div class="modal-body">
+
+            <!-- TAB: GERAL -->
+            <div id="tab-geral" class="tab-pane active">
+                <h3>Tipos de Dados</h3>
+                <table class="doc-table">
+                    <thead><tr><th>Palavra</th><th>Exemplo</th><th>Obs.</th></tr></thead>
+                    <tbody>
+                        <tr><td><code>inteiro</code></td><td><code>inteiro x = 10</code></td><td>Números inteiros</td></tr>
+                        <tr><td><code>real</code></td><td><code>real pi = 3.14</code></td><td>Números decimais</td></tr>
+                        <tr><td><code>caracter</code></td><td><code>caracter nome = "Ana"</code></td><td>Textos / strings</td></tr>
+                        <tr><td><code>booleano</code></td><td><code>booleano ativo = verdadeiro</code></td><td>Lógico</td></tr>
+                        <tr>
+                            <td><code>super</code></td>
+                            <td><code>super lista = [1, 2, 3]</code></td>
+                            <td>
+                                Tipo universal — aceita <strong>qualquer valor</strong>, incluindo listas fixas <code>[...]</code>
+                                e mistura de tipos. Equivale ao <code>any</code> do TypeScript.
+                                Use para criar arrays literais com colchetes.
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>Listas: Dinâmicas vs. Fixas</h3>
+                <div class="doc-note">
+                    <strong>Lista dinâmica</strong> (<code>m.lista(...)</code>) — criada pela biblioteca <code>metodos</code>,
+                    com métodos como <code>.adicionar()</code>, <code>.ordenar()</code>, etc.<br><br>
+                    <strong>Lista fixa</strong> (<code>super x = [...]</code>) — criada com colchetes e o tipo <code>super</code>.
+                    É um array nativo JavaScript. Use quando só precisa de um conjunto fixo de valores e acesso por índice (<code>x[0]</code>).
+                </div>
+                <pre class="code-example"><span class="ex-cmt">// Lista DINÂMICA — usa métodos da biblioteca metodos</span>
+<span class="ex-kw">importar</span> metodos <span class="ex-kw">como</span> m;
+<span class="ex-kw">super</span> notas = m.lista(<span class="ex-num">7</span>, <span class="ex-num">8</span>, <span class="ex-num">9</span>);
+notas.adicionar(<span class="ex-num">10</span>);
+<span class="ex-fn">imprima</span>(notas.tamanho());    <span class="ex-cmt">// 4</span>
+
+<span class="ex-cmt">// Lista FIXA — acesso direto por índice</span>
+<span class="ex-kw">super</span> dias = [<span class="ex-str">"Seg"</span>, <span class="ex-str">"Ter"</span>, <span class="ex-str">"Qua"</span>];
+<span class="ex-fn">imprima</span>(dias[0]);            <span class="ex-cmt">// "Seg"</span></pre>
+
+                <h3>Validação Rigorosa de Tipos</h3>
+                <div class="doc-note">
+                    As bibliotecas nativas (<code>mat</code>, <code>metodos</code>, <code>calculo</code>, <code>estatistica</code>)
+                    verificam ativamente o tipo dos argumentos. Passar um tipo errado gera um <strong>erro claro em PT-BR</strong>
+                    antes da execução continuar — sem conversões silenciosas.
+                </div>
+
+                <h3>Erros em Português</h3>
+                <div class="doc-note">
+                    Todos os erros de execução são traduzidos automaticamente para PT-BR com indicação da
+                    <strong>[Linha X]</strong> aproximada do pseudocódigo onde ocorreram.
+                </div>
+
+                <h3>Valores Especiais</h3>
+                <table class="doc-table">
+                    <thead><tr><th>Palavra</th><th>Equivale a</th><th>Significado</th></tr></thead>
+                    <tbody>
+                        <tr><td><code>verdadeiro</code></td><td><code>true</code></td><td>Booleano verdadeiro</td></tr>
+                        <tr><td><code>falso</code></td><td><code>false</code></td><td>Booleano falso</td></tr>
+                        <tr><td><code>vazio</code></td><td><code>null</code></td><td>Ausência intencional de valor</td></tr>
+                        <tr><td><code>indefinido</code></td><td><code>undefined</code></td><td>Variável sem valor atribuído</td></tr>
+                        <tr><td><code>Infinito</code></td><td><code>Infinity</code></td><td>Infinito positivo (+∞)</td></tr>
+                        <tr><td><code>NegInfinito</code></td><td><code>-Infinity</code></td><td>Infinito negativo (−∞)</td></tr>
+                    </tbody>
+                </table>
+                <h3>Operadores</h3>
+                <table class="doc-table">
+                    <thead><tr><th>Operador</th><th>Significado</th><th>Exemplo</th></tr></thead>
+                    <tbody>
+                        <tr><td><code>e</code></td><td>E lógico (AND)</td><td><code>se (a > 1 e b &lt; 2)</code></td></tr>
+                        <tr><td><code>ou</code></td><td>OU lógico (OR)</td><td><code>se (x == 0 ou y == 0)</code></td></tr>
+                        <tr><td><code>nao</code></td><td>Negação (NOT)</td><td><code>se (nao ativo)</code></td></tr>
+                        <tr><td><code>mod</code></td><td>Resto da divisão (%)</td><td><code>10 mod 3</code> → 1</td></tr>
+                    </tbody>
+                </table>
+                <h3>Notação Científica e Texto Especial</h3>
+                <table class="doc-table">
+                    <thead><tr><th>Sintaxe</th><th>Resultado / Obs.</th></tr></thead>
+                    <tbody>
+                        <tr><td><code>2E10</code> ou <code>2e10</code></td><td>Notação científica nativa: 20 000 000 000</td></tr>
+                        <tr><td><code>1.5E-3</code></td><td>0.0015</td></tr>
+                        <tr><td><code>f"Olá {nome}!"</code></td><td>Interpola variáveis dentro do texto (f-string)</td></tr>
+                        <tr><td><code>3 * "oi"</code></td><td>Repete o texto: <code>"oioioi"</code></td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- TAB: ESTRUTURAS -->
+            <div id="tab-estruturas" class="tab-pane hidden">
+                <h3>Entrada e Saída</h3>
+                <pre class="code-example"><span class="ex-fn">imprima</span>(<span class="ex-str">"Olá, Mundo!"</span>);
+<span class="ex-fn">imprima</span>(f<span class="ex-str">"Seu nome é {nome}"</span>);
+<span class="ex-kw">caracter</span> nome = <span class="ex-fn">leia</span>(<span class="ex-str">"Digite seu nome:"</span>);</pre>
+
+                <h3>Comentários</h3>
+                <pre class="code-example"><span class="ex-cmt">// Comentário de uma linha</span>
+
+<span class="ex-cmt">/* Comentário
+   de múltiplas
+   linhas */</span></pre>
+
+                <h3>Condicional</h3>
+                <pre class="code-example"><span class="ex-kw">se</span> (x > 10) {
+    <span class="ex-fn">imprima</span>(<span class="ex-str">"Maior que 10"</span>);
+} <span class="ex-kw">senao se</span> (x == 10) {
+    <span class="ex-fn">imprima</span>(<span class="ex-str">"Igual a 10"</span>);
+} <span class="ex-kw">senao</span> {
+    <span class="ex-fn">imprima</span>(<span class="ex-str">"Menor que 10"</span>);
+}</pre>
+
+                <h3>Para / Enquanto / Faca</h3>
+                <pre class="code-example"><span class="ex-kw">para</span> (<span class="ex-kw">inteiro</span> i = 0; i &lt; 5; i++) {
+    <span class="ex-fn">imprima</span>(i);
+}
+
+<span class="ex-kw">inteiro</span> x = 0;
+<span class="ex-kw">enquanto</span> (x &lt; 3) { x = x + 1; }
+
+<span class="ex-kw">faca</span> { x = x - 1; } <span class="ex-kw">enquanto</span> (x > 0);</pre>
+
+                <h3>Escolha (switch)</h3>
+                <pre class="code-example"><span class="ex-kw">escolha</span> (nota) {
+    <span class="ex-kw">caso</span> 10: <span class="ex-fn">imprima</span>(<span class="ex-str">"Excelente!"</span>); <span class="ex-kw">quebrar</span>;
+    <span class="ex-kw">caso</span> 5:  <span class="ex-fn">imprima</span>(<span class="ex-str">"Regular"</span>);   <span class="ex-kw">quebrar</span>;
+    <span class="ex-kw">padrao</span>:  <span class="ex-fn">imprima</span>(<span class="ex-str">"Outra nota"</span>);
+}</pre>
+
+                <h3>Tratamento de Erros</h3>
+                <pre class="code-example"><span class="ex-kw">tentar</span> {
+    <span class="ex-kw">inteiro</span> x = 10 / 0;
+} <span class="ex-kw">capturar</span> (erro) {
+    <span class="ex-fn">imprima</span>(<span class="ex-str">"Erro capturado!"</span>);
+}</pre>
+            </div>
+
+            <!-- TAB: FUNÇÕES TIPADAS -->
+            <div id="tab-funcoes" class="tab-pane hidden">
+                <h3>Funções Simples</h3>
+                <pre class="code-example"><span class="ex-kw">funcao</span> soma(a, b) {
+    <span class="ex-kw">retorno</span> a + b;
+}
+<span class="ex-fn">imprima</span>(soma(<span class="ex-num">3</span>, <span class="ex-num">4</span>));  <span class="ex-cmt">// 7</span></pre>
+
+                <h3>Parâmetros com Tipo e Restrição</h3>
+                <p class="tab-intro">
+                    Adicione o tipo e uma restrição opcional entre parênteses.
+                    A IDE valida os valores em tempo de execução e lança um erro claro se forem violados.
+                </p>
+                <pre class="code-example"><span class="ex-kw">funcao</span> raizQuadrada(<span class="ex-kw">real</span>(x >= 0)) {
+    <span class="ex-kw">retorno</span> <span class="ex-fn">raiz</span>(x);
+}
+<span class="ex-fn">imprima</span>(raizQuadrada(<span class="ex-num">9</span>));   <span class="ex-cmt">// 3</span>
+<span class="ex-fn">imprima</span>(raizQuadrada(-<span class="ex-num">1</span>));  <span class="ex-cmt">// Erro: 'x' deve satisfazer: x >= 0</span></pre>
+
+                <h3>Parâmetros com Valor Padrão</h3>
+                <p class="tab-intro">
+                    Use <code>: valor</code> após o parêntese para definir um padrão.
+                    Parâmetros sem padrão são obrigatórios.
+                </p>
+                <pre class="code-example"><span class="ex-kw">funcao</span> saudacao(<span class="ex-kw">caracter</span>(nome), <span class="ex-kw">caracter</span>(prefixo) : <span class="ex-str">"Olá"</span>) {
+    <span class="ex-fn">imprima</span>(f<span class="ex-str">"{prefixo}, {nome}!"</span>);
+}
+
+saudacao(<span class="ex-str">"Ana"</span>);             <span class="ex-cmt">// Olá, Ana!</span>
+saudacao(<span class="ex-str">"Bruno"</span>, <span class="ex-str">"Oi"</span>);    <span class="ex-cmt">// Oi, Bruno!</span></pre>
+
+                <h3>Combinando Tudo</h3>
+                <pre class="code-example"><span class="ex-kw">funcao</span> potencia(<span class="ex-kw">real</span>(base), <span class="ex-kw">inteiro</span>(exp > 0) : <span class="ex-num">2</span>) {
+    <span class="ex-kw">retorno</span> <span class="ex-fn">expo</span>(base, exp);
+}
+
+<span class="ex-fn">imprima</span>(potencia(<span class="ex-num">3</span>));        <span class="ex-cmt">// 9    (exp usa padrão 2)</span>
+<span class="ex-fn">imprima</span>(potencia(<span class="ex-num">2</span>, <span class="ex-num">8</span>));    <span class="ex-cmt">// 256</span>
+<span class="ex-fn">imprima</span>(potencia(<span class="ex-num">5</span>, -<span class="ex-num">1</span>));   <span class="ex-cmt">// Erro: 'exp' deve satisfazer: exp > 0</span></pre>
+
+                <div class="doc-note">
+                    <strong>Sintaxe resumida:</strong><br>
+                    <code>tipo(nome)</code> — obrigatório, sem restrição<br>
+                    <code>tipo(nome operador valor)</code> — obrigatório, com restrição (ex: <code>&gt;= 0</code>, <code>!= 0</code>)<br>
+                    <code>tipo(nome) : padrão</code> — opcional com valor padrão<br>
+                    <code>tipo(nome operador valor) : padrão</code> — opcional com restrição
+                </div>
+            </div>
+
+            <!-- TAB: MAT -->
+            <div id="tab-mat" class="tab-pane hidden">
+                <h3>Biblioteca Matemática</h3>
+                <p class="tab-intro">Uso: <code>importar mat como m;</code></p>
+                <table class="doc-table">
+                    <thead><tr><th>Função / Constante</th><th>Descrição</th><th>Exemplo</th></tr></thead>
+                    <tbody>
+                        <tr><td><code>m.pi</code></td><td>π (3.14159...)</td><td><code>imprima(m.pi)</code></td></tr>
+                        <tr><td><code>m.e</code></td><td>Número de Euler (2.71828...)</td><td><code>imprima(m.e)</code></td></tr>
+                        <tr><td><code>m.Infinito</code></td><td>Infinito positivo (+∞)</td><td><code>m.Infinito</code></td></tr>
+                        <tr><td><code>m.NegInfinito</code></td><td>Infinito negativo (−∞)</td><td><code>m.NegInfinito</code></td></tr>
+                        <tr><td><code>m.abs(x)</code></td><td>Valor absoluto</td><td><code>m.abs(-5)</code> → 5</td></tr>
+                        <tr><td><code>m.arred(x)</code></td><td>Arredondamento padrão (½ sobe)</td><td><code>m.arred(3.6)</code> → 4</td></tr>
+                        <tr><td><code>m.piso(x)</code></td><td>Arredonda sempre para baixo (floor)</td><td><code>m.piso(3.9)</code> → 3</td></tr>
+                        <tr><td><code>m.teto(x)</code></td><td>Arredonda sempre para cima (ceil)</td><td><code>m.teto(3.1)</code> → 4</td></tr>
+                        <tr><td><code>m.max(a, b)</code></td><td>O maior dos dois</td><td><code>m.max(10, 20)</code> → 20</td></tr>
+                        <tr><td><code>m.min(a, b)</code></td><td>O menor dos dois</td><td><code>m.min(10, 20)</code> → 10</td></tr>
+                        <tr><td><code>m.sen(x)</code></td><td>Seno (x em radianos)</td><td><code>m.sen(0)</code> → 0</td></tr>
+                        <tr><td><code>m.cos(x)</code></td><td>Cosseno</td><td><code>m.cos(0)</code> → 1</td></tr>
+                        <tr><td><code>m.tan(x)</code></td><td>Tangente</td><td><code>m.tan(m.pi/4)</code> ≈ 1</td></tr>
+                        <tr><td><code>m.ln(x)</code></td><td>Logaritmo natural (base <em>e</em>)</td><td><code>m.ln(m.e)</code> → 1</td></tr>
+                        <tr><td><code>m.log2(x)</code></td><td>Logaritmo base 2</td><td><code>m.log2(8)</code> → 3</td></tr>
+                        <tr><td><code>m.log10(x)</code></td><td>Logaritmo base 10</td><td><code>m.log10(1000)</code> → 3</td></tr>
+                        <tr><td><code>m.log(x, base)</code></td><td>Logaritmo em qualquer base</td><td><code>m.log(27, 3)</code> → 3</td></tr>
+                        <tr><td><code>m.aleatorio(mn, mx)</code></td><td>Inteiro aleatório em [mn, mx]</td><td><code>m.aleatorio(1, 6)</code></td></tr>
+                        <tr><td><code>raiz(x)</code></td><td>Raiz quadrada — <strong>nativa</strong></td><td><code>raiz(16)</code> → 4</td></tr>
+                        <tr><td><code>expo(b, e)</code></td><td>Potência — <strong>nativa</strong></td><td><code>expo(2, 8)</code> → 256</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>Somatório e Produtório</h3>
+                <p class="tab-intro">Recebem uma <strong>funcao que aceita i</strong> e a aplicam para cada inteiro de <em>min</em> a <em>max</em>.</p>
+                <table class="doc-table">
+                    <thead><tr><th>Função</th><th>O que faz</th></tr></thead>
+                    <tbody>
+                        <tr><td><code>m.somatorio(fn, min, max)</code></td><td>Σ fn(min) + … + fn(max)</td></tr>
+                        <tr><td><code>m.produtorio(fn, min, max)</code></td><td>Π fn(min) × … × fn(max)</td></tr>
+                    </tbody>
+                </table>
+                <pre class="code-example"><span class="ex-kw">importar</span> mat <span class="ex-kw">como</span> m;
+
+<span class="ex-kw">funcao</span> quad(i) { <span class="ex-kw">retorno</span> i * i; }
+<span class="ex-fn">imprima</span>(m.somatorio(quad, 1, 5));   <span class="ex-cmt">// 55  (1+4+9+16+25)</span>
+
+<span class="ex-kw">funcao</span> id(i) { <span class="ex-kw">retorno</span> i; }
+<span class="ex-fn">imprima</span>(m.produtorio(id, 1, 5));    <span class="ex-cmt">// 120 (5!)</span></pre>
+            </div>
+
+            <!-- TAB: METODOS -->
+            <div id="tab-metodos" class="tab-pane hidden">
+                <h3>Biblioteca de Dados</h3>
+                <p class="tab-intro">Uso: <code>importar metodos como m;</code></p>
+
+                <h4>Texto — <code>m.texto(valor)</code></h4>
+                <table class="doc-table">
+                    <thead><tr><th>Método</th><th>Descrição</th></tr></thead>
+                    <tbody>
+                        <tr><td><code>.maiusculo()</code></td><td>Converte para MAIÚSCULAS</td></tr>
+                        <tr><td><code>.minusculo()</code></td><td>Converte para minúsculas</td></tr>
+                        <tr><td><code>.capitalizar()</code></td><td>Primeira letra maiúscula, resto minúsculo</td></tr>
+                        <tr><td><code>.contem(txt)</code></td><td>Retorna verdadeiro se o texto contém <em>txt</em></td></tr>
+                        <tr><td><code>.tamanho()</code></td><td>Número de caracteres</td></tr>
+                        <tr><td><code>.inverter()</code></td><td>Texto ao contrário</td></tr>
+                        <tr><td><code>.aparar()</code></td><td>Remove espaços das bordas</td></tr>
+                        <tr><td><code>.mesclar(str)</code></td><td>Concatena com outro texto</td></tr>
+                    </tbody>
+                </table>
+
+                <h4>Lista — <code>m.lista(v1, v2, ...)</code></h4>
+                <table class="doc-table">
+                    <thead><tr><th>Método</th><th>Descrição</th></tr></thead>
+                    <tbody>
+                        <tr><td><code>.adicionar(val)</code></td><td>Adiciona ao final da lista</td></tr>
+                        <tr><td><code>.remover(val)</code></td><td>Remove a primeira ocorrência de <em>val</em></td></tr>
+                        <tr><td><code>.obter(i)</code></td><td>Retorna o item na posição <em>i</em> (começa em 0)</td></tr>
+                        <tr><td><code>.tamanho()</code></td><td>Quantidade de itens</td></tr>
+                        <tr><td><code>.ordenar()</code></td><td>Ordena em ordem <strong>crescente</strong> (A→Z, menor→maior). Modifica a lista original. Tipos mistos (número + texto) geram resultado imprevisível — use listas de tipo homogêneo.</td></tr>
+                        <tr><td><code>.contem(val)</code></td><td>Retorna verdadeiro se <em>val</em> existe na lista</td></tr>
+                    </tbody>
+                </table>
+
+                <h4>Número — <code>m.numero(valor)</code></h4>
+                <p class="tab-intro">Converte e inspeciona valores numéricos. Aceita inteiros, reais, <code>verdadeiro</code>/<code>falso</code> e strings numéricas.</p>
+                <table class="doc-table">
+                    <thead><tr><th>Método</th><th>Descrição</th><th>Exemplo</th></tr></thead>
+                    <tbody>
+                        <tr><td><code>.sinal()</code></td><td>Retorna 1 (positivo), -1 (negativo) ou 0 (zero)</td><td><code>m.numero(-5).sinal()</code> → -1</td></tr>
+                        <tr><td><code>.int()</code></td><td>Converte para inteiro truncando decimais. <code>verdadeiro</code>→1, <code>falso</code>→0</td><td><code>m.numero(3.9).int()</code> → 3</td></tr>
+                        <tr><td><code>.re()</code></td><td>Retorna o valor como número real</td><td><code>m.numero("3.14").re()</code> → 3.14</td></tr>
+                        <tr><td><code>.decimal(n)</code></td><td>Arredonda para <em>n</em> casas decimais, retornando um real</td><td><code>m.numero(3.14159).decimal(2)</code> → 3.14</td></tr>
+                        <tr>
+                            <td><code>.fatorar(0)</code></td>
+                            <td>Lista de pares [[base, exp], …] da fatoração em primos. <strong>Exige número inteiro — use <code>.int()</code> antes se necessário.</strong></td>
+                            <td><code>m.numero(12).fatorar(0)</code> → [[2,2],[3,1]]</td>
+                        </tr>
+                        <tr>
+                            <td><code>.fatorar(1)</code></td>
+                            <td>String formatada com expoentes Unicode. Também exige inteiro.</td>
+                            <td><code>m.numero(12).fatorar(1)</code> → "2² × 3¹"</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div class="doc-note">
+                    <strong>Atenção:</strong> <code>.int()</code> e <code>.re()</code> substituíram os antigos <code>.inteiro()</code> e <code>.real()</code>.<br>
+                    <code>.fatorar()</code> agora <strong>rejeita valores reais</strong> com uma mensagem explicativa — converta antes:
+                    <code>m.numero(3.7).int().fatorar(1)</code> → usa o inteiro 3.
+                </div>
+                <pre class="code-example"><span class="ex-kw">importar</span> metodos <span class="ex-kw">como</span> m;
+
+<span class="ex-kw">inteiro</span> n = 360;
+<span class="ex-fn">imprima</span>(m.numero(n).fatorar(<span class="ex-num">1</span>));    <span class="ex-cmt">// 2³ × 3² × 5¹</span>
+<span class="ex-fn">imprima</span>(m.numero(-7).sinal());        <span class="ex-cmt">// -1</span>
+<span class="ex-fn">imprima</span>(m.numero(verdadeiro).int());  <span class="ex-cmt">// 1</span>
+<span class="ex-fn">imprima</span>(m.numero(3.9).int());         <span class="ex-cmt">// 3 (trunca, não arredonda)</span>
+<span class="ex-fn">imprima</span>(m.numero(3.14159).decimal(<span class="ex-num">2</span>));<span class="ex-cmt">// 3.14</span></pre>
+
+                <h4>Mapa (dicionário) — <code>m.mapa()</code></h4>
+                <table class="doc-table">
+                    <thead><tr><th>Método</th><th>Descrição</th></tr></thead>
+                    <tbody>
+                        <tr><td><code>.definir(chave, val)</code></td><td>Insere ou atualiza</td></tr>
+                        <tr><td><code>.obter(chave)</code></td><td>Recupera o valor</td></tr>
+                        <tr><td><code>.tem(chave)</code></td><td>Verifica existência</td></tr>
+                        <tr><td><code>.remover(chave)</code></td><td>Remove a entrada</td></tr>
+                    </tbody>
+                </table>
+
+                <h4>Conjunto (set único) — <code>m.conjunto()</code></h4>
+                <p class="tab-intro">Nunca aceita duplicatas. Agora inclui operações de teoria dos conjuntos.</p>
+                <table class="doc-table">
+                    <thead><tr><th>Método</th><th>Descrição</th></tr></thead>
+                    <tbody>
+                        <tr><td><code>.adicionar(val)</code></td><td>Insere (ignora duplicatas automaticamente)</td></tr>
+                        <tr><td><code>.tem(val)</code></td><td>Verifica se o valor existe</td></tr>
+                        <tr><td><code>.remover(val)</code></td><td>Remove o valor</td></tr>
+                        <tr><td><code>.tamanho()</code></td><td>Quantidade de elementos únicos</td></tr>
+                        <tr><td><code>.uniao(outro)</code></td><td>Retorna novo Conjunto com todos os elementos de ambos (A ∪ B)</td></tr>
+                        <tr><td><code>.intersecao(outro)</code></td><td>Retorna novo Conjunto com elementos em comum (A ∩ B)</td></tr>
+                        <tr><td><code>.diferenca(outro)</code></td><td>Retorna novo Conjunto com elementos de A que não estão em B (A − B)</td></tr>
+                    </tbody>
+                </table>
+                <pre class="code-example"><span class="ex-kw">importar</span> metodos <span class="ex-kw">como</span> m;
+
+<span class="ex-kw">super</span> A = m.conjunto(); A.adicionar(<span class="ex-num">1</span>); A.adicionar(<span class="ex-num">2</span>); A.adicionar(<span class="ex-num">3</span>);
+<span class="ex-kw">super</span> B = m.conjunto(); B.adicionar(<span class="ex-num">2</span>); B.adicionar(<span class="ex-num">3</span>); B.adicionar(<span class="ex-num">4</span>);
+
+<span class="ex-fn">imprima</span>(A.uniao(B));       <span class="ex-cmt">// {1, 2, 3, 4}</span>
+<span class="ex-fn">imprima</span>(A.intersecao(B));  <span class="ex-cmt">// {2, 3}</span>
+<span class="ex-fn">imprima</span>(A.diferenca(B));   <span class="ex-cmt">// {1}</span></pre>
+            </div>
+
+            <!-- TAB: TABULAR -->
+            <div id="tab-tabular" class="tab-pane hidden">
+                <h3>Biblioteca Visual</h3>
+                <p class="tab-intro">Uso: <code>importar tabular como t;</code> — renderiza elementos visuais no console.</p>
+                <table class="doc-table">
+                    <thead><tr><th>Função</th><th>Descrição</th></tr></thead>
+                    <tbody>
+                        <tr><td><code>t.separador()</code></td><td>Linha divisória tracejada</td></tr>
+                        <tr><td><code>t.tabela(cab, linhas)</code></td><td>Tabela formatada com cabeçalho</td></tr>
+                        <tr><td><code>t.progresso(val, max)</code></td><td>Barra de progresso visual</td></tr>
+                        <tr><td><code>t.tabelaVerdade(expressoes, variaveis, mostrarIntermediarias?)</code></td><td>Tabela-verdade completa — ver detalhes abaixo</td></tr>
+                    </tbody>
+                </table>
+
+                <h4>Exemplo: t.tabela()</h4>
+                <pre class="code-example"><span class="ex-kw">importar</span> tabular <span class="ex-kw">como</span> t;
+
+<span class="ex-kw">super</span> cab   = [<span class="ex-str">"Nome"</span>, <span class="ex-str">"Nota"</span>];
+<span class="ex-kw">super</span> dados = [[<span class="ex-str">"Ana"</span>, <span class="ex-num">9.5</span>], [<span class="ex-str">"Bruno"</span>, <span class="ex-num">4.0</span>]];
+t.tabela(cab, dados);</pre>
+
+                <h3>t.tabelaVerdade()</h3>
+                <p class="tab-intro">
+                    Gera automaticamente todas as combinações V/F e exibe a tabela colorida no console.
+                    Suporta múltiplas expressões simultaneamente e exibição de sub-expressões intermediárias.
+                </p>
+
+                <h4>Assinatura</h4>
+                <pre class="code-example">t.tabelaVerdade(expressoes, variaveis, mostrarIntermediarias)</pre>
+                <table class="doc-table">
+                    <thead><tr><th>Parâmetro</th><th>Tipo</th><th>Descrição</th></tr></thead>
+                    <tbody>
+                        <tr>
+                            <td><code>expressoes</code></td>
+                            <td>caracter ou Lista</td>
+                            <td>Uma expressão lógica como string, ou uma Lista de strings para comparar várias fórmulas lado a lado.</td>
+                        </tr>
+                        <tr>
+                            <td><code>variaveis</code></td>
+                            <td>Lista (obrigatória)</td>
+                            <td>Lista de strings com os nomes das variáveis usadas nas expressões. Máx: 8 variáveis.</td>
+                        </tr>
+                        <tr>
+                            <td><code>mostrarIntermediarias</code></td>
+                            <td>booleano (padrão: falso)</td>
+                            <td>Se verdadeiro, adiciona colunas para cada sub-expressão entre parênteses, das mais internas para as mais externas.</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h4>Operadores Suportados</h4>
+                <table class="doc-table">
+                    <thead><tr><th>Símbolo</th><th>Operador</th><th>Equivale a</th></tr></thead>
+                    <tbody>
+                        <tr><td><code>e</code></td><td>Conjunção (AND)</td><td>p ∧ q</td></tr>
+                        <tr><td><code>ou</code></td><td>Disjunção (OR)</td><td>p ∨ q</td></tr>
+                        <tr><td><code>nao</code></td><td>Negação (NOT)</td><td>¬p</td></tr>
+                        <tr><td><code>xou</code></td><td>Disjunção Exclusiva (XOR)</td><td>p ⊕ q</td></tr>
+                        <tr><td><code>-&gt;</code></td><td>Condicional (Implicação)</td><td>p → q</td></tr>
+                        <tr><td><code>&lt;-&gt;</code></td><td>Bicondicional (Equivalência)</td><td>p ↔ q</td></tr>
+                    </tbody>
+                </table>
+
+                <h4>Exemplos</h4>
+                <pre class="code-example"><span class="ex-kw">importar</span> tabular <span class="ex-kw">como</span> t;
+<span class="ex-kw">importar</span> metodos <span class="ex-kw">como</span> m;
+
+<span class="ex-cmt">// Exemplo 1 — Expressão simples</span>
+t.tabelaVerdade(<span class="ex-str">"p e q"</span>, m.lista(<span class="ex-str">"p"</span>, <span class="ex-str">"q"</span>));
+
+<span class="ex-cmt">// Exemplo 2 — Com intermediárias (mostra colunas de sub-expressões)</span>
+t.tabelaVerdade(<span class="ex-str">"(p e q) ou nao r"</span>, m.lista(<span class="ex-str">"p"</span>, <span class="ex-str">"q"</span>, <span class="ex-str">"r"</span>), verdadeiro);
+
+<span class="ex-cmt">// Exemplo 3 — Múltiplas expressões (compara fórmulas lado a lado)</span>
+<span class="ex-kw">super</span> exprs = m.lista(<span class="ex-str">"p -> q"</span>, <span class="ex-str">"nao p ou q"</span>);
+t.tabelaVerdade(exprs, m.lista(<span class="ex-str">"p"</span>, <span class="ex-str">"q"</span>));
+<span class="ex-cmt">// As duas colunas serão idênticas — demonstra que p->q ≡ ¬p∨q</span>
+
+<span class="ex-cmt">// Exemplo 4 — Bicondicional e XOR</span>
+t.tabelaVerdade(<span class="ex-str">"p &lt;-> q"</span>, m.lista(<span class="ex-str">"p"</span>, <span class="ex-str">"q"</span>));
+t.separador();
+t.tabelaVerdade(<span class="ex-str">"p xou q"</span>,  m.lista(<span class="ex-str">"p"</span>, <span class="ex-str">"q"</span>));</pre>
+
+                <div class="doc-note">
+                    <strong>Coloração:</strong>
+                    colunas de variáveis em cinza neutro;
+                    intermediárias em verde/vermelho suave;
+                    expressões principais em verde/vermelho intenso e negrito.
+                    Células com erro de avaliação aparecem em amarelo (<code>?</code>).
+                </div>
+            </div>
+
+            <!-- TAB: CALCULO -->
+            <div id="tab-calculo" class="tab-pane hidden">
+                <h3>Biblioteca de Análise Numérica</h3>
+                <p class="tab-intro">Uso: <code>importar calculo como c;</code> — Apoio a demonstrações de limites, derivadas e integrais.</p>
+
+                <table class="doc-table">
+                    <thead><tr><th>Função</th><th>Descrição</th><th>Parâmetros</th></tr></thead>
+                    <tbody>
+                        <tr>
+                            <td><code>c.limite(fn, ponto)</code></td>
+                            <td>Calcula lim<sub>x→ponto</sub> fn(x) numericamente. Lança erro se os limites laterais divergirem.</td>
+                            <td><code>fn</code>: funcao; <code>ponto</code>: numero</td>
+                        </tr>
+                        <tr>
+                            <td><code>c.derivada(fn, ponto, ordem)</code></td>
+                            <td>Derivada numérica de ordem n em um ponto. Ordem padrão: 1. Suporta até ordem 4.</td>
+                            <td><code>fn</code>: funcao; <code>ponto</code>: numero; <code>ordem</code>: inteiro ≥ 1</td>
+                        </tr>
+                        <tr>
+                            <td><code>c.integral(fn, a, b)</code></td>
+                            <td>Integral definida de fn entre a e b pela Regra de Simpson (n=1000). Precisão adequada para fins didáticos.</td>
+                            <td><code>fn</code>: funcao; <code>a</code>, <code>b</code>: numero</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h4>Exemplos</h4>
+                <pre class="code-example"><span class="ex-kw">importar</span> calculo <span class="ex-kw">como</span> c;
+
+<span class="ex-cmt">// Limite de sen(x)/x quando x → 0 (resultado clássico: 1)</span>
+<span class="ex-kw">funcao</span> f(x) { <span class="ex-kw">retorno</span> <span class="ex-fn">raiz</span>(x); }
+<span class="ex-fn">imprima</span>(c.limite(f, 0));           <span class="ex-cmt">// ≈ 0 (raiz tende a 0)</span>
+
+<span class="ex-cmt">// Derivada de x² em x=3 → deve ser 6</span>
+<span class="ex-kw">funcao</span> quad(x) { <span class="ex-kw">retorno</span> x * x; }
+<span class="ex-fn">imprima</span>(c.derivada(quad, 3));      <span class="ex-cmt">// ≈ 6</span>
+<span class="ex-fn">imprima</span>(c.derivada(quad, 3, 2));   <span class="ex-cmt">// ≈ 2 (2ª derivada de x² é constante 2)</span>
+
+<span class="ex-cmt">// Integral de x de 0 a 4 → área = 8</span>
+<span class="ex-kw">funcao</span> linear(x) { <span class="ex-kw">retorno</span> x; }
+<span class="ex-fn">imprima</span>(c.integral(linear, 0, 4)); <span class="ex-cmt">// ≈ 8</span></pre>
+
+                <div class="doc-note">
+                    <strong>Importante:</strong> os resultados são <strong>aproximações numéricas</strong>.
+                    São adequados para verificar intuições matemáticas, mas não substituem cálculo analítico exato.
+                    Valores muito próximos de singularidades podem apresentar imprecisão.
+                </div>
+            </div>
+
+            <!-- TAB: ESTATISTICA -->
+            <div id="tab-estatistica" class="tab-pane hidden">
+                <h3>Biblioteca de Estatística e Probabilidade</h3>
+                <p class="tab-intro">Uso: <code>importar estatistica como e;</code></p>
+
+                <h4>Combinatória — exigem inteiros ≥ 0</h4>
+                <table class="doc-table">
+                    <thead><tr><th>Função</th><th>Fórmula</th><th>Descrição</th></tr></thead>
+                    <tbody>
+                        <tr><td><code>e.fatorial(n)</code></td><td>n!</td><td>Fatorial de n. Máx: n=170.</td></tr>
+                        <tr><td><code>e.combinacao(n, k)</code></td><td>C(n,k) = n! / (k! × (n−k)!)</td><td>Combinações de n elementos tomados k a k (sem repetição, sem ordem).</td></tr>
+                        <tr><td><code>e.arranjo(n, k)</code></td><td>A(n,k) = n! / (n−k)!</td><td>Arranjos de n elementos tomados k a k (sem repetição, com ordem).</td></tr>
+                    </tbody>
+                </table>
+
+                <h4>Análise de Dados — exigem Lista não-vazia de números</h4>
+                <table class="doc-table">
+                    <thead><tr><th>Função</th><th>Descrição</th></tr></thead>
+                    <tbody>
+                        <tr><td><code>e.media(lista)</code></td><td>Média aritmética (Σxᵢ / n)</td></tr>
+                        <tr><td><code>e.mediana(lista)</code></td><td>Valor central após ordenação. Em listas de tamanho par: média dos dois centrais.</td></tr>
+                        <tr><td><code>e.moda(lista)</code></td><td>Valor(es) mais frequente(s). Retorna uma Lista (pode ter múltiplas modas).</td></tr>
+                        <tr><td><code>e.variancia(lista)</code></td><td>Variância populacional σ² = Σ(xᵢ − μ)² / n</td></tr>
+                        <tr><td><code>e.desvioPadrao(lista)</code></td><td>Desvio padrão populacional σ = √variância</td></tr>
+                    </tbody>
+                </table>
+
+                <h4>Exemplo Completo</h4>
+                <pre class="code-example"><span class="ex-kw">importar</span> estatistica <span class="ex-kw">como</span> e;
+<span class="ex-kw">importar</span> metodos <span class="ex-kw">como</span> m;
+
+<span class="ex-cmt">// Combinatória</span>
+<span class="ex-fn">imprima</span>(e.fatorial(<span class="ex-num">5</span>));         <span class="ex-cmt">// 120</span>
+<span class="ex-fn">imprima</span>(e.combinacao(<span class="ex-num">10</span>, <span class="ex-num">3</span>));  <span class="ex-cmt">// 120  (C(10,3))</span>
+<span class="ex-fn">imprima</span>(e.arranjo(<span class="ex-num">5</span>, <span class="ex-num">2</span>));      <span class="ex-cmt">// 20   (A(5,2))</span>
+
+<span class="ex-cmt">// Análise de dados</span>
+<span class="ex-kw">super</span> notas = m.lista(<span class="ex-num">7</span>, <span class="ex-num">8</span>, <span class="ex-num">9</span>, <span class="ex-num">6</span>, <span class="ex-num">8</span>, <span class="ex-num">10</span>, <span class="ex-num">7</span>);
+
+<span class="ex-fn">imprima</span>(e.media(notas));         <span class="ex-cmt">// 7.857...</span>
+<span class="ex-fn">imprima</span>(e.mediana(notas));       <span class="ex-cmt">// 8</span>
+<span class="ex-fn">imprima</span>(e.moda(notas));          <span class="ex-cmt">// [7, 8]</span>
+<span class="ex-fn">imprima</span>(e.desvioPadrao(notas));  <span class="ex-cmt">// ≈ 1.21</span></pre>
+
+                <div class="doc-note">
+                    <strong>Validação rigorosa:</strong> todas as funções de análise rejeitam listas vazias
+                    e listas com elementos não-numéricos, exibindo uma mensagem de erro clara com a posição
+                    do elemento inválido.
+                </div>
+            </div>
+
+            <!-- TAB: ATALHOS -->
+            <div id="tab-atalhos" class="tab-pane hidden">
+                <h3>Atalhos de Teclado</h3>
+                <table class="doc-table">
+                    <thead><tr><th>Atalho</th><th>Ação</th></tr></thead>
+                    <tbody>
+                        <tr><td><code>Ctrl + S</code></td><td>Executar o algoritmo</td></tr>
+                        <tr><td><code>Ctrl + M</code></td><td>Limpar o console de saída</td></tr>
+                        <tr><td><code>Ctrl + Enter</code></td><td>Inserir nova linha <strong>acima</strong> da atual</td></tr>
+                        <tr><td><code>Ctrl + '</code></td><td>Comentar / descomentar linha(s) selecionada(s)</td></tr>
+                        <tr><td><code>Alt + ↑ / ↓</code></td><td>Mover a linha atual para cima ou para baixo</td></tr>
+                        <tr><td><code>Tab</code></td><td>Indentar seleção (ou inserir 4 espaços)</td></tr>
+                        <tr><td><code>Shift + Tab</code></td><td>Remover indentação da seleção</td></tr>
+                        <tr><td><code>F1</code></td><td>Abrir / fechar documentação</td></tr>
+                        <tr><td><code>Esc</code></td><td>Fechar documentação ou autocomplete</td></tr>
+                        <tr><td><code>{</code>, <code>(</code>, <code>[</code>, <code>"</code>, <code>'</code></td><td>Fecha o par automaticamente</td></tr>
+                        <tr><td><code>Backspace</code> entre par</td><td>Apaga os dois delimitadores</td></tr>
+                        <tr><td>Seta ▼ na margem</td><td>Recolher / expandir bloco de código</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>Autocomplete</h3>
+                <div class="doc-note">
+                    Ao digitar qualquer palavra, sugestões aparecem automaticamente.
+                    Use <strong>↑ / ↓</strong> para navegar, <strong>Tab</strong> ou <strong>Enter</strong> para aceitar,
+                    e <strong>Esc</strong> para fechar.
+                </div>
+
+                <h3>Marcadores de Projeto</h3>
+                <pre class="code-example">meuAlgoritmo()
+@NOME[Calculadora de IMC]
+@AUTOR[Maria Souza]
+@DESC[Calcula o índice de massa corporal]
+@VERSAO[2]
+{
+    <span class="ex-cmt">// código aqui...</span>
+}</pre>
+
+                <h3>Estrutura Obrigatória</h3>
+                <pre class="code-example">nomeDoAlgoritmo()
+{
+    <span class="ex-cmt">// Seu código aqui</span>
+}</pre>
+
+                <h3>Observações</h3>
+                <ul class="doc-list">
+                    <li>Notação científica (<code>2E10</code>, <code>1.5e-3</code>) é suportada nativamente.</li>
+                    <li><code>Infinito</code> e <code>NegInfinito</code> podem ser usados diretamente ou via <code>m.Infinito</code>.</li>
+                    <li>O comando <code>leia()</code> pausa a execução e aguarda <strong>Enter</strong> no console.</li>
+                    <li>Erros de execução aparecem em vermelho com a mensagem exata.</li>
+                    <li><code>somatorio</code> e <code>produtorio</code> exigem uma <code>funcao</code> como 1º argumento.</li>
+                    <li>O título da aba do navegador é atualizado com o nome do algoritmo.</li>
+                </ul>
+            </div>
+
+        </div><!-- /modal-body -->
+        <div class="modal-footer">
+            <button class="btn-primary" onclick="toggleHelp()">Fechar Documentação</button>
+        </div>
+    </div>
+</div>
+
+<script src="js/compiler.js"></script>
+<script src="js/editor.js"></script>
+</body>
+</html>
