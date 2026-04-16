@@ -83,6 +83,7 @@
             <div id="line-numbers" aria-hidden="true"></div>
             <div id="editor-wrapper">
                 <pre id="highlight-layer" aria-hidden="true"></pre>
+                <pre id="error-layer" aria-hidden="true"></pre>
                 <textarea
                     id="code-editor"
                     spellcheck="false"
@@ -125,6 +126,7 @@
 
 <!-- ===== AUTOCOMPLETE POPUP ===== -->
 <div id="autocomplete-popup" role="listbox" aria-label="Sugestões"></div>
+<div id="signature-popup" class="hidden" aria-hidden="true"></div>
 
 <!-- ===== HELP MODAL ===== -->
 <div id="help-modal" class="modal-overlay hidden" role="dialog" aria-modal="true">
@@ -387,7 +389,7 @@ saudacao(<span class="ex-str">"Bruno"</span>, <span class="ex-str">"Oi"</span>);
                 <h3>Biblioteca de Dados</h3>
                 <p class="tab-intro">Uso: <code>importar metodos como m;</code></p>
 
-                <h4>Texto — <code>m.texto(valor)</code></h4>
+                <h4>Texto — <code>m.caracter(valor)</code></h4>
                 <table class="doc-table">
                     <thead><tr><th>Método</th><th>Descrição</th></tr></thead>
                     <tbody>
