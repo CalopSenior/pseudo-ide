@@ -2053,7 +2053,7 @@ const Bibliotecas = {
 /* ============================================================
    7. I/O GLOBAL
    ============================================================ */
-function imprima(conteudo) {
+function imprima(...args) {
   const div = document.createElement("div");
   div.className = "console-line";
   const arrow = document.createElement("span");
@@ -2061,7 +2061,7 @@ function imprima(conteudo) {
   arrow.textContent = "›";
   arrow.setAttribute("aria-hidden", "true");
   const cnt = document.createElement("span");
-  cnt.textContent = _vtx(conteudo);
+  cnt.textContent = args.map(_vtx).join(" ");
   div.appendChild(arrow);
   div.appendChild(cnt);
   _c().appendChild(div);
