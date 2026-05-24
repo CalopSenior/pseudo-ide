@@ -1,0 +1,2260 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pseudo-IDE</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link
+        href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,400;0,500;0,600;1,400&family=Outfit:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+
+    <!-- ===== HEADER ===== -->
+    <header id="header">
+        <div class="header-left">
+            <div class="traffic-lights">
+                <span class="tl tl-red"></span>
+                <span class="tl tl-yellow"></span>
+                <span class="tl tl-green"></span>
+            </div>
+            <div class="app-brand">
+                <span class="app-icon">⌨</span>
+                <span class="app-title">Pseudo-IDE</span>
+                <span class="app-sub">v4.0</span>
+            </div>
+        </div>
+        <div class="header-center" id="algo-name-display">sem título</div>
+        <div class="header-right">
+            <button class="btn-icon" onclick="toggleHelp()" title="Documentação (F1)">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10" />
+                    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+                    <line x1="12" y1="17" x2="12.01" y2="17" />
+                </svg>
+                Docs
+            </button>
+            <div class="btn-group">
+                <button class="btn-icon" onclick="abrirArquivo()" title="Abrir arquivo">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+                    </svg>
+                    Abrir
+                </button>
+
+                <button class="btn-icon" onclick="salvarArquivo()" title="Salvar local">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                        <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                        <polyline points="7 3 7 8 15 8"></polyline>
+                    </svg>
+                    Salvar
+                </button>
+
+                <button class="btn-icon" onclick="gerarLinkCompartilhamento()" title="Compartilhar Link">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                        <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+                    </svg>
+                    Link
+                </button>
+
+                <button class="btn-icon" onclick="publicarNaNuvem()" title="Publicar na Nuvem">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path>
+                        <polyline points="16 16 12 12 8 16"></polyline>
+                        <line x1="12" y1="12" x2="12" y2="21"></line>
+                    </svg>
+                    Publicar
+                </button>
+
+                <button class="btn-icon" onclick="configurarNuvem()" title="Configurar URL">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path
+                            d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
+                        </path>
+                    </svg>
+                    API
+                </button>
+                <button class="btn-icon" onclick="toggleTeacherModal()" title="Área do Professor"
+                    style="color: #fbbf24;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                    </svg>
+                    Professor
+                </button>
+            </div>
+            <button class="btn-icon" onclick="limparConsole()" title="Limpar console (Ctrl+M)">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="3 6 5 6 21 6" />
+                    <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                    <path d="M10 11v6M14 11v6" />
+                    <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+                </svg>
+                Limpar
+            </button>
+            <button class="btn-icon" onclick="iniciarDepuracao()" style="color: var(--green);"
+                title="Depurar Passo-a-Passo (F9)">
+                Depurar
+            </button>
+            <button class="btn-run" onclick="executarCodigo()" title="Executar (Ctrl+S)">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+                    <polygon points="5 3 19 12 5 21 5 3" />
+                </svg>
+                Executar
+            </button>
+        </div>
+    </header>
+
+    <!-- ===== METADATA BAR ===== -->
+    <div id="metadata-bar" class="hidden">
+        <span id="meta-nome" class="meta-item meta-name">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                <polyline points="14 2 14 8 20 8" />
+            </svg>
+            <span class="meta-val"></span>
+        </span>
+        <span class="meta-sep">·</span>
+        <span id="meta-autor" class="meta-item"><svg width="12" height="12" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2.5">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                <circle cx="12" cy="7" r="4" />
+            </svg><span class="meta-val"></span></span>
+        <span class="meta-sep">·</span>
+        <span id="meta-versao" class="meta-item meta-version"><span class="meta-val"></span></span>
+        <span class="meta-sep">·</span>
+        <span id="meta-desc" class="meta-item meta-desc"><span class="meta-val"></span></span>
+    </div>
+
+    <input type="file" id="file-import" accept=".ide,.txt,.pseudo" style="display:none">
+
+    <!-- ===== MAIN ===== -->
+    <main id="main-layout">
+
+        <section id="editor-panel">
+            <div id="search-box" class="hidden">
+                <input type="text" id="search-input" placeholder="Buscar no código..." autocomplete="off">
+                <span id="search-count">0/0</span>
+                <button class="btn-icon" id="search-prev" title="Anterior (Shift+Enter)">↑</button>
+                <button class="btn-icon" id="search-next" title="Próximo (Enter)">↓</button>
+                <button class="btn-icon" id="search-close" title="Fechar (Esc)">×</button>
+            </div>
+
+            <div class="panel-tab">
+                <span class="tab-dot"></span>
+                <span id="tab-filename">algoritmo.pseudo</span>
+            </div>
+            <div id="editor-container">
+                <div id="line-numbers" aria-hidden="true"></div>
+                <div id="editor-wrapper">
+                    <pre id="highlight-layer" aria-hidden="true"></pre>
+                    <pre id="error-layer" aria-hidden="true"></pre>
+                    <pre id="warning-layer" aria-hidden="true"></pre>
+                    <div id="debug-panel" class="hidden">
+                        <div class="debug-header">Depurador Ativo</div>
+                        <div class="debug-controls">
+                            <button onclick="continuarDepuracao()" title="Avançar (F10)">⏭ Próximo</button>
+                            <button class="btn-stop" onclick="pararDepuracao()" title="Parar (F9)">⏹ Parar</button>
+                        </div>
+                        <div id="debug-vars"></div>
+                    </div>
+                    <textarea id="code-editor" spellcheck="false" wrap="off" autocomplete="off" autocorrect="off"
+                        autocapitalize="off" aria-label="Editor de código">meuAlgoritmo()
+{
+    // Olá! Escreva seu algoritmo aqui.
+    // Use Ctrl+S ou o botão Executar para rodar.
+
+    caracter nome = leia("Qual é o seu nome?");
+    imprima(f"Olá, {nome}! Bem-vindo à Pseudo-IDE v4.");
+}</textarea>
+                </div>
+            </div>
+        </section>
+
+        <div id="resizer" title="Arraste para redimensionar"></div>
+
+        <section id="console-panel">
+            <div class="panel-tab">
+                <span class="tab-dot tab-dot-console"></span>
+                Console de Saída
+                <span id="exec-status" class="exec-status"></span>
+            </div>
+            <div id="console-saida">
+                <div class="console-placeholder">
+                    <span class="placeholder-icon">▶</span>
+                    Execute seu algoritmo para ver os resultados aqui.
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <div id="autocomplete-popup" role="listbox" aria-label="Sugestões"></div>
+    <div id="signature-popup" class="hidden" aria-hidden="true"></div>
+
+    <!-- ===== HELP MODAL ===== -->
+    <div id="help-modal" class="modal-overlay hidden" role="dialog" aria-modal="true">
+        <div class="modal-box">
+
+            <!-- Cabeçalho -->
+            <div class="modal-header">
+                <h2>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
+                        <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
+                    </svg>
+                    Guia Completo — Pseudo-IDE v4.1
+                </h2>
+                <button class="modal-close" onclick="toggleHelp()">✕</button>
+            </div>
+
+            <!-- Abas de navegação -->
+            <div class="modal-tabs" role="tablist">
+                <button class="tab-btn active" onclick="switchTab('tab-inicio',    this)">🚀 Início</button>
+                <button class="tab-btn" onclick="switchTab('tab-tipos',     this)">📦 Tipos</button>
+                <button class="tab-btn" onclick="switchTab('tab-controle',  this)">🔀 Controle</button>
+                <button class="tab-btn" onclick="switchTab('tab-funcoes',   this)">⚙️ Funções</button>
+                <button class="tab-btn" onclick="switchTab('tab-excecoes',  this)">⚠️ Exceções</button>
+                <button class="tab-btn" onclick="switchTab('tab-mat',       this)">🔢 mat</button>
+                <button class="tab-btn" onclick="switchTab('tab-metodos',   this)">🗂️ metodos</button>
+                <button class="tab-btn" onclick="switchTab('tab-tabular',   this)">📊 tabular</button>
+                <button class="tab-btn" onclick="switchTab('tab-calculo',   this)">∫ calculo</button>
+                <button class="tab-btn" onclick="switchTab('tab-estat',     this)">📈 estatistica</button>
+                <button class="tab-btn" onclick="switchTab('tab-tempo',     this)">⏱️ tempo</button>
+                <button class="tab-btn" onclick="switchTab('tab-graficos',  this)">📉 graficos</button>
+                <button class="tab-btn" onclick="switchTab('tab-prob',      this)">🎲 probabilidade</button>
+                <button class="tab-btn" onclick="switchTab('tab-editor',    this)">⌨️ Editor</button>
+            </div>
+
+            <!-- Corpo -->
+            <div class="modal-body">
+
+
+                <!-- ═══════════════════════════════════════════════════════════
+     🚀 INÍCIO
+     ═══════════════════════════════════════════════════════════ -->
+                <div id="tab-inicio" class="tab-pane active">
+
+                    <h3>O que é a Pseudo-IDE?</h3>
+                    <p class="tab-intro">
+                        A Pseudo-IDE é um ambiente de programação educacional onde você escreve <strong>pseudocódigo em
+                            português</strong>
+                        e ele é automaticamente executado no navegador. O objetivo é aprender lógica de programação,
+                        matemática e
+                        algoritmos sem precisar decorar sintaxe de linguagens complexas.
+                    </p>
+
+                    <h3>Estrutura obrigatória de todo algoritmo</h3>
+                    <p class="tab-intro">
+                        Todo programa precisa de um <strong>nome de algoritmo</strong> seguido por <code>()</code> e um
+                        bloco <code>{ }</code>.
+                        Pense nisso como a "capa" do seu programa.
+                    </p>
+                    <pre class="code-example"><span class="ex-cmt">// O nome do algoritmo aparece na aba e no topo da janela.</span>
+<span class="ex-cmt">// Pode ser qualquer nome sem espaços.</span>
+meuPrimeiroAlgoritmo()
+{
+    <span class="ex-fn">imprima</span>(<span class="ex-str">"Olá, Mundo!"</span>);
+}</pre>
+
+                    <h3>Entrada e Saída</h3>
+                    <table class="doc-table">
+                        <thead>
+                            <tr>
+                                <th>Comando</th>
+                                <th>O que faz</th>
+                                <th>Exemplo</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>imprima(valor)</code></td>
+                                <td>Mostra um valor no console de saída. Aceita qualquer coisa: números, textos, listas…
+                                </td>
+                                <td><code>imprima("olá")</code></td>
+                            </tr>
+                            <tr>
+                                <td><code>leia("pergunta")</code></td>
+                                <td>Pausa o programa e espera o usuário digitar algo. O valor digitado fica armazenado
+                                    na variável.</td>
+                                <td><code>caracter n = leia("Seu nome:")</code></td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <h3>Comentários</h3>
+                    <p class="tab-intro">Comentários são anotações que o computador ignora. Use para explicar seu
+                        código.</p>
+                    <pre class="code-example"><span class="ex-cmt">// Comentário de uma linha — tudo depois de // é ignorado</span>
+
+<span class="ex-cmt">/*
+   Comentário de bloco — útil para textos longos
+   ou para desativar vários comandos de uma vez.
+*/</span></pre>
+
+                    <h3>Marcadores de projeto (opcionais)</h3>
+                    <p class="tab-intro">
+                        Coloque marcadores logo após o nome do algoritmo para documentar seu trabalho.
+                        Eles aparecem na barra de informações no topo da IDE.
+                    </p>
+                    <pre class="code-example">calculadoraIMC()
+<span class="ex-kw">@NOME</span>[Calculadora de IMC]
+<span class="ex-kw">@AUTOR</span>[Maria Souza]
+<span class="ex-kw">@VERSAO</span>[2]
+<span class="ex-kw">@DESC</span>[Calcula o Índice de Massa Corporal]
+{
+    <span class="ex-cmt">// código aqui...</span>
+}</pre>
+
+                    <h3>Seu primeiro programa completo</h3>
+                    <pre class="code-example">saudacao()
+{
+    caracter nome = <span class="ex-fn">leia</span>(<span class="ex-str">"Qual é o seu nome?"</span>);
+    inteiro idade = <span class="ex-fn">leia</span>(<span class="ex-str">"Quantos anos você tem?"</span>);
+
+    <span class="ex-fn">imprima</span>(f<span class="ex-str">"Olá, {nome}! Você tem {idade} anos."</span>);
+
+    <span class="ex-kw">se</span> (idade >= 18) {
+        <span class="ex-fn">imprima</span>(<span class="ex-str">"Você é maior de idade."</span>);
+    } <span class="ex-kw">senao</span> {
+        <span class="ex-fn">imprima</span>(<span class="ex-str">"Você ainda é menor de idade."</span>);
+    }
+}</pre>
+
+                    <div class="doc-note">
+                        <strong>💡 Dica de ouro:</strong> Use <strong>Ctrl+S</strong> para executar o algoritmo a
+                        qualquer momento.
+                        O console de saída fica no lado direito da tela. Se acontecer um erro, ele aparece em vermelho
+                        com o número aproximado da linha onde aconteceu.
+                    </div>
+                </div><!-- /tab-inicio -->
+
+
+                <!-- ═══════════════════════════════════════════════════════════
+     📦 TIPOS E VALORES
+     ═══════════════════════════════════════════════════════════ -->
+                <div id="tab-tipos" class="tab-pane hidden">
+
+                    <h3>Tipos de variável</h3>
+                    <p class="tab-intro">
+                        Uma variável é uma "caixa" onde você guarda um valor. Na Pseudo-IDE, você <strong>declara o
+                            tipo</strong>
+                        da caixa antes do nome — isso ajuda a evitar erros: se você tentar guardar um texto em uma caixa
+                        de inteiro,
+                        o programa avisa na hora.
+                    </p>
+                    <table class="doc-table">
+                        <thead>
+                            <tr>
+                                <th>Tipo</th>
+                                <th>Guarda</th>
+                                <th>Exemplo</th>
+                                <th>Observação</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>inteiro</code></td>
+                                <td>Números sem casas decimais</td>
+                                <td><code>inteiro x = 10</code></td>
+                                <td>Aceita negativos. Não aceita 3.5, somente 3.</td>
+                            </tr>
+                            <tr>
+                                <td><code>real</code></td>
+                                <td>Números com ou sem casas decimais</td>
+                                <td><code>real preco = 9.99</code></td>
+                                <td>Use ponto, não vírgula: <code>3.14</code> (não <code>3,14</code>).</td>
+                            </tr>
+                            <tr>
+                                <td><code>caracter</code></td>
+                                <td>Textos (qualquer sequência de letras, números, símbolos)</td>
+                                <td><code>caracter nome = "Ana"</code></td>
+                                <td>Coloque o texto entre aspas duplas ou simples.</td>
+                            </tr>
+                            <tr>
+                                <td><code>booleano</code></td>
+                                <td>Verdadeiro ou falso</td>
+                                <td><code>booleano ativo = verdadeiro</code></td>
+                                <td>Só aceita <code>verdadeiro</code> ou <code>falso</code>.</td>
+                            </tr>
+                            <tr>
+                                <td><code>super</code></td>
+                                <td>Qualquer coisa (tipo universal)</td>
+                                <td><code>super lista = [1, 2, 3]</code></td>
+                                <td>Use quando precisar de listas com <code>[...]</code> ou misturar tipos. Sem
+                                    validação de tipo.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div class="doc-note">
+                        <strong>Tipagem forte:</strong> a IDE verifica o tipo no momento da atribuição.
+                        <code>inteiro x = 3.7</code> gera erro imediatamente: <em>"variável 'x' declarada como inteiro,
+                            mas recebeu real (3.7)"</em>.
+                        Isso te ajuda a encontrar bugs antes que eles causem problemas maiores.
+                    </div>
+
+                    <h3>Valores especiais</h3>
+                    <table class="doc-table">
+                        <thead>
+                            <tr>
+                                <th>Palavra</th>
+                                <th>Significado</th>
+                                <th>Quando usar</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>verdadeiro</code></td>
+                                <td>Booleano verdadeiro (<code>true</code>)</td>
+                                <td>Condições, flags de controle</td>
+                            </tr>
+                            <tr>
+                                <td><code>falso</code></td>
+                                <td>Booleano falso (<code>false</code>)</td>
+                                <td>Condições, flags de controle</td>
+                            </tr>
+                            <tr>
+                                <td><code>vazio</code></td>
+                                <td>Ausência intencional de valor (<code>null</code>)</td>
+                                <td>Inicializar variável "sem valor ainda"</td>
+                            </tr>
+                            <tr>
+                                <td><code>indefinido</code></td>
+                                <td>Variável ainda não atribuída (<code>undefined</code>)</td>
+                                <td>Checar se algo foi preenchido</td>
+                            </tr>
+                            <tr>
+                                <td><code>Infinito</code></td>
+                                <td>+∞</td>
+                                <td>Valores que crescem sem limite, divisão por zero</td>
+                            </tr>
+                            <tr>
+                                <td><code>NegInfinito</code></td>
+                                <td>−∞</td>
+                                <td>Limite negativo</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <h3>Operadores</h3>
+                    <table class="doc-table">
+                        <thead>
+                            <tr>
+                                <th>Operador</th>
+                                <th>Função</th>
+                                <th>Exemplo</th>
+                                <th>Resultado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>+  -  *  /</code></td>
+                                <td>Aritmética básica</td>
+                                <td><code>10 / 3</code></td>
+                                <td><code>3.333...</code></td>
+                            </tr>
+                            <tr>
+                                <td><code>mod</code></td>
+                                <td>Resto da divisão inteira</td>
+                                <td><code>10 mod 3</code></td>
+                                <td><code>1</code></td>
+                            </tr>
+                            <tr>
+                                <td><code>==</code></td>
+                                <td>Igual a</td>
+                                <td><code>x == 5</code></td>
+                                <td>verdadeiro ou falso</td>
+                            </tr>
+                            <tr>
+                                <td><code>!=</code></td>
+                                <td>Diferente de</td>
+                                <td><code>x != 0</code></td>
+                                <td>verdadeiro ou falso</td>
+                            </tr>
+                            <tr>
+                                <td><code>&gt;  &lt;  &gt;=  &lt;=</code></td>
+                                <td>Comparação</td>
+                                <td><code>x >= 18</code></td>
+                                <td>verdadeiro ou falso</td>
+                            </tr>
+                            <tr>
+                                <td><code>e</code></td>
+                                <td>E lógico — ambos devem ser verdadeiros</td>
+                                <td><code>x > 0 e x &lt; 10</code></td>
+                                <td>verdadeiro ou falso</td>
+                            </tr>
+                            <tr>
+                                <td><code>ou</code></td>
+                                <td>OU lógico — basta um ser verdadeiro</td>
+                                <td><code>x == 0 ou x == 1</code></td>
+                                <td>verdadeiro ou falso</td>
+                            </tr>
+                            <tr>
+                                <td><code>nao</code></td>
+                                <td>Negação — inverte o valor lógico</td>
+                                <td><code>nao ativo</code></td>
+                                <td>inverte verdadeiro/falso</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <h3>Textos especiais</h3>
+                    <h4>F-strings — texto com variáveis incorporadas</h4>
+                    <p class="tab-intro">Coloque <code>f</code> antes das aspas e use <code>{ }</code> para incluir
+                        variáveis dentro do texto.</p>
+                    <pre class="code-example">caracter nome = <span class="ex-str">"Carlos"</span>;
+inteiro idade = <span class="ex-num">25</span>;
+<span class="ex-fn">imprima</span>(f<span class="ex-str">"Meu nome é {nome} e tenho {idade} anos."</span>);
+<span class="ex-cmt">// Saída: Meu nome é Carlos e tenho 25 anos.</span>
+
+<span class="ex-cmt">// Você pode usar expressões dentro das chaves:</span>
+<span class="ex-fn">imprima</span>(f<span class="ex-str">"O dobro de {idade} é {idade * 2}."</span>);
+<span class="ex-cmt">// Saída: O dobro de 25 é 50.</span></pre>
+
+                    <h4>Repetição de texto</h4>
+                    <pre
+                        class="code-example"><span class="ex-fn">imprima</span>(<span class="ex-num">3</span> * <span class="ex-str">"ha"</span>);    <span class="ex-cmt">// hahaha</span>
+<span class="ex-fn">imprima</span>(<span class="ex-str">"=-"</span> * <span class="ex-num">10</span>); <span class="ex-cmt">// =-=-=-=-=-=-=-=-=-=-=-=-</span></pre>
+
+                    <h4>Notação científica</h4>
+                    <pre class="code-example">real grande = <span class="ex-num">2E10</span>;    <span class="ex-cmt">// 20 000 000 000</span>
+real pequeno = <span class="ex-num">1.5e-3</span>; <span class="ex-cmt">// 0.0015</span></pre>
+
+                    <h3>Listas fixas com <code>super</code></h3>
+                    <p class="tab-intro">
+                        Use <code>super</code> e colchetes <code>[...]</code> para criar uma lista de acesso rápido por
+                        índice.
+                        O índice começa em <strong>0</strong> (o primeiro elemento é o de número 0).
+                    </p>
+                    <pre class="code-example">super dias = [<span class="ex-str">"Seg"</span>, <span class="ex-str">"Ter"</span>, <span class="ex-str">"Qua"</span>, <span class="ex-str">"Qui"</span>, <span class="ex-str">"Sex"</span>];
+
+<span class="ex-fn">imprima</span>(dias[<span class="ex-num">0</span>]);  <span class="ex-cmt">// Seg  (primeiro)</span>
+<span class="ex-fn">imprima</span>(dias[<span class="ex-num">4</span>]);  <span class="ex-cmt">// Sex  (quinto)</span>
+<span class="ex-fn">imprima</span>(dias.length); <span class="ex-cmt">// 5 (total de elementos)</span></pre>
+                </div><!-- /tab-tipos -->
+
+
+                <!-- ═══════════════════════════════════════════════════════════
+     🔀 CONTROLE DE FLUXO
+     ═══════════════════════════════════════════════════════════ -->
+                <div id="tab-controle" class="tab-pane hidden">
+
+                    <h3>Condicional: se / senao</h3>
+                    <p class="tab-intro">Execute um bloco de código <em>somente se</em> uma condição for verdadeira.</p>
+                    <pre class="code-example"><span class="ex-cmt">// Forma simples</span>
+<span class="ex-kw">se</span> (nota >= 7) {
+    <span class="ex-fn">imprima</span>(<span class="ex-str">"Aprovado!"</span>);
+}
+
+<span class="ex-cmt">// Com alternativa</span>
+<span class="ex-kw">se</span> (nota >= 7) {
+    <span class="ex-fn">imprima</span>(<span class="ex-str">"Aprovado!"</span>);
+} <span class="ex-kw">senao</span> {
+    <span class="ex-fn">imprima</span>(<span class="ex-str">"Reprovado."</span>);
+}
+
+<span class="ex-cmt">// Múltiplas condições (encadeado)</span>
+<span class="ex-kw">se</span> (nota >= 9) {
+    <span class="ex-fn">imprima</span>(<span class="ex-str">"Excelente!"</span>);
+} <span class="ex-kw">senao se</span> (nota >= 7) {
+    <span class="ex-fn">imprima</span>(<span class="ex-str">"Bom"</span>);
+} <span class="ex-kw">senao se</span> (nota >= 5) {
+    <span class="ex-fn">imprima</span>(<span class="ex-str">"Regular"</span>);
+} <span class="ex-kw">senao</span> {
+    <span class="ex-fn">imprima</span>(<span class="ex-str">"Insuficiente"</span>);
+}</pre>
+
+                    <h3>Escolha (switch)</h3>
+                    <p class="tab-intro">Ideal quando você quer comparar uma variável com vários valores fixos. Mais
+                        legível que vários <code>senao se</code>.</p>
+                    <pre class="code-example">inteiro dia = <span class="ex-num">3</span>;
+<span class="ex-kw">escolha</span> (dia) {
+    <span class="ex-kw">caso</span> <span class="ex-num">1</span>: <span class="ex-fn">imprima</span>(<span class="ex-str">"Segunda-feira"</span>); <span class="ex-kw">quebrar</span>;
+    <span class="ex-kw">caso</span> <span class="ex-num">2</span>: <span class="ex-fn">imprima</span>(<span class="ex-str">"Terça-feira"</span>);  <span class="ex-kw">quebrar</span>;
+    <span class="ex-kw">caso</span> <span class="ex-num">3</span>: <span class="ex-fn">imprima</span>(<span class="ex-str">"Quarta-feira"</span>); <span class="ex-kw">quebrar</span>;
+    <span class="ex-kw">padrao</span>:  <span class="ex-fn">imprima</span>(<span class="ex-str">"Outro dia"</span>); <span class="ex-cmt">// executado se nenhum caso bater</span>
+}
+<span class="ex-cmt">// Saída: Quarta-feira</span></pre>
+                    <div class="doc-note"><strong>⚠️ Atenção:</strong> não esqueça o <code>quebrar</code> ao final de
+                        cada <code>caso</code>. Sem ele, o programa continua executando os casos seguintes.</div>
+
+                    <h3>Laço: para (contagem)</h3>
+                    <p class="tab-intro">Repete um bloco um número determinado de vezes. Perfeito quando você sabe
+                        exatamente quantas repetições quer.</p>
+                    <pre class="code-example"><span class="ex-cmt">// Estrutura: para (inicio; condição; passo)</span>
+<span class="ex-kw">para</span> (<span class="ex-kw">inteiro</span> i = <span class="ex-num">1</span>; i &lt;= <span class="ex-num">5</span>; i++) {
+    <span class="ex-fn">imprima</span>(f<span class="ex-str">"Iteração número {i}"</span>);
+}
+<span class="ex-cmt">// Imprime: 1, 2, 3, 4, 5</span>
+
+<span class="ex-cmt">// Contagem regressiva</span>
+<span class="ex-kw">para</span> (<span class="ex-kw">inteiro</span> i = <span class="ex-num">10</span>; i >= <span class="ex-num">1</span>; i--) {
+    <span class="ex-fn">imprima</span>(i);
+}
+
+<span class="ex-cmt">// Passo de 2 em 2</span>
+<span class="ex-kw">para</span> (<span class="ex-kw">inteiro</span> i = <span class="ex-num">0</span>; i &lt;= <span class="ex-num">10</span>; i = i + <span class="ex-num">2</span>) {
+    <span class="ex-fn">imprima</span>(i); <span class="ex-cmt">// 0, 2, 4, 6, 8, 10</span>
+}</pre>
+
+                    <h3>Laço: para em (percorrer coleção)</h3>
+                    <p class="tab-intro">Percorre cada elemento de uma Lista, Conjunto, Mapa ou texto, um por vez. Mais
+                        simples que o laço com contador quando você não precisa do índice.</p>
+                    <pre class="code-example"><span class="ex-kw">importar</span> metodos <span class="ex-kw">como</span> m;
+<span class="ex-kw">super</span> frutas = m.lista(<span class="ex-str">"maçã"</span>, <span class="ex-str">"banana"</span>, <span class="ex-str">"uva"</span>);
+
+<span class="ex-kw">para</span> (fruta <span class="ex-op">em</span> frutas) {
+    <span class="ex-fn">imprima</span>(fruta);
+}
+<span class="ex-cmt">// Imprime: maçã, banana, uva (um por linha)</span>
+
+<span class="ex-cmt">// Também funciona em textos (itera caractere a caractere)</span>
+<span class="ex-kw">para</span> (letra <span class="ex-op">em</span> <span class="ex-str">"olá"</span>) {
+    <span class="ex-fn">imprima</span>(letra); <span class="ex-cmt">// o, l, á</span>
+}
+
+<span class="ex-cmt">// E em Conjuntos</span>
+<span class="ex-kw">super</span> nums = m.conjunto();
+nums.adicionar(<span class="ex-num">10</span>); nums.adicionar(<span class="ex-num">20</span>); nums.adicionar(<span class="ex-num">30</span>);
+<span class="ex-kw">para</span> (n <span class="ex-op">em</span> nums) { <span class="ex-fn">imprima</span>(n); }</pre>
+
+                    <h3>Laço: enquanto</h3>
+                    <p class="tab-intro">Repete enquanto uma condição for verdadeira. Use quando você <em>não sabe</em>
+                        de antemão quantas repetições vai precisar.</p>
+                    <pre class="code-example">inteiro tentativas = <span class="ex-num">0</span>;
+inteiro senha = <span class="ex-num">1234</span>;
+inteiro entrada = <span class="ex-num">0</span>;
+
+<span class="ex-kw">enquanto</span> (entrada != senha) {
+    entrada = <span class="ex-fn">leia</span>(<span class="ex-str">"Digite a senha:"</span>);
+    tentativas = tentativas + <span class="ex-num">1</span>;
+}
+<span class="ex-fn">imprima</span>(f<span class="ex-str">"Correto! {tentativas} tentativa(s)."</span>);</pre>
+
+                    <h3>Laço: faca...enquanto</h3>
+                    <p class="tab-intro">Igual ao <code>enquanto</code>, mas <strong>sempre executa pelo menos uma
+                            vez</strong> antes de checar a condição.</p>
+                    <pre class="code-example">inteiro n = <span class="ex-num">0</span>;
+<span class="ex-kw">faca</span> {
+    n = <span class="ex-fn">leia</span>(<span class="ex-str">"Digite um número positivo:"</span>);
+} <span class="ex-kw">enquanto</span> (n &lt;= <span class="ex-num">0</span>);
+<span class="ex-fn">imprima</span>(f<span class="ex-str">"Você digitou: {n}"</span>);</pre>
+
+                    <h3>Controle de laços: quebrar e continuar</h3>
+                    <pre class="code-example"><span class="ex-cmt">// quebrar — sai do laço imediatamente</span>
+<span class="ex-kw">para</span> (<span class="ex-kw">inteiro</span> i = <span class="ex-num">1</span>; i &lt;= <span class="ex-num">10</span>; i++) {
+    <span class="ex-kw">se</span> (i == <span class="ex-num">5</span>) { <span class="ex-kw">quebrar</span>; }
+    <span class="ex-fn">imprima</span>(i); <span class="ex-cmt">// imprime 1, 2, 3, 4</span>
+}
+
+<span class="ex-cmt">// continuar — pula para a próxima iteração</span>
+<span class="ex-kw">para</span> (<span class="ex-kw">inteiro</span> i = <span class="ex-num">1</span>; i &lt;= <span class="ex-num">5</span>; i++) {
+    <span class="ex-kw">se</span> (i == <span class="ex-num">3</span>) { <span class="ex-kw">continuar</span>; } <span class="ex-cmt">// pula o 3</span>
+    <span class="ex-fn">imprima</span>(i); <span class="ex-cmt">// imprime 1, 2, 4, 5</span>
+}</pre>
+                </div><!-- /tab-controle -->
+
+
+                <!-- ═══════════════════════════════════════════════════════════
+     ⚙️ FUNÇÕES
+     ═══════════════════════════════════════════════════════════ -->
+                <div id="tab-funcoes" class="tab-pane hidden">
+
+                    <h3>O que é uma função?</h3>
+                    <p class="tab-intro">
+                        Uma função é um bloco de código com um nome, que você pode chamar quando precisar.
+                        Use funções para <strong>evitar repetição</strong> e <strong>organizar</strong> seu algoritmo em
+                        partes menores.
+                    </p>
+
+                    <h3>Função simples</h3>
+                    <pre class="code-example">calculadora()
+{
+    <span class="ex-cmt">// Definir a função</span>
+    <span class="ex-kw">funcao</span> somar(a, b) {
+        <span class="ex-kw">retorno</span> a + b;
+    }
+
+    <span class="ex-cmt">// Chamar a função</span>
+    <span class="ex-fn">imprima</span>(somar(<span class="ex-num">3</span>, <span class="ex-num">4</span>));    <span class="ex-cmt">// 7</span>
+    <span class="ex-fn">imprima</span>(somar(<span class="ex-num">10</span>, <span class="ex-num">-2</span>));   <span class="ex-cmt">// 8</span>
+
+    <span class="ex-cmt">// Guardar o resultado em variável</span>
+    real resultado = somar(<span class="ex-num">5.5</span>, <span class="ex-num">2.5</span>);
+    <span class="ex-fn">imprima</span>(resultado); <span class="ex-cmt">// 8</span>
+}</pre>
+
+                    <h3>Funções com tipo nos parâmetros (tipadas)</h3>
+                    <p class="tab-intro">
+                        Você pode declarar o <strong>tipo esperado</strong> de cada parâmetro usando a sintaxe
+                        <code>tipo(nome)</code>. Se o chamador passar um tipo errado, um erro claro é gerado
+                        automaticamente.
+                    </p>
+                    <pre
+                        class="code-example"><span class="ex-kw">funcao</span> dobrar(<span class="ex-kw">real</span>(x)) {
+    <span class="ex-kw">retorno</span> x * <span class="ex-num">2</span>;
+}
+
+<span class="ex-fn">imprima</span>(dobrar(<span class="ex-num">5</span>));     <span class="ex-cmt">// 10</span>
+<span class="ex-fn">imprima</span>(dobrar(<span class="ex-num">3.14</span>));  <span class="ex-cmt">// 6.28</span>
+dobrar(<span class="ex-str">"oi"</span>);           <span class="ex-cmt">// ERRO: esperava real, recebeu texto</span></pre>
+
+                    <h3>Parâmetros com restrição de valor</h3>
+                    <p class="tab-intro">
+                        Além do tipo, você pode adicionar uma <strong>condição</strong> que o valor deve satisfazer.
+                        Coloque a condição dentro dos parênteses do tipo.
+                    </p>
+                    <pre
+                        class="code-example"><span class="ex-kw">funcao</span> raizSegura(<span class="ex-kw">real</span>(x >= 0)) {
+    <span class="ex-kw">retorno</span> <span class="ex-fn">raiz</span>(x);
+}
+
+<span class="ex-fn">imprima</span>(raizSegura(<span class="ex-num">9</span>));   <span class="ex-cmt">// 3</span>
+raizSegura(-<span class="ex-num">1</span>);          <span class="ex-cmt">// ERRO: 'x' deve satisfazer: x >= 0</span>
+
+<span class="ex-cmt">// Outros exemplos de restrições:</span>
+<span class="ex-kw">funcao</span> dividir(<span class="ex-kw">real</span>(a), <span class="ex-kw">real</span>(b != 0)) {
+    <span class="ex-kw">retorno</span> a / b;
+}
+<span class="ex-kw">funcao</span> fatPosit(<span class="ex-kw">inteiro</span>(n >= 0)) { <span class="ex-cmt">/* ... */</span> }</pre>
+
+                    <h3>Parâmetros com valor padrão</h3>
+                    <p class="tab-intro">
+                        Use <code>: valor</code> após o parêntese para definir um valor padrão.
+                        Parâmetros com padrão podem ser omitidos na chamada.
+                    </p>
+                    <pre
+                        class="code-example"><span class="ex-kw">funcao</span> saudar(<span class="ex-kw">caracter</span>(nome), <span class="ex-kw">caracter</span>(prefixo) : <span class="ex-str">"Olá"</span>) {
+    <span class="ex-fn">imprima</span>(f<span class="ex-str">"{prefixo}, {nome}!"</span>);
+}
+
+saudar(<span class="ex-str">"Ana"</span>);             <span class="ex-cmt">// Olá, Ana!</span>
+saudar(<span class="ex-str">"Bruno"</span>, <span class="ex-str">"Oi"</span>);    <span class="ex-cmt">// Oi, Bruno!</span>
+
+<span class="ex-cmt">// Combinando tipo + restrição + padrão:</span>
+<span class="ex-kw">funcao</span> potencia(<span class="ex-kw">real</span>(base), <span class="ex-kw">inteiro</span>(exp >= 1) : <span class="ex-num">2</span>) {
+    <span class="ex-kw">retorno</span> <span class="ex-fn">expo</span>(base, exp);
+}
+<span class="ex-fn">imprima</span>(potencia(<span class="ex-num">3</span>));      <span class="ex-cmt">// 9  (exp usa padrão 2)</span>
+<span class="ex-fn">imprima</span>(potencia(<span class="ex-num">2</span>, <span class="ex-num">10</span>)); <span class="ex-cmt">// 1024</span></pre>
+
+                    <h3>Recursão</h3>
+                    <p class="tab-intro">Uma função pode chamar a si mesma. Sempre defina uma <strong>condição de
+                            parada</strong> para evitar loop infinito.</p>
+                    <pre
+                        class="code-example"><span class="ex-kw">funcao</span> fatorial(<span class="ex-kw">inteiro</span>(n >= 0)) {
+    <span class="ex-kw">se</span> (n <= <span class="ex-num">1</span>) { <span class="ex-kw">retorno</span> <span class="ex-num">1</span>; }    <span class="ex-cmt">// condição de parada</span>
+    <span class="ex-kw">retorno</span> n * fatorial(n - <span class="ex-num">1</span>); <span class="ex-cmt">// chamada recursiva</span>
+}
+<span class="ex-fn">imprima</span>(fatorial(<span class="ex-num">5</span>)); <span class="ex-cmt">// 120  (5 × 4 × 3 × 2 × 1)</span>
+<span class="ex-fn">imprima</span>(fatorial(<span class="ex-num">0</span>)); <span class="ex-cmt">// 1   (por definição, 0! = 1)</span></pre>
+
+                    <div class="doc-note">
+                        <strong>Resumo das sintaxes de parâmetro:</strong><br>
+                        <code>tipo(nome)</code> — obrigatório, sem restrição<br>
+                        <code>tipo(nome op valor)</code> — obrigatório, com restrição (ex: <code>&gt;= 0</code>,
+                        <code>!= 0</code>)<br>
+                        <code>tipo(nome) : padrão</code> — opcional com valor padrão<br>
+                        <code>tipo(nome op valor) : padrão</code> — opcional com restrição e padrão
+                    </div>
+                </div><!-- /tab-funcoes -->
+
+
+                <!-- ═══════════════════════════════════════════════════════════
+     ⚠️ EXCEÇÕES
+     ═══════════════════════════════════════════════════════════ -->
+                <div id="tab-excecoes" class="tab-pane hidden">
+
+                    <h3>O que são exceções?</h3>
+                    <p class="tab-intro">
+                        Exceções são erros que acontecem durante a execução do programa. Você pode
+                        <strong>lançar</strong> uma exceção para sinalizar que algo deu errado, e
+                        <strong>capturá-la</strong>
+                        para tratar o problema de forma elegante — sem que o programa trave.
+                    </p>
+
+                    <h3>Capturar erros: tentar / capturar</h3>
+                    <p class="tab-intro">Envolva código arriscado em <code>tentar { }</code> e trate o erro em
+                        <code>capturar { }</code>.
+                    </p>
+                    <pre class="code-example"><span class="ex-kw">tentar</span> {
+    real resultado = <span class="ex-num">10</span> / <span class="ex-num">0</span>;
+    <span class="ex-fn">imprima</span>(resultado);
+} <span class="ex-kw">capturar</span> (erro) {
+    <span class="ex-fn">imprima</span>(f<span class="ex-str">"Aconteceu um erro: {erro.message}"</span>);
+}
+
+<span class="ex-cmt">// O programa continua após o capturar:</span>
+<span class="ex-fn">imprima</span>(<span class="ex-str">"Programa continua normalmente."</span>);</pre>
+
+                    <h3>Lançar exceção simples</h3>
+                    <pre class="code-example"><span class="ex-kw">funcao</span> sacar(<span class="ex-kw">real</span>(valor > 0)) {
+    real saldo = <span class="ex-num">100.0</span>;
+    <span class="ex-kw">se</span> (valor > saldo) {
+        <span class="ex-kw">lançar</span> <span class="ex-kw">erro</span> <span class="ex-str">"Saldo insuficiente para o saque."</span>;
+    }
+    <span class="ex-fn">imprima</span>(f<span class="ex-str">"Saque de R${valor} realizado."</span>);
+}
+
+<span class="ex-kw">tentar</span> {
+    sacar(<span class="ex-num">50</span>);   <span class="ex-cmt">// OK</span>
+    sacar(<span class="ex-num">200</span>);  <span class="ex-cmt">// lança erro</span>
+} <span class="ex-kw">capturar</span> (e) {
+    <span class="ex-fn">imprima</span>(e.message); <span class="ex-cmt">// Saldo insuficiente para o saque.</span>
+}</pre>
+
+                    <h3>Lançar exceção estruturada</h3>
+                    <p class="tab-intro">
+                        Use <code>lançar erro(tipo, mensagem, dadoRecebido, dadoEsperado)</code> para criar erros mais
+                        ricos,
+                        com informações detalhadas sobre o que deu errado. Todos os parâmetros são opcionais.
+                    </p>
+                    <pre class="code-example"><span class="ex-kw">funcao</span> validarIdade(<span class="ex-kw">inteiro</span>(n)) {
+    <span class="ex-kw">se</span> (n &lt; <span class="ex-num">0</span> <span class="ex-op">ou</span> n > <span class="ex-num">150</span>) {
+        <span class="ex-kw">lançar</span> <span class="ex-kw">erro</span>(
+            <span class="ex-str">"ValorInvalido"</span>,      <span class="ex-cmt">// tipo do erro</span>
+            <span class="ex-str">"Idade fora do intervalo válido"</span>, <span class="ex-cmt">// descrição</span>
+            n,                      <span class="ex-cmt">// dado recebido</span>
+            <span class="ex-str">"entre 0 e 150"</span>        <span class="ex-cmt">// dado esperado</span>
+        );
+    }
+    <span class="ex-fn">imprima</span>(f<span class="ex-str">"Idade {n} registrada."</span>);
+}
+
+<span class="ex-kw">tentar</span> {
+    validarIdade(<span class="ex-num">25</span>);  <span class="ex-cmt">// OK</span>
+    validarIdade(<span class="ex-num">999</span>); <span class="ex-cmt">// lança erro estruturado</span>
+} <span class="ex-kw">capturar</span> (e) {
+    <span class="ex-fn">imprima</span>(f<span class="ex-str">"[{e.tipo}] {e.message}"</span>);
+    <span class="ex-fn">imprima</span>(f<span class="ex-str">"Recebido: {e.dadoEntrada}"</span>);
+    <span class="ex-fn">imprima</span>(f<span class="ex-str">"Esperado: {e.dadoEsperado}"</span>);
+}</pre>
+
+                    <table class="doc-table">
+                        <thead>
+                            <tr>
+                                <th>Forma</th>
+                                <th>Sintaxe</th>
+                                <th>Quando usar</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Simples</td>
+                                <td><code>lançar erro "mensagem"</code></td>
+                                <td>Sinalização rápida de problema</td>
+                            </tr>
+                            <tr>
+                                <td>Estruturada</td>
+                                <td><code>lançar erro(tipo, msg, entrada, esperado)</code></td>
+                                <td>Erros ricos com contexto para diagnóstico</td>
+                            </tr>
+                            <tr>
+                                <td>Qualquer valor</td>
+                                <td><code>lançar expressao</code></td>
+                                <td>Lançar um objeto ou string personalizado</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div><!-- /tab-excecoes -->
+
+
+                <!-- ═══════════════════════════════════════════════════════════
+     🔢 MAT
+     ═══════════════════════════════════════════════════════════ -->
+                <div id="tab-mat" class="tab-pane hidden">
+                    <h3>Biblioteca Matemática</h3>
+                    <p class="tab-intro">Funções e constantes matemáticas. Importe com <code>importar mat como m;</code>
+                    </p>
+
+                    <h4>Constantes</h4>
+                    <table class="doc-table">
+                        <thead>
+                            <tr>
+                                <th>Constante</th>
+                                <th>Valor</th>
+                                <th>Exemplo</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>m.pi</code></td>
+                                <td>π ≈ 3.14159265…</td>
+                                <td><code>real area = m.pi * raio * raio</code></td>
+                            </tr>
+                            <tr>
+                                <td><code>m.E</code></td>
+                                <td>e ≈ 2.71828182…</td>
+                                <td><code>imprima(m.E)</code></td>
+                            </tr>
+                            <tr>
+                                <td><code>m.Infinito</code></td>
+                                <td>+∞</td>
+                                <td><code>se (x == m.Infinito)</code></td>
+                            </tr>
+                            <tr>
+                                <td><code>m.NegInfinito</code></td>
+                                <td>−∞</td>
+                                <td>Limite inferior</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <h4>Arredondamento e valor absoluto</h4>
+                    <table class="doc-table">
+                        <thead>
+                            <tr>
+                                <th>Função</th>
+                                <th>Descrição</th>
+                                <th>Exemplo → Resultado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>m.abs(x)</code></td>
+                                <td>Valor absoluto |x|. Remove o sinal negativo.</td>
+                                <td><code>m.abs(-7)</code> → 7</td>
+                            </tr>
+                            <tr>
+                                <td><code>m.arred(x)</code></td>
+                                <td>Arredonda para o inteiro mais próximo (½ sobe).</td>
+                                <td><code>m.arred(3.5)</code> → 4</td>
+                            </tr>
+                            <tr>
+                                <td><code>m.piso(x)</code></td>
+                                <td>Arredonda sempre para baixo ⌊x⌋.</td>
+                                <td><code>m.piso(3.9)</code> → 3</td>
+                            </tr>
+                            <tr>
+                                <td><code>m.teto(x)</code></td>
+                                <td>Arredonda sempre para cima ⌈x⌉.</td>
+                                <td><code>m.teto(3.1)</code> → 4</td>
+                            </tr>
+                            <tr>
+                                <td><code>m.max(a, b)</code></td>
+                                <td>O maior dos dois valores.</td>
+                                <td><code>m.max(10, 20)</code> → 20</td>
+                            </tr>
+                            <tr>
+                                <td><code>m.min(a, b)</code></td>
+                                <td>O menor dos dois valores.</td>
+                                <td><code>m.min(10, 20)</code> → 10</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <h4>Trigonometria (ângulos em radianos)</h4>
+                    <p class="tab-intro">Para converter graus em radianos: <code>radianos = graus * m.pi / 180</code>
+                    </p>
+                    <table class="doc-table">
+                        <thead>
+                            <tr>
+                                <th>Função</th>
+                                <th>Descrição</th>
+                                <th>Exemplo → Resultado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>m.sen(x)</code></td>
+                                <td>Seno de x</td>
+                                <td><code>m.sen(m.pi / 2)</code> → 1</td>
+                            </tr>
+                            <tr>
+                                <td><code>m.cos(x)</code></td>
+                                <td>Cosseno de x</td>
+                                <td><code>m.cos(0)</code> → 1</td>
+                            </tr>
+                            <tr>
+                                <td><code>m.tan(x)</code></td>
+                                <td>Tangente de x</td>
+                                <td><code>m.tan(m.pi / 4)</code> → ≈ 1</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <h4>Logaritmos e raízes</h4>
+                    <table class="doc-table">
+                        <thead>
+                            <tr>
+                                <th>Função</th>
+                                <th>Descrição</th>
+                                <th>Exemplo → Resultado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>raiz(x)</code></td>
+                                <td>Raiz quadrada √x — função <strong>nativa</strong>, não precisa importar</td>
+                                <td><code>raiz(25)</code> → 5</td>
+                            </tr>
+                            <tr>
+                                <td><code>expo(base, exp)</code></td>
+                                <td>Potência base^exp — função <strong>nativa</strong></td>
+                                <td><code>expo(2, 8)</code> → 256</td>
+                            </tr>
+                            <tr>
+                                <td><code>m.ln(x)</code></td>
+                                <td>Logaritmo natural (base e)</td>
+                                <td><code>m.ln(m.E)</code> → 1</td>
+                            </tr>
+                            <tr>
+                                <td><code>m.log2(x)</code></td>
+                                <td>Logaritmo base 2</td>
+                                <td><code>m.log2(8)</code> → 3</td>
+                            </tr>
+                            <tr>
+                                <td><code>m.log10(x)</code></td>
+                                <td>Logaritmo base 10</td>
+                                <td><code>m.log10(1000)</code> → 3</td>
+                            </tr>
+                            <tr>
+                                <td><code>m.log(x, base)</code></td>
+                                <td>Logaritmo em qualquer base</td>
+                                <td><code>m.log(27, 3)</code> → 3</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <h4>Aleatoriedade e somatório</h4>
+                    <table class="doc-table">
+                        <thead>
+                            <tr>
+                                <th>Função</th>
+                                <th>Parâmetros</th>
+                                <th>Descrição</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>m.aleatorio(min, max)</code></td>
+                                <td>min, max: inteiros</td>
+                                <td>Inteiro aleatório no intervalo [min, max] (inclusivo em ambos os lados).</td>
+                            </tr>
+                            <tr>
+                                <td><code>m.somatorio(fn, min, max)</code></td>
+                                <td>fn: funcao(i), min/max: numeros</td>
+                                <td>Calcula Σ fn(i) para i de min até max. Substitui a notação matemática de somatório.
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><code>m.produtorio(fn, min, max)</code></td>
+                                <td>fn: funcao(i), min/max: numeros</td>
+                                <td>Calcula Π fn(i) para i de min até max.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <pre
+                        class="code-example"><span class="ex-kw">importar</span> mat <span class="ex-kw">como</span> m;
+
+<span class="ex-cmt">// Número aleatório entre 1 e 6 (dado)</span>
+inteiro dado = m.aleatorio(<span class="ex-num">1</span>, <span class="ex-num">6</span>);
+<span class="ex-fn">imprima</span>(f<span class="ex-str">"Tirou: {dado}"</span>);
+
+<span class="ex-cmt">// Somatório: Σ i² de 1 a 5 = 1+4+9+16+25 = 55</span>
+<span class="ex-kw">funcao</span> quadrado(i) { <span class="ex-kw">retorno</span> i * i; }
+<span class="ex-fn">imprima</span>(m.somatorio(quadrado, <span class="ex-num">1</span>, <span class="ex-num">5</span>)); <span class="ex-cmt">// 55</span>
+
+<span class="ex-cmt">// Fatorial via produtório: Π i de 1 a 5 = 120</span>
+<span class="ex-kw">funcao</span> id(i) { <span class="ex-kw">retorno</span> i; }
+<span class="ex-fn">imprima</span>(m.produtorio(id, <span class="ex-num">1</span>, <span class="ex-num">5</span>)); <span class="ex-cmt">// 120</span></pre>
+                </div><!-- /tab-mat -->
+
+
+                <!-- ═══════════════════════════════════════════════════════════
+     🗂️ METODOS
+     ═══════════════════════════════════════════════════════════ -->
+                <div id="tab-metodos" class="tab-pane hidden">
+                    <h3>Biblioteca de Estruturas de Dados</h3>
+                    <p class="tab-intro">Cria objetos com métodos e valida tipos. Importe com
+                        <code>importar metodos como m;</code>
+                    </p>
+                    <p class="tab-intro">Você também pode importar somente o que precisa:
+                        <code>importar metodos.lista como li;</code>
+                    </p>
+
+                    <h4>Texto — <code>m.caracter(valor)</code></h4>
+                    <p class="tab-intro">Cria um objeto de texto com métodos de manipulação. Retorna um novo Caracter
+                        sem modificar o original.</p>
+                    <pre class="code-example"><span class="ex-kw">importar</span> metodos <span class="ex-kw">como</span> m;
+<span class="ex-kw">super</span> t = m.caracter(<span class="ex-str">"  olá mundo  "</span>);
+
+<span class="ex-fn">imprima</span>(t.maiusculo());     <span class="ex-cmt">// "  OLÁ MUNDO  "</span>
+<span class="ex-fn">imprima</span>(t.minusculo());     <span class="ex-cmt">// "  olá mundo  "</span>
+<span class="ex-fn">imprima</span>(t.aparar());        <span class="ex-cmt">// "olá mundo"  (remove espaços das bordas)</span>
+<span class="ex-fn">imprima</span>(t.capitalizar());   <span class="ex-cmt">// "  Olá mundo  "</span>
+<span class="ex-fn">imprima</span>(t.inverter());      <span class="ex-cmt">// "  odnum álô  "</span>
+<span class="ex-fn">imprima</span>(t.tamanho());       <span class="ex-cmt">// 14</span>
+<span class="ex-fn">imprima</span>(t.contem(<span class="ex-str">"olá"</span>));   <span class="ex-cmt">// verdadeiro</span>
+<span class="ex-fn">imprima</span>(t.mesclar(<span class="ex-str">"!"</span>));    <span class="ex-cmt">// "  olá mundo  !" (concatena)</span>
+
+<span class="ex-cmt">// Encadeamento de métodos</span>
+<span class="ex-fn">imprima</span>(t.aparar().capitalizar()); <span class="ex-cmt">// "Olá mundo"</span></pre>
+
+                    <h4>Lista dinâmica — <code>m.lista(v1, v2, ...)</code></h4>
+                    <p class="tab-intro">
+                        Lista que cresce e encolhe. Índice começa em <strong>0</strong>.
+                        Suporta <code>para (x em lista)</code>.
+                    </p>
+                    <pre class="code-example"><span class="ex-kw">importar</span> metodos <span class="ex-kw">como</span> m;
+<span class="ex-kw">super</span> notas = m.lista(<span class="ex-num">7.0</span>, <span class="ex-num">8.5</span>, <span class="ex-num">6.0</span>);
+
+notas.adicionar(<span class="ex-num">9.0</span>);           <span class="ex-cmt">// [7.0, 8.5, 6.0, 9.0]</span>
+notas.remover(<span class="ex-num">6.0</span>);            <span class="ex-cmt">// [7.0, 8.5, 9.0]</span>
+<span class="ex-fn">imprima</span>(notas.obter(<span class="ex-num">0</span>));        <span class="ex-cmt">// 7.0 (primeiro elemento)</span>
+<span class="ex-fn">imprima</span>(notas.tamanho());       <span class="ex-cmt">// 3</span>
+<span class="ex-fn">imprima</span>(notas.contem(<span class="ex-num">8.5</span>));    <span class="ex-cmt">// verdadeiro</span>
+notas.ordenar();                 <span class="ex-cmt">// [7.0, 8.5, 9.0] (crescente)</span>
+
+<span class="ex-cmt">// Percorrer com para em</span>
+<span class="ex-kw">para</span> (nota <span class="ex-op">em</span> notas) {
+    <span class="ex-fn">imprima</span>(nota);
+}</pre>
+
+                    <h4>Número — <code>m.numero(valor)</code></h4>
+                    <p class="tab-intro">Converte e inspeciona valores numéricos. Aceita inteiros, reais e strings
+                        numéricas.</p>
+                    <pre
+                        class="code-example"><span class="ex-kw">importar</span> metodos <span class="ex-kw">como</span> m;
+
+<span class="ex-fn">imprima</span>(m.numero(-<span class="ex-num">5</span>).sinal());         <span class="ex-cmt">// -1  (negativo)</span>
+<span class="ex-fn">imprima</span>(m.numero(<span class="ex-num">0</span>).sinal());          <span class="ex-cmt">// 0   (zero)</span>
+<span class="ex-fn">imprima</span>(m.numero(<span class="ex-num">7</span>).sinal());          <span class="ex-cmt">// 1   (positivo)</span>
+<span class="ex-fn">imprima</span>(m.numero(<span class="ex-num">3.9</span>).int());          <span class="ex-cmt">// 3   (trunca, não arredonda)</span>
+<span class="ex-fn">imprima</span>(m.numero(<span class="ex-str">"3.14"</span>).re());        <span class="ex-cmt">// 3.14 (converte texto em real)</span>
+<span class="ex-fn">imprima</span>(m.numero(<span class="ex-num">3.14159</span>).decimal(<span class="ex-num">2</span>)); <span class="ex-cmt">// 3.14 (arredonda 2 casas)</span>
+<span class="ex-fn">imprima</span>(m.numero(<span class="ex-num">12</span>).fatorar(<span class="ex-num">1</span>));      <span class="ex-cmt">// "2² × 3¹"</span>
+<span class="ex-fn">imprima</span>(m.numero(<span class="ex-num">360</span>).fatorar(<span class="ex-num">0</span>));     <span class="ex-cmt">// Lista [[2,3],[3,2],[5,1]]</span></pre>
+                    <div class="doc-note"><strong>Atenção em fatorar():</strong> exige número inteiro. Se tiver um real,
+                        converta primeiro: <code>m.numero(3.7).int().fatorar(1)</code></div>
+
+                    <h4>Mapa (dicionário) — <code>m.mapa()</code></h4>
+                    <p class="tab-intro">Armazena pares <strong>chave → valor</strong>. A chave pode ser qualquer coisa.
+                        Suporta <code>para ([k, v] em mapa)</code>.</p>
+                    <pre class="code-example"><span class="ex-kw">importar</span> metodos <span class="ex-kw">como</span> m;
+<span class="ex-kw">super</span> agenda = m.mapa();
+
+agenda.definir(<span class="ex-str">"Ana"</span>, <span class="ex-str">"(11) 9999-1111"</span>);
+agenda.definir(<span class="ex-str">"Bruno"</span>, <span class="ex-str">"(21) 8888-2222"</span>);
+
+<span class="ex-fn">imprima</span>(agenda.obter(<span class="ex-str">"Ana"</span>));    <span class="ex-cmt">// "(11) 9999-1111"</span>
+<span class="ex-fn">imprima</span>(agenda.tem(<span class="ex-str">"Carlos"</span>)); <span class="ex-cmt">// falso</span>
+agenda.remover(<span class="ex-str">"Bruno"</span>);
+
+<span class="ex-cmt">// Percorrer pares [chave, valor]</span>
+<span class="ex-kw">para</span> (par <span class="ex-op">em</span> agenda) {
+    <span class="ex-fn">imprima</span>(f<span class="ex-str">"{par[0]}: {par[1]}"</span>);
+}</pre>
+
+                    <h4>Conjunto (sem duplicatas) — <code>m.conjunto()</code></h4>
+                    <p class="tab-intro">Cada valor aparece apenas uma vez. Suporta operações matemáticas de conjuntos e
+                        <code>para (x em conjunto)</code>.
+                    </p>
+                    <pre class="code-example"><span class="ex-kw">importar</span> metodos <span class="ex-kw">como</span> m;
+<span class="ex-kw">super</span> A = m.conjunto(); A.adicionar(<span class="ex-num">1</span>); A.adicionar(<span class="ex-num">2</span>); A.adicionar(<span class="ex-num">3</span>);
+<span class="ex-kw">super</span> B = m.conjunto(); B.adicionar(<span class="ex-num">2</span>); B.adicionar(<span class="ex-num">3</span>); B.adicionar(<span class="ex-num">4</span>);
+A.adicionar(<span class="ex-num">2</span>); <span class="ex-cmt">// ignorado — já existe!</span>
+
+<span class="ex-fn">imprima</span>(A.uniao(B));       <span class="ex-cmt">// {1, 2, 3, 4}</span>
+<span class="ex-fn">imprima</span>(A.intersecao(B));  <span class="ex-cmt">// {2, 3}</span>
+<span class="ex-fn">imprima</span>(A.diferenca(B));   <span class="ex-cmt">// {1}  (em A mas não em B)</span>
+<span class="ex-fn">imprima</span>(A.tem(<span class="ex-num">5</span>));         <span class="ex-cmt">// falso</span>
+<span class="ex-fn">imprima</span>(A.tamanho());      <span class="ex-cmt">// 3</span></pre>
+
+                    <h4>Vetor (álgebra linear) — <code>m.vetor([x, y, z, ...])</code></h4>
+                    <pre
+                        class="code-example"><span class="ex-kw">importar</span> metodos <span class="ex-kw">como</span> m;
+<span class="ex-kw">super</span> v1 = m.vetor([<span class="ex-num">1</span>, <span class="ex-num">2</span>, <span class="ex-num">3</span>]);
+<span class="ex-kw">super</span> v2 = m.vetor([<span class="ex-num">4</span>, <span class="ex-num">5</span>, <span class="ex-num">6</span>]);
+
+<span class="ex-fn">imprima</span>(v1.dimensao());     <span class="ex-cmt">// 3</span>
+<span class="ex-fn">imprima</span>(v1.soma(v2));       <span class="ex-cmt">// (5, 7, 9)</span>
+<span class="ex-fn">imprima</span>(v1.subtrair(v2));   <span class="ex-cmt">// (-3, -3, -3)</span>
+<span class="ex-fn">imprima</span>(v1.escalar(<span class="ex-num">2</span>));     <span class="ex-cmt">// (2, 4, 6)  (multiplica por escalar)</span>
+<span class="ex-fn">imprima</span>(v1.ponto(v2));      <span class="ex-cmt">// 32  (produto escalar: 1×4 + 2×5 + 3×6)</span>
+<span class="ex-fn">imprima</span>(v1.norma());        <span class="ex-cmt">// ≈ 3.742  (comprimento do vetor √(1²+2²+3²))</span>
+<span class="ex-fn">imprima</span>(v1.normalizar());   <span class="ex-cmt">// vetor de comprimento 1, mesma direção</span></pre>
+
+                    <h4>Matriz — <code>m.matriz([[linha1], [linha2], ...])</code></h4>
+                    <pre class="code-example"><span class="ex-kw">importar</span> metodos <span class="ex-kw">como</span> m;
+<span class="ex-kw">super</span> A = m.matriz([[<span class="ex-num">1</span>, <span class="ex-num">2</span>], [<span class="ex-num">3</span>, <span class="ex-num">4</span>]]);
+<span class="ex-kw">super</span> B = m.matriz([[<span class="ex-num">5</span>, <span class="ex-num">6</span>], [<span class="ex-num">7</span>, <span class="ex-num">8</span>]]);
+
+<span class="ex-fn">imprima</span>(A.linhas);          <span class="ex-cmt">// 2</span>
+<span class="ex-fn">imprima</span>(A.colunas);         <span class="ex-cmt">// 2</span>
+<span class="ex-fn">imprima</span>(A.obter(<span class="ex-num">0</span>, <span class="ex-num">1</span>));     <span class="ex-cmt">// 2  (linha 0, coluna 1)</span>
+<span class="ex-fn">imprima</span>(A.soma(B));         <span class="ex-cmt">// [[6,8],[10,12]]</span>
+<span class="ex-fn">imprima</span>(A.mult(B));         <span class="ex-cmt">// [[19,22],[43,50]] (multiplicação matricial)</span>
+<span class="ex-fn">imprima</span>(A.transposta());    <span class="ex-cmt">// [[1,3],[2,4]]</span>
+<span class="ex-fn">imprima</span>(A.mult(<span class="ex-num">3</span>));         <span class="ex-cmt">// [[3,6],[9,12]] (escalar)</span>
+
+<span class="ex-cmt">// Multiplicação Matriz × Vetor</span>
+<span class="ex-kw">super</span> v = m.vetor([<span class="ex-num">1</span>, <span class="ex-num">2</span>]);
+<span class="ex-fn">imprima</span>(A.mult(v));         <span class="ex-cmt">// Vetor resultante</span></pre>
+                </div><!-- /tab-metodos -->
+
+
+                <!-- ═══════════════════════════════════════════════════════════
+     📊 TABULAR
+     ═══════════════════════════════════════════════════════════ -->
+                <div id="tab-tabular" class="tab-pane hidden">
+                    <h3>Biblioteca de Saída Visual</h3>
+                    <p class="tab-intro">Renderiza tabelas, barras e tabelas-verdade direto no console. Importe com
+                        <code>importar tabular como t;</code>
+                    </p>
+
+                    <h4>t.separador()</h4>
+                    <p class="tab-intro">Desenha uma linha divisória pontilhada no console. Útil para separar seções da
+                        saída.</p>
+                    <pre class="code-example"><span class="ex-fn">imprima</span>(<span class="ex-str">"Parte 1"</span>);
+t.separador();
+<span class="ex-fn">imprima</span>(<span class="ex-str">"Parte 2"</span>);</pre>
+
+                    <h4>t.tabela(cabecalho, linhas)</h4>
+                    <p class="tab-intro">Renderiza uma tabela formatada com cabeçalho. Aceita arrays literais ou Listas.
+                    </p>
+                    <pre class="code-example"><span class="ex-kw">importar</span> tabular <span class="ex-kw">como</span> t;
+<span class="ex-kw">importar</span> metodos <span class="ex-kw">como</span> m;
+
+<span class="ex-cmt">// Com arrays literais</span>
+super cab   = [<span class="ex-str">"Nome"</span>, <span class="ex-str">"Nota"</span>, <span class="ex-str">"Situação"</span>];
+super dados = [
+    [<span class="ex-str">"Ana"</span>,   <span class="ex-num">9.5</span>, <span class="ex-str">"Aprovada"</span>],
+    [<span class="ex-str">"Bruno"</span>, <span class="ex-num">4.0</span>, <span class="ex-str">"Reprovado"</span>],
+    [<span class="ex-str">"Carla"</span>, <span class="ex-num">7.0</span>, <span class="ex-str">"Aprovada"</span>]
+];
+t.tabela(cab, dados);</pre>
+
+                    <h4>t.progresso(valor, maximo)</h4>
+                    <p class="tab-intro">Exibe uma barra de progresso visual. Útil para mostrar porcentagens ou
+                        completude.</p>
+                    <pre
+                        class="code-example"><span class="ex-kw">importar</span> tabular <span class="ex-kw">como</span> t;
+t.progresso(<span class="ex-num">75</span>, <span class="ex-num">100</span>);   <span class="ex-cmt">// [██████████████████████░░░░░░░░]  75%</span>
+t.progresso(<span class="ex-num">3</span>, <span class="ex-num">10</span>);    <span class="ex-cmt">// [█████████░░░░░░░░░░░░░░░░░░░░]  30%</span></pre>
+
+                    <h4>t.tabelaVerdade(expressoes, variaveis, mostrarIntermediarias?)</h4>
+                    <p class="tab-intro">Gera automaticamente todas as combinações V/F e calcula as expressões lógicas.
+                    </p>
+                    <table class="doc-table">
+                        <thead>
+                            <tr>
+                                <th>Parâmetro</th>
+                                <th>Tipo</th>
+                                <th>Descrição</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>expressoes</code></td>
+                                <td>caracter ou Lista de caracter</td>
+                                <td>Uma ou mais expressões lógicas como texto</td>
+                            </tr>
+                            <tr>
+                                <td><code>variaveis</code></td>
+                                <td>Lista de caracter</td>
+                                <td>Nomes das variáveis usadas nas expressões</td>
+                            </tr>
+                            <tr>
+                                <td><code>mostrarIntermediarias</code></td>
+                                <td>booleano (padrão: falso)</td>
+                                <td>Se verdadeiro, exibe colunas para sub-expressões entre parênteses</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <table class="doc-table">
+                        <thead>
+                            <tr>
+                                <th>Operador</th>
+                                <th>Significado</th>
+                                <th>Símbolo matemático</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>e</code></td>
+                                <td>Conjunção (AND)</td>
+                                <td>p ∧ q</td>
+                            </tr>
+                            <tr>
+                                <td><code>ou</code></td>
+                                <td>Disjunção (OR)</td>
+                                <td>p ∨ q</td>
+                            </tr>
+                            <tr>
+                                <td><code>nao</code></td>
+                                <td>Negação (NOT)</td>
+                                <td>¬p</td>
+                            </tr>
+                            <tr>
+                                <td><code>xou</code></td>
+                                <td>Ou exclusivo (XOR)</td>
+                                <td>p ⊕ q</td>
+                            </tr>
+                            <tr>
+                                <td><code>-&gt;</code></td>
+                                <td>Implicação (se p então q)</td>
+                                <td>p → q</td>
+                            </tr>
+                            <tr>
+                                <td><code>&lt;-&gt;</code></td>
+                                <td>Bicondicional (equivalência)</td>
+                                <td>p ↔ q</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <pre class="code-example"><span class="ex-kw">importar</span> tabular <span class="ex-kw">como</span> t;
+<span class="ex-kw">importar</span> metodos <span class="ex-kw">como</span> m;
+
+<span class="ex-cmt">// Expressão simples</span>
+t.tabelaVerdade(<span class="ex-str">"p e q"</span>, m.lista(<span class="ex-str">"p"</span>, <span class="ex-str">"q"</span>));
+
+<span class="ex-cmt">// Com sub-expressões visíveis</span>
+t.tabelaVerdade(<span class="ex-str">"(p e q) ou nao r"</span>, m.lista(<span class="ex-str">"p"</span>, <span class="ex-str">"q"</span>, <span class="ex-str">"r"</span>), verdadeiro);
+
+<span class="ex-cmt">// Comparar duas fórmulas lado a lado (demonstrar equivalência lógica)</span>
+super exprs = m.lista(<span class="ex-str">"p -> q"</span>, <span class="ex-str">"nao p ou q"</span>);
+t.tabelaVerdade(exprs, m.lista(<span class="ex-str">"p"</span>, <span class="ex-str">"q"</span>));
+<span class="ex-cmt">// As colunas serão idênticas — p->q ≡ ¬p∨q!</span></pre>
+                </div><!-- /tab-tabular -->
+
+
+                <!-- ═══════════════════════════════════════════════════════════
+     ∫ CALCULO
+     ═══════════════════════════════════════════════════════════ -->
+                <div id="tab-calculo" class="tab-pane hidden">
+                    <h3>Biblioteca de Análise Numérica</h3>
+                    <p class="tab-intro">
+                        Aproximações numéricas de operações de cálculo diferencial e integral.
+                        Importe com <code>importar calculo como c;</code>
+                    </p>
+                    <div class="doc-note">
+                        <strong>Resultado aproximado:</strong> os valores são calculados numericamente, não
+                        simbolicamente.
+                        São adequados para verificar intuições e estudar comportamentos, mas não substituem o cálculo
+                        analítico exato.
+                    </div>
+
+                    <h4>c.limite(fn, ponto)</h4>
+                    <p class="tab-intro">Calcula lim<sub>x→ponto</sub> fn(x). Lança erro se os limites lateral esquerdo
+                        e direito divergirem muito.</p>
+                    <pre
+                        class="code-example"><span class="ex-kw">importar</span> calculo <span class="ex-kw">como</span> c;
+
+<span class="ex-cmt">// Limite clássico: lim sen(x)/x quando x→0 = 1</span>
+<span class="ex-kw">funcao</span> f(x) {
+    <span class="ex-kw">se</span> (x == <span class="ex-num">0</span>) { <span class="ex-kw">retorno</span> <span class="ex-num">0</span>; }  <span class="ex-cmt">// evitar divisão por zero</span>
+    <span class="ex-kw">importar</span> mat <span class="ex-kw">como</span> m;
+    <span class="ex-kw">retorno</span> m.sen(x) / x;
+}
+<span class="ex-fn">imprima</span>(c.limite(f, <span class="ex-num">0</span>)); <span class="ex-cmt">// ≈ 1</span></pre>
+
+                    <h4>c.derivada(fn, ponto, ordem?)</h4>
+                    <p class="tab-intro">Derivada numérica de fn no ponto. O parâmetro <code>ordem</code> é opcional
+                        (padrão: 1). Suporta até ordem 4.</p>
+                    <pre
+                        class="code-example"><span class="ex-kw">importar</span> calculo <span class="ex-kw">como</span> c;
+
+<span class="ex-kw">funcao</span> f(x) { <span class="ex-kw">retorno</span> x * x; }  <span class="ex-cmt">// f(x) = x²</span>
+
+<span class="ex-fn">imprima</span>(c.derivada(f, <span class="ex-num">3</span>));     <span class="ex-cmt">// ≈ 6   (1ª derivada: f'(x) = 2x, f'(3) = 6)</span>
+<span class="ex-fn">imprima</span>(c.derivada(f, <span class="ex-num">3</span>, <span class="ex-num">2</span>));  <span class="ex-cmt">// ≈ 2   (2ª derivada: f''(x) = 2, constante)</span>
+<span class="ex-fn">imprima</span>(c.derivada(f, <span class="ex-num">3</span>, <span class="ex-num">3</span>));  <span class="ex-cmt">// ≈ 0   (3ª derivada de x² é zero)</span></pre>
+
+                    <h4>c.integral(fn, a, b)</h4>
+                    <p class="tab-intro">Integral definida ∫<sub>a</sub><sup>b</sup> fn(x) dx usando a Regra de Simpson
+                        com 1000 subdivisões.</p>
+                    <pre
+                        class="code-example"><span class="ex-kw">importar</span> calculo <span class="ex-kw">como</span> c;
+
+<span class="ex-cmt">// Área sob f(x) = x de 0 a 4  → deveria ser 8 (triângulo)</span>
+<span class="ex-kw">funcao</span> linear(x) { <span class="ex-kw">retorno</span> x; }
+<span class="ex-fn">imprima</span>(c.integral(linear, <span class="ex-num">0</span>, <span class="ex-num">4</span>)); <span class="ex-cmt">// ≈ 8</span>
+
+<span class="ex-cmt">// Integral de x² de 0 a 1 → 1/3 ≈ 0.3333</span>
+<span class="ex-kw">funcao</span> quadratica(x) { <span class="ex-kw">retorno</span> x * x; }
+<span class="ex-fn">imprima</span>(c.integral(quadratica, <span class="ex-num">0</span>, <span class="ex-num">1</span>)); <span class="ex-cmt">// ≈ 0.333</span></pre>
+
+                    <h4>Funções Especiais e Avançadas</h4>
+                    <table class="doc-table">
+                        <thead>
+                            <tr>
+                                <th>Função</th>
+                                <th>Símbolo</th>
+                                <th>Descrição</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>c.gamma(x)</code></td>
+                                <td>Γ(x)</td>
+                                <td>Extensão do fatorial para números reais e complexos. Γ(n) = (n-1)!<br><em>Nota: Não
+                                        definida para inteiros ≤ 0.</em></td>
+                            </tr>
+                            <tr>
+                                <td><code>c.digamma(x)</code></td>
+                                <td>ψ(x)</td>
+                                <td>Derivada logarítmica da função Gamma.</td>
+                            </tr>
+                            <tr>
+                                <td><code>c.zeta(s)</code></td>
+                                <td>ζ(s)</td>
+                                <td>Função Zeta de Riemann. Requer <code>s &gt; 1</code> para convergência numérica na
+                                    IDE.</td>
+                            </tr>
+                            <tr>
+                                <td><code>c.phi(n)</code></td>
+                                <td>φ(n)</td>
+                                <td>Função Totiente de Euler. Conta quantos inteiros positivos ≤ n são coprimos com n.
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><code>c.lambertW(x)</code></td>
+                                <td>W(x)</td>
+                                <td>Ramo principal da função inversa de f(w) = w·e^w. Útil para isolar incógnitas em
+                                    equações exponenciais. Requer <code>x ≥ -1/e</code>.</td>
+                            </tr>
+                            <tr>
+                                <td><code>c.taylor(fn, a, x, n)</code></td>
+                                <td>T(x)</td>
+                                <td>Série de Taylor de <code>fn</code> em torno do ponto <code>a</code>, avaliada no
+                                    ponto <code>x</code>, com <code>n</code> termos (máximo 4 termos devido à
+                                    instabilidade numérica).</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <h4>Exemplos</h4>
+                    <pre
+                        class="code-example"><span class="ex-kw">importar</span> calculo <span class="ex-kw">como</span> c;
+
+<span class="ex-cmt">// Série de Taylor: Aproximando e^x ao redor de a=0, testando em x=1</span>
+<span class="ex-kw">funcao</span> expx(x) { <span class="ex-kw">importar</span> mat <span class="ex-kw">como</span> m; <span class="ex-kw">retorno</span> <span class="ex-fn">expo</span>(m.E, x); }
+<span class="ex-fn">imprima</span>(c.taylor(expx, <span class="ex-num">0</span>, <span class="ex-num">1</span>, <span class="ex-num">4</span>)); <span class="ex-cmt">// ≈ 2.708 (próximo a 'e')</span>
+
+<span class="ex-cmt">// W de Lambert: Resolvendo a equação x * e^x = 2</span>
+real solucao = c.lambertW(<span class="ex-num">2</span>);
+<span class="ex-fn">imprima</span>(solucao); <span class="ex-cmt">// ≈ 0.8526</span>
+
+<span class="ex-cmt">// Função Totiente de Euler</span>
+<span class="ex-fn">imprima</span>(c.phi(<span class="ex-num">9</span>)); <span class="ex-cmt">// 6 (os coprimos são: 1, 2, 4, 5, 7, 8)</span>
+
+<span class="ex-cmt">// Função Gamma (Fatorial de números reais)</span>
+<span class="ex-fn">imprima</span>(c.gamma(<span class="ex-num">5</span>));   <span class="ex-cmt">// 24 (pois Γ(5) = 4!)</span>
+<span class="ex-fn">imprima</span>(c.gamma(<span class="ex-num">0.5</span>)); <span class="ex-cmt">// ≈ 1.772 (que é √π)</span></pre>
+
+                </div><!-- /tab-calculo -->
+
+
+                <!-- ═══════════════════════════════════════════════════════════
+     📈 ESTATISTICA
+     ═══════════════════════════════════════════════════════════ -->
+                <div id="tab-estat" class="tab-pane hidden">
+                    <h3>Biblioteca de Estatística</h3>
+                    <p class="tab-intro">Análise de dados e combinatória. Importe com
+                        <code>importar estatistica como e;</code>
+                    </p>
+
+                    <h4>Combinatória</h4>
+                    <table class="doc-table">
+                        <thead>
+                            <tr>
+                                <th>Função</th>
+                                <th>Fórmula</th>
+                                <th>Descrição</th>
+                                <th>Exemplo</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>e.fatorial(n)</code></td>
+                                <td>n!</td>
+                                <td>Produto de 1 × 2 × … × n. Máximo n=170.</td>
+                                <td><code>e.fatorial(5)</code> → 120</td>
+                            </tr>
+                            <tr>
+                                <td><code>e.combinacao(n, k)</code></td>
+                                <td>C(n,k) = n! / (k!·(n−k)!)</td>
+                                <td>Quantas formas de escolher k itens de n, sem importar a ordem.</td>
+                                <td><code>e.combinacao(10, 3)</code> → 120</td>
+                            </tr>
+                            <tr>
+                                <td><code>e.arranjo(n, k)</code></td>
+                                <td>A(n,k) = n! / (n−k)!</td>
+                                <td>Quantas formas ordenadas de escolher k itens de n.</td>
+                                <td><code>e.arranjo(5, 2)</code> → 20</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <h4>Análise de dados</h4>
+                    <p class="tab-intro">Todas as funções abaixo exigem uma <strong>Lista de números não-vazia</strong>.
+                    </p>
+                    <table class="doc-table">
+                        <thead>
+                            <tr>
+                                <th>Função</th>
+                                <th>O que calcula</th>
+                                <th>Detalhe</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>e.media(lista)</code></td>
+                                <td>Média aritmética</td>
+                                <td>Soma de todos dividida pela quantidade.</td>
+                            </tr>
+                            <tr>
+                                <td><code>e.mediana(lista)</code></td>
+                                <td>Valor central</td>
+                                <td>Ordena e retorna o do meio. Par: média dos dois centrais.</td>
+                            </tr>
+                            <tr>
+                                <td><code>e.moda(lista)</code></td>
+                                <td>Valor(es) mais frequente(s)</td>
+                                <td>Retorna uma Lista — pode ter múltiplas modas.</td>
+                            </tr>
+                            <tr>
+                                <td><code>e.variancia(lista)</code></td>
+                                <td>Variância populacional σ²</td>
+                                <td>Mede o espalhamento dos dados em torno da média.</td>
+                            </tr>
+                            <tr>
+                                <td><code>e.desvioPadrao(lista)</code></td>
+                                <td>Desvio padrão σ</td>
+                                <td>Raiz da variância. Mesma unidade dos dados.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <pre
+                        class="code-example"><span class="ex-kw">importar</span> estatistica <span class="ex-kw">como</span> e;
+<span class="ex-kw">importar</span> metodos <span class="ex-kw">como</span> m;
+
+super notas = m.lista(<span class="ex-num">6</span>, <span class="ex-num">7</span>, <span class="ex-num">8</span>, <span class="ex-num">8</span>, <span class="ex-num">9</span>, <span class="ex-num">10</span>, <span class="ex-num">7</span>);
+
+<span class="ex-fn">imprima</span>(e.media(notas));         <span class="ex-cmt">// 7.857...</span>
+<span class="ex-fn">imprima</span>(e.mediana(notas));       <span class="ex-cmt">// 8</span>
+<span class="ex-fn">imprima</span>(e.moda(notas));          <span class="ex-cmt">// [7, 8]  (dois valores mais frequentes)</span>
+<span class="ex-fn">imprima</span>(e.variancia(notas));     <span class="ex-cmt">// ≈ 1.55</span>
+<span class="ex-fn">imprima</span>(e.desvioPadrao(notas));  <span class="ex-cmt">// ≈ 1.24</span>
+
+<span class="ex-cmt">// Combinatória: de 10 alunos, quantas duplas possíveis?</span>
+<span class="ex-fn">imprima</span>(e.combinacao(<span class="ex-num">10</span>, <span class="ex-num">2</span>)); <span class="ex-cmt">// 45</span></pre>
+                </div><!-- /tab-estat -->
+
+
+                <!-- ═══════════════════════════════════════════════════════════
+     ⏱️ TEMPO
+     ═══════════════════════════════════════════════════════════ -->
+                <div id="tab-tempo" class="tab-pane hidden">
+                    <h3>Biblioteca de Medição de Tempo</h3>
+                    <p class="tab-intro">Mede performance de funções e analisa empiricamente a complexidade de
+                        algoritmos. Importe com <code>importar tempo como tp;</code></p>
+
+                    <h4>tp.agora() / tp.milisegundos()</h4>
+                    <p class="tab-intro">Retorna o tempo atual em milissegundos de alta resolução. Use dois valores para
+                        medir o tempo entre dois momentos.</p>
+                    <pre class="code-example"><span class="ex-kw">importar</span> tempo <span class="ex-kw">como</span> tp;
+
+real inicio = tp.agora();
+<span class="ex-cmt">// ... código a medir ...</span>
+<span class="ex-kw">para</span> (<span class="ex-kw">inteiro</span> i = <span class="ex-num">0</span>; i &lt; <span class="ex-num">100000</span>; i++) { } <span class="ex-cmt">// loop de teste</span>
+real fim = tp.agora();
+<span class="ex-fn">imprima</span>(f<span class="ex-str">"Tempo: {fim - inicio} ms"</span>);</pre>
+
+                    <h4>tp.medirExecucao(fn, ...args)</h4>
+                    <p class="tab-intro">Executa uma função com os argumentos fornecidos, mede o tempo e imprime o
+                        resultado automaticamente. Retorna o valor da função.</p>
+                    <pre class="code-example"><span class="ex-kw">importar</span> tempo <span class="ex-kw">como</span> tp;
+<span class="ex-kw">importar</span> estatistica <span class="ex-kw">como</span> e;
+<span class="ex-kw">importar</span> metodos <span class="ex-kw">como</span> m;
+
+super dados = m.lista(<span class="ex-num">5</span>, <span class="ex-num">3</span>, <span class="ex-num">9</span>, <span class="ex-num">1</span>, <span class="ex-num">7</span>);
+
+<span class="ex-cmt">// Chama e.media(dados) e mostra o tempo</span>
+real resultado = tp.medirExecucao(e.media, dados);
+<span class="ex-fn">imprima</span>(f<span class="ex-str">"Média = {resultado}"</span>);
+<span class="ex-cmt">// Console mostrará: ⏱ tempo.medirExecucao: 0.0123 ms</span></pre>
+
+                    <h4>tp.testeStress(fn, n_max)</h4>
+                    <p class="tab-intro">
+                        Ferramenta educacional para analisar empiricamente a <strong>complexidade assintótica</strong>
+                        de um algoritmo.
+                        Executa fn(n) para n = 10, 100, 1000, … até n_max e exibe uma tabela comparativa.
+                        Observando como o tempo cresce ao aumentar n 10×, você consegue estimar se é O(n), O(n²), O(n
+                        log n), etc.
+                    </p>
+                    <table class="doc-table">
+                        <thead>
+                            <tr>
+                                <th>Se o tempo cresce…</th>
+                                <th>Complexidade estimada</th>
+                                <th>Exemplo</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Também ~10×</td>
+                                <td>O(n) — linear</td>
+                                <td>Busca linear, soma de lista</td>
+                            </tr>
+                            <tr>
+                                <td>~100× (10²)</td>
+                                <td>O(n²) — quadrático</td>
+                                <td>Bubble sort, seleção</td>
+                            </tr>
+                            <tr>
+                                <td>~30× (10 × log10)</td>
+                                <td>O(n log n)</td>
+                                <td>Merge sort, heap sort</td>
+                            </tr>
+                            <tr>
+                                <td>Pouco mais que 10×</td>
+                                <td>O(n log n) ou melhor</td>
+                                <td>Algoritmos eficientes</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <pre class="code-example"><span class="ex-kw">importar</span> tempo <span class="ex-kw">como</span> tp;
+
+<span class="ex-cmt">// Algoritmo O(n²): dois laços aninhados</span>
+<span class="ex-kw">funcao</span> quadratico(<span class="ex-kw">inteiro</span>(n > 0)) {
+    inteiro soma = <span class="ex-num">0</span>;
+    <span class="ex-kw">para</span> (<span class="ex-kw">inteiro</span> i = <span class="ex-num">0</span>; i &lt; n; i++) {
+        <span class="ex-kw">para</span> (<span class="ex-kw">inteiro</span> j = <span class="ex-num">0</span>; j &lt; n; j++) {
+            soma = soma + <span class="ex-num">1</span>;
+        }
+    }
+    <span class="ex-kw">retorno</span> soma;
+}
+tp.testeStress(quadratico, <span class="ex-num">10000</span>);
+<span class="ex-cmt">// Tabela: n=10 → ~0ms, n=100 → ~X ms, n=1000 → ~100X ms, ...</span>
+<span class="ex-cmt">// O tempo cresce 100x quando n cresce 10x → O(n²) confirmado!</span></pre>
+                </div><!-- /tab-tempo -->
+
+
+                <!-- ═══════════════════════════════════════════════════════════
+     📉 GRAFICOS
+     ═══════════════════════════════════════════════════════════ -->
+                <div id="tab-graficos" class="tab-pane hidden">
+                    <h3>Biblioteca de Gráficos</h3>
+                    <p class="tab-intro">
+                        Renderiza gráficos interativos diretamente no console. Importe com
+                        <code>importar graficos como g;</code>
+                    </p>
+                    <div class="doc-warn">
+                        <strong>Dependência obrigatória:</strong> o arquivo <code>js/plotterApi.js</code> deve estar
+                        presente na pasta do projeto.
+                        Sem ele, a biblioteca exibe uma mensagem de erro educacional, mas o resto da IDE funciona
+                        normalmente.
+                    </div>
+
+                    <h4>g.plotar(dados, config) — interface unificada</h4>
+                    <p class="tab-intro">Método único para todos os tipos de gráfico. O campo <code>config.tipo</code>
+                        define o que será desenhado.</p>
+
+                    <table class="doc-table">
+                        <thead>
+                            <tr>
+                                <th colspan="3">Objeto <code>config</code> — campos disponíveis</th>
+                            </tr>
+                            <tr>
+                                <th>Campo</th>
+                                <th>Tipo / Valores</th>
+                                <th>Descrição (todos opcionais exceto tipo)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>tipo</code></td>
+                                <td><code>'linha'</code> | <code>'barra'</code> | <code>'dispersao'</code> |
+                                    <code>'3d'</code>
+                                </td>
+                                <td><strong>Obrigatório.</strong> Define o tipo de gráfico.</td>
+                            </tr>
+                            <tr>
+                                <td><code>titulo</code></td>
+                                <td>caracter</td>
+                                <td>Texto exibido no topo do gráfico. Padrão: sem título.</td>
+                            </tr>
+                            <tr>
+                                <td><code>largura</code></td>
+                                <td>inteiro (pixels)</td>
+                                <td>Largura do canvas. Padrão: 500.</td>
+                            </tr>
+                            <tr>
+                                <td><code>altura</code></td>
+                                <td>inteiro (pixels)</td>
+                                <td>Altura do canvas. Padrão: 320.</td>
+                            </tr>
+                            <tr>
+                                <td><code>intervalo</code></td>
+                                <td><code>[min, max]</code></td>
+                                <td>Intervalo do eixo X para tipo <code>'linha'</code> e <code>'3d'</code>. Padrão:
+                                    <code>[-10, 10]</code>.
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <pre
+                        class="code-example"><span class="ex-kw">importar</span> graficos <span class="ex-kw">como</span> g;
+
+<span class="ex-cmt">// ── Tipo 'linha': dados deve ser uma funcao ──────────────</span>
+<span class="ex-kw">funcao</span> parabola(x) { <span class="ex-kw">retorno</span> x * x; }
+
+g.plotar(parabola, {
+    tipo:      <span class="ex-str">"linha"</span>,
+    titulo:    <span class="ex-str">"f(x) = x²"</span>,
+    intervalo: [-<span class="ex-num">5</span>, <span class="ex-num">5</span>],
+    largura:   <span class="ex-num">600</span>,
+    altura:    <span class="ex-num">350</span>
+});
+
+<span class="ex-cmt">// ── Tipo 'barra': dados deve ter .rotulos e .valores ─────</span>
+g.plotar(
+    { rotulos: [<span class="ex-str">"Jan"</span>, <span class="ex-str">"Fev"</span>, <span class="ex-str">"Mar"</span>], valores: [<span class="ex-num">1200</span>, <span class="ex-num">980</span>, <span class="ex-num">1540</span>] },
+    { tipo: <span class="ex-str">"barra"</span>, titulo: <span class="ex-str">"Vendas por Mês"</span> }
+);
+
+<span class="ex-cmt">// ── Tipo 'dispersao': dados deve ser Lista de {x, y} ─────</span>
+<span class="ex-kw">importar</span> metodos <span class="ex-kw">como</span> m;
+<span class="ex-kw">importar</span> mat <span class="ex-kw">como</span> mat;
+super pontos = m.lista();
+<span class="ex-kw">para</span> (<span class="ex-kw">inteiro</span> i = <span class="ex-num">0</span>; i &lt; <span class="ex-num">20</span>; i++) {
+    real x = mat.aleatorio(-<span class="ex-num">5</span>, <span class="ex-num">5</span>);
+    pontos.adicionar({ x: x, y: x * x + mat.aleatorio(-<span class="ex-num">2</span>, <span class="ex-num">2</span>) });
+}
+g.plotar(pontos, { tipo: <span class="ex-str">"dispersao"</span>, titulo: <span class="ex-str">"Dados Ruidosos"</span> });
+
+<span class="ex-cmt">// ── Tipo '3d': dados deve ser uma funcao de (x, z) ───────</span>
+<span class="ex-kw">funcao</span> cone(x, z) { <span class="ex-kw">retorno</span> <span class="ex-fn">raiz</span>(x*x + z*z); }
+g.plotar(cone, { tipo: <span class="ex-str">"3d"</span>, titulo: <span class="ex-str">"Cone"</span>, intervalo: [-<span class="ex-num">5</span>, <span class="ex-num">5</span>] });</pre>
+
+                    <h4>g.plotarFuncao(fn, intervalo?, opcoes?) / g.plotarMultiplas(listaFuncoes, intervalo?, opcoes?)</h4>
+                    <p class="tab-intro">Atalho rápido para plotar uma única função matemática 2D.</p>
+                    <table class="doc-table">
+                        <thead>
+                            <tr>
+                                <th colspan="3">Objeto <code>opcoes</code></th>
+                            </tr>
+                            <tr>
+                                <th>Campo</th>
+                                <th>Tipo</th>
+                                <th>Descrição</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>titulo</code></td>
+                                <td>caracter</td>
+                                <td>Título do gráfico</td>
+                            </tr>
+                            <tr>
+                                <td><code>largura</code></td>
+                                <td>inteiro</td>
+                                <td>Largura em pixels (padrão: 500)</td>
+                            </tr>
+                            <tr>
+                                <td><code>altura</code></td>
+                                <td>inteiro</td>
+                                <td>Altura em pixels (padrão: 320)</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <pre
+                        class="code-example"><span class="ex-kw">importar</span> graficos <span class="ex-kw">como</span> g;
+<span class="ex-kw">importar</span> mat <span class="ex-kw">como</span> m;
+
+<span class="ex-kw">funcao</span> senoide(x) { <span class="ex-kw">retorno</span> m.sen(x); }
+g.plotarFuncao(senoide, [-<span class="ex-num">6.28</span>, <span class="ex-num">6.28</span>], { titulo: <span class="ex-str">"sen(x)"</span> });</pre>
+
+                    <h4>g.dispersao(pontos, opcoes?)</h4>
+                    <p class="tab-intro">Gráfico de dispersão a partir de uma Lista de objetos com campos <code>x</code>
+                        e <code>y</code>.</p>
+                    <table class="doc-table">
+                        <thead>
+                            <tr>
+                                <th>Campo de opcoes</th>
+                                <th>Tipo</th>
+                                <th>Padrão</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>titulo</code></td>
+                                <td>caracter</td>
+                                <td>""</td>
+                            </tr>
+                            <tr>
+                                <td><code>largura</code></td>
+                                <td>inteiro</td>
+                                <td>500</td>
+                            </tr>
+                            <tr>
+                                <td><code>altura</code></td>
+                                <td>inteiro</td>
+                                <td>320</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <h4>g.superficie3D(fn, opcoes?)</h4>
+                    <p class="tab-intro">Renderiza uma superfície 3D interativa. A função recebe <code>(x, z)</code> e
+                        retorna <code>y</code>. Rotacione arrastando o mouse.</p>
+                    <table class="doc-table">
+                        <thead>
+                            <tr>
+                                <th>Campo de opcoes</th>
+                                <th>Tipo</th>
+                                <th>Padrão</th>
+                                <th>Descrição</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>titulo</code></td>
+                                <td>caracter</td>
+                                <td>""</td>
+                                <td>Título do gráfico</td>
+                            </tr>
+                            <tr>
+                                <td><code>largura</code></td>
+                                <td>inteiro</td>
+                                <td>500</td>
+                                <td>Largura em pixels</td>
+                            </tr>
+                            <tr>
+                                <td><code>altura</code></td>
+                                <td>inteiro</td>
+                                <td>380</td>
+                                <td>Altura em pixels</td>
+                            </tr>
+                            <tr>
+                                <td><code>intervalo</code></td>
+                                <td>[min, max]</td>
+                                <td>[-5, 5]</td>
+                                <td>Range de x e z</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <pre class="code-example"><span class="ex-kw">importar</span> graficos <span class="ex-kw">como</span> g;
+<span class="ex-kw">importar</span> mat <span class="ex-kw">como</span> m;
+
+<span class="ex-cmt">// Superfície de onda</span>
+<span class="ex-kw">funcao</span> onda(x, z) {
+    <span class="ex-kw">retorno</span> m.sen(<span class="ex-fn">raiz</span>(x*x + z*z));
+}
+g.superficie3D(onda, {
+    titulo:    <span class="ex-str">"Onda Circular"</span>,
+    intervalo: [-<span class="ex-num">10</span>, <span class="ex-num">10</span>],
+    largura:   <span class="ex-num">600</span>,
+    altura:    <span class="ex-num">400</span>
+});</pre>
+                </div><!-- /tab-graficos -->
+
+
+                <!-- ═══════════════════════════════════════════════════════════
+     🎲 PROBABILIDADE
+     ═══════════════════════════════════════════════════════════ -->
+                <div id="tab-prob" class="tab-pane hidden">
+                    <h3>Biblioteca de Probabilidade</h3>
+                    <p class="tab-intro">Simulações estocásticas e geração de números aleatórios com controle. Importe
+                        com <code>importar probabilidade como p;</code></p>
+
+                    <h4>p.uniforme(min, max)</h4>
+                    <p class="tab-intro">Número real aleatório no intervalo fechado [min, max]. Cada ponto do intervalo
+                        tem a mesma chance.</p>
+                    <pre
+                        class="code-example"><span class="ex-kw">importar</span> probabilidade <span class="ex-kw">como</span> p;
+real x = p.uniforme(<span class="ex-num">0.0</span>, <span class="ex-num">1.0</span>);  <span class="ex-cmt">// ex: 0.7342</span>
+real altura = p.uniforme(<span class="ex-num">1.5</span>, <span class="ex-num">2.0</span>); <span class="ex-cmt">// altura aleatória entre 1.5m e 2m</span></pre>
+
+                    <h4>p.aleatorioInteiro(min, max)</h4>
+                    <p class="tab-intro">Inteiro aleatório no intervalo fechado [min, max] (ambos incluídos).</p>
+                    <pre
+                        class="code-example"><span class="ex-kw">importar</span> probabilidade <span class="ex-kw">como</span> p;
+inteiro cara_ou_coroa = p.aleatorioInteiro(<span class="ex-num">0</span>, <span class="ex-num">1</span>); <span class="ex-cmt">// 0 ou 1</span>
+inteiro carta = p.aleatorioInteiro(<span class="ex-num">1</span>, <span class="ex-num">13</span>);        <span class="ex-cmt">// Ás ao Rei</span></pre>
+
+                    <h4>p.rolarDados(quantidade, faces)</h4>
+                    <p class="tab-intro">Simula o lançamento de dados. Retorna uma Lista com o resultado de cada dado
+                        individualmente.</p>
+                    <pre class="code-example"><span class="ex-kw">importar</span> probabilidade <span class="ex-kw">como</span> p;
+
+<span class="ex-cmt">// Rolar 2 dados de 6 faces (comum em jogos de tabuleiro)</span>
+super resultado = p.rolarDados(<span class="ex-num">2</span>, <span class="ex-num">6</span>);
+<span class="ex-fn">imprima</span>(resultado);  <span class="ex-cmt">// ex: [3, 5]</span>
+<span class="ex-fn">imprima</span>(f<span class="ex-str">"Total: {resultado.obter(0) + resultado.obter(1)}"</span>);
+
+<span class="ex-cmt">// D20 de RPG</span>
+super d20 = p.rolarDados(<span class="ex-num">1</span>, <span class="ex-num">20</span>);
+<span class="ex-fn">imprima</span>(f<span class="ex-str">"Você tirou: {d20.obter(0)}"</span>);</pre>
+
+                    <h4>p.sortearComPesos(itens, pesos)</h4>
+                    <p class="tab-intro">
+                        Sorteia um item da lista com probabilidade <strong>proporcional ao peso</strong>.
+                        Os pesos não precisam somar 1 — a biblioteca normaliza automaticamente.
+                        Use para simular eventos não-uniformes.
+                    </p>
+                    <pre class="code-example"><span class="ex-kw">importar</span> probabilidade <span class="ex-kw">como</span> p;
+<span class="ex-kw">importar</span> metodos <span class="ex-kw">como</span> m;
+
+<span class="ex-cmt">// Moeda viciada: 70% cara, 30% coroa</span>
+super lado = p.sortearComPesos(
+    m.lista(<span class="ex-str">"cara"</span>, <span class="ex-str">"coroa"</span>),
+    m.lista(<span class="ex-num">0.7</span>,    <span class="ex-num">0.3</span>)
+);
+<span class="ex-fn">imprima</span>(lado);
+
+<span class="ex-cmt">// Baú de recompensas (pesos podem ser qualquer número positivo)</span>
+super recompensa = p.sortearComPesos(
+    m.lista(<span class="ex-str">"Ouro"</span>, <span class="ex-str">"Prata"</span>, <span class="ex-str">"Diamante"</span>),
+    m.lista(<span class="ex-num">50</span>,     <span class="ex-num">30</span>,      <span class="ex-num">5</span>)
+); <span class="ex-cmt">// Ouro ≈ 58.8%, Prata ≈ 35.3%, Diamante ≈ 5.9%</span></pre>
+
+                    <h4>p.monteCarlo(fn, n)</h4>
+                    <p class="tab-intro">
+                        Método de Monte Carlo: executa <code>fn(x)</code> exatamente <code>n</code> vezes com
+                        <code>x</code> aleatório em [0, 1] e retorna a <strong>proporção</strong> de vezes que a função
+                        retornou verdadeiro.
+                        Quanto maior o <code>n</code>, mais precisa a estimativa.
+                    </p>
+                    <pre class="code-example"><span class="ex-kw">importar</span> probabilidade <span class="ex-kw">como</span> p;
+
+<span class="ex-cmt">// Estimar π: um ponto (x,y) cai dentro do círculo unitário
+// se x²+y² ≤ 1. A proporção ≈ π/4</span>
+<span class="ex-kw">funcao</span> noCirulo(x) {
+    real y = p.uniforme(<span class="ex-num">0</span>, <span class="ex-num">1</span>);
+    <span class="ex-kw">retorno</span> x*x + y*y &lt;= <span class="ex-num">1</span>;
+}
+
+real piEst = p.monteCarlo(noCirulo, <span class="ex-num">100000</span>) * <span class="ex-num">4</span>;
+<span class="ex-fn">imprima</span>(f<span class="ex-str">"π estimado: {piEst}"</span>);  <span class="ex-cmt">// ≈ 3.14</span>
+
+<span class="ex-cmt">// Probabilidade de tirar > 4 em um dado (esperado: 1/3 ≈ 33.3%)</span>
+<span class="ex-kw">funcao</span> dadoGrande(x) {
+    <span class="ex-kw">retorno</span> p.aleatorioInteiro(<span class="ex-num">1</span>, <span class="ex-num">6</span>) > <span class="ex-num">4</span>;
+}
+real prob = p.monteCarlo(dadoGrande, <span class="ex-num">50000</span>);
+<span class="ex-fn">imprima</span>(f<span class="ex-str">"P(dado > 4) ≈ {prob * 100}%"</span>);</pre>
+                </div><!-- /tab-prob -->
+
+
+                <!-- ═══════════════════════════════════════════════════════════
+     ⌨️ EDITOR
+     ═══════════════════════════════════════════════════════════ -->
+                <div id="tab-editor" class="tab-pane hidden">
+
+                    <h3>Atalhos de teclado</h3>
+                    <table class="doc-table">
+                        <thead>
+                            <tr>
+                                <th>Atalho</th>
+                                <th>Ação</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>Ctrl + S</code></td>
+                                <td>Executar o algoritmo</td>
+                            </tr>
+                            <tr>
+                                <td><code>Ctrl + M</code></td>
+                                <td>Limpar o console de saída</td>
+                            </tr>
+                            <tr>
+                                <td><code>Ctrl + Z</code></td>
+                                <td>Desfazer (undo customizado — até 300 estados)</td>
+                            </tr>
+                            <tr>
+                                <td><code>Ctrl + Y</code> ou <code>Ctrl + Shift + Z</code></td>
+                                <td>Refazer (redo)</td>
+                            </tr>
+                            <tr>
+                                <td><code>Ctrl + Enter</code></td>
+                                <td>Inserir nova linha <strong>acima</strong> da atual</td>
+                            </tr>
+                            <tr>
+                                <td><code>Ctrl + '</code></td>
+                                <td>Comentar / descomentar linha(s) selecionada(s)</td>
+                            </tr>
+                            <tr>
+                                <td><code>Alt + ↑ / ↓</code></td>
+                                <td>Mover a linha atual (ou bloco selecionado) para cima/baixo</td>
+                            </tr>
+                            <tr>
+                                <td><code>Tab</code></td>
+                                <td>Indentar (4 espaços), ou indentar todas as linhas selecionadas</td>
+                            </tr>
+                            <tr>
+                                <td><code>Shift + Tab</code></td>
+                                <td>Remover indentação da seleção</td>
+                            </tr>
+                            <tr>
+                                <td><code>F1</code></td>
+                                <td>Abrir / fechar esta documentação</td>
+                            </tr>
+                            <tr>
+                                <td><code>Esc</code></td>
+                                <td>Fechar documentação ou autocomplete</td>
+                            </tr>
+                            <tr>
+                                <td><code>{ ( [ " '</code></td>
+                                <td>Fecha o par automaticamente</td>
+                            </tr>
+                            <tr>
+                                <td><code>Backspace</code> entre par</td>
+                                <td>Apaga os dois delimitadores juntos</td>
+                            </tr>
+                            <tr>
+                                <td>Seta <strong>▼</strong> na margem</td>
+                                <td>Recolher / expandir bloco de código</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <h3>Autocomplete inteligente</h3>
+                    <p class="tab-intro">
+                        Ao digitar qualquer palavra, sugestões aparecem automaticamente no popup.
+                        O autocomplete conhece todas as palavras-chave, funções das bibliotecas e também
+                        as <strong>variáveis e funções que você declarou</strong> no seu próprio código.
+                    </p>
+                    <table class="doc-table">
+                        <thead>
+                            <tr>
+                                <th>Tecla</th>
+                                <th>Ação</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>↑ / ↓</code></td>
+                                <td>Navegar nas sugestões</td>
+                            </tr>
+                            <tr>
+                                <td><code>Tab</code> ou <code>Enter</code></td>
+                                <td>Aceitar a sugestão selecionada</td>
+                            </tr>
+                            <tr>
+                                <td><code>Esc</code></td>
+                                <td>Fechar o popup sem aceitar</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <h3>Assinatura de funções</h3>
+                    <p class="tab-intro">
+                        Quando você abre parênteses após o nome de uma função, um balão aparece mostrando os
+                        parâmetros esperados. O parâmetro atual (de acordo com a vírgula onde o cursor está) fica
+                        destacado em azul.
+                    </p>
+
+                    <h3>Linter visual (aviso amarelo)</h3>
+                    <p class="tab-intro">
+                        O editor analisa seu código em tempo real e sublinha em <strong>amarelo ondulado</strong>
+                        padrões que funcionam, mas que vão contra as boas práticas da Pseudo-IDE.
+                        Passe o mouse sobre o número da linha para ver a sugestão.
+                    </p>
+                    <table class="doc-table">
+                        <thead>
+                            <tr>
+                                <th>Padrão detectado</th>
+                                <th>Sugestão</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>x = { ... }</code> — objeto JS literal</td>
+                                <td>Use <code>m.mapa()</code> da biblioteca metodos</td>
+                            </tr>
+                            <tr>
+                                <td><code>var x</code> ou <code>const x</code></td>
+                                <td>Use os tipos da Pseudo-IDE: inteiro, real, caracter, booleano ou super</td>
+                            </tr>
+                            <tr>
+                                <td><code>new Map()</code>, <code>new Set()</code>, <code>new Array()</code></td>
+                                <td>Use m.mapa(), m.conjunto(), m.lista()</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <h3>Salvar e abrir arquivos</h3>
+                    <p class="tab-intro">
+                        Use os botões <strong>Salvar</strong> e <strong>Abrir</strong> no cabeçalho para salvar/carregar
+                        arquivos com extensão <code>.ide</code>. O arquivo é texto puro — você pode editá-lo em qualquer
+                        editor.
+                    </p>
+
+                    <h3>Marcadores de projeto</h3>
+                    <pre class="code-example">nomeDoAlgoritmo()
+<span class="ex-kw">@NOME</span>[Título do Algoritmo]
+<span class="ex-kw">@AUTOR</span>[Seu Nome]
+<span class="ex-kw">@VERSAO</span>[1]
+<span class="ex-kw">@DESC</span>[Breve descrição do que o algoritmo faz]
+{
+    <span class="ex-cmt">// Código aqui</span>
+}</pre>
+
+                    <h3>Erros de execução</h3>
+                    <p class="tab-intro">
+                        Quando ocorre um erro durante a execução:
+                    </p>
+                    <ul class="doc-list">
+                        <li>O erro aparece em vermelho no console de saída com a mensagem traduzida para PT-BR.</li>
+                        <li>O <strong>número de linha</strong> aproximado é indicado no erro:
+                            <code>[Linha 5] Erro de Tipo: ...</code>
+                        </li>
+                        <li>O número de linha nesse bloco de código fica destacado em vermelho na margem.</li>
+                        <li>No console do navegador (F12 → Console), um <code>console.warn</code> mostra o erro original
+                            em inglês com o stack trace completo — útil para depuração avançada.</li>
+                    </ul>
+
+                    <h3>Importação de bibliotecas</h3>
+                    <p class="tab-intro">Você pode importar uma biblioteca inteira ou só uma função específica:</p>
+                    <pre
+                        class="code-example"><span class="ex-cmt">// Importar biblioteca completa</span>
+<span class="ex-kw">importar</span> metodos <span class="ex-kw">como</span> m;
+<span class="ex-kw">super</span> x = m.lista(<span class="ex-num">1</span>, <span class="ex-num">2</span>, <span class="ex-num">3</span>);
+
+<span class="ex-cmt">// Importação modular — só a função lista</span>
+<span class="ex-kw">importar</span> metodos.lista <span class="ex-kw">como</span> li;
+<span class="ex-kw">super</span> x = li(<span class="ex-num">1</span>, <span class="ex-num">2</span>, <span class="ex-num">3</span>);  <span class="ex-cmt">// funciona igual!</span></pre>
+                </div><!-- /tab-editor -->
+
+
+            </div><!-- /modal-body -->
+
+            <div class="modal-footer">
+                <button class="btn-primary" onclick="toggleHelp()">Fechar Documentação</button>
+            </div>
+        </div><!-- /modal-box -->
+    </div><!-- /help-modal -->
+
+    <div id="teacher-modal" class="modal-overlay hidden">
+        <div class="modal-box" style="max-width: 750px;">
+            <div class="modal-header">
+                <h2>Área do Professor: Criação de Bibliotecas e API</h2>
+                <button class="btn-close" onclick="toggleTeacherModal()" title="Fechar">×</button>
+            </div>
+
+            <div class="modal-body" style="padding: 24px; overflow-y: auto;">
+                <p class="tab-intro">
+                    A Pseudo-IDE permite criar, empacotar e distribuir suas próprias bibliotecas de funções para os
+                    alunos usando um servidor em nuvem (API REST).
+                </p>
+
+                <h4>1. A Anatomia de uma Biblioteca</h4>
+                <p>Uma biblioteca é um algoritmo normal que contém funções e um cabeçalho de metadados. O marcador
+                    principal é o <code>@BIBLIOTECA[nome_do_pacote]</code>.</p>
+
+                <ul class="doc-list">
+                    <li><strong>Tudo deve ser Função:</strong> Códigos soltos (como <code>imprima()</code>) fora de
+                        funções serão executados assim que o aluno importar o pacote. Coloque sua lógica de negócio
+                        dentro de blocos <code>funcao</code>.</li>
+                    <li><strong>Funções Públicas:</strong> Qualquer função declarada normalmente (ex:
+                        <code>funcao calcular()</code>) ficará disponível para os alunos usarem.
+                    </li>
+                    <li><strong>Funções Privadas:</strong> Se quiser criar uma função auxiliar oculta para uso interno,
+                        inicie o nome com um sublinhado (ex: <code>funcao _ajuste()</code>). Ela não será exportada para
+                        o usuário.</li>
+                </ul>
+
+                <h4>2. Exemplo Completo de Pacote</h4>
+                <pre class="code-example"><span class="ex-marker">@NOME</span><span class="ex-marker-bracket">[</span><span class="ex-marker-val">Física Básica</span><span class="ex-marker-bracket">]</span>
+<span class="ex-marker">@AUTOR</span><span class="ex-marker-bracket">[</span><span class="ex-marker-val">Prof. Gabriel</span><span class="ex-marker-bracket">]</span>
+<span class="ex-marker">@VERSAO</span><span class="ex-marker-bracket">[</span><span class="ex-marker-val">1.0</span><span class="ex-marker-bracket">]</span>
+<span class="ex-marker">@BIBLIOTECA</span><span class="ex-marker-bracket">[</span><span class="ex-marker-val">fisica_basica</span><span class="ex-marker-bracket">]</span>
+
+minhaBiblioteca() {
+    <span class="ex-kw">importar</span> mat <span class="ex-kw">como</span> m;
+
+    <span class="ex-cmt">// Função Privada (Oculta do aluno)</span>
+    <span class="ex-kw">funcao</span> _validarTempo(t) {
+        <span class="ex-kw">se</span> (t < 0) { <span class="ex-kw">lançar erro</span> "Tempo não pode ser negativo!"; }
+    }
+
+    <span class="ex-cmt">// Função Pública</span>
+    <span class="ex-kw">funcao</span> mru(pos_inicial, vel, tempo) {
+        _validarTempo(tempo);
+        <span class="ex-kw">retorno</span> pos_inicial + (vel * tempo);
+    }
+}</pre>
+
+                <h4>3. Como Configurar o Servidor (Backend)</h4>
+                <p>A Pseudo-IDE não exige um banco de dados complexo. O servidor só precisa aceitar requisições
+                    <strong>POST</strong> (texto simples) para salvar o pacote e <strong>GET</strong> para retornar o
+                    pacote em JSON.
+                </p>
+
+                <div class="doc-note">
+                    <strong>Por que texto simples no POST?</strong> O envio é feito via Simple Request
+                    (<code>text/plain</code>) para evitar bloqueios automáticos de CORS (requisições OPTIONS de
+                    preflight) em servidores serverless (ex: Google Apps Script).
+                </div>
+
+                <h5>Exemplo de Servidor: Google Apps Script (Planilha)</h5>
+                <pre class="code-example"><span class="ex-cmt">// doPost: Grava a biblioteca na Planilha</span>
+function doPost(e) {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  const data = JSON.parse(e.postData.contents);
+  sheet.appendRow([data.nome, data.autor, data.versao, data.codigoInjetor]);
+  return ContentService.createTextOutput("OK").setMimeType(ContentService.MimeType.TEXT);
+}
+
+<span class="ex-cmt">// doGet: Busca a biblioteca mais recente (lendo de baixo para cima)</span>
+function doGet(e) {
+  const nome = e.parameter.nome;
+  const data = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet().getDataRange().getValues();
+  for (let i = data.length - 1; i >= 0; i--) {
+    if (data[i][0] === nome) {
+      const payload = { tipo: 'biblioteca', nome: data[i][0], autor: data[i][1], versao: data[i][2], codigoInjetor: data[i][3] };
+      return ContentService.createTextOutput(JSON.stringify(payload)).setMimeType(ContentService.MimeType.JSON);
+    }
+  }
+  return ContentService.createTextOutput("{}").setMimeType(ContentService.MimeType.JSON);
+}</pre>
+
+                <h4>4. Como o Aluno Utiliza</h4>
+                <p>No cabeçalho da Pseudo-IDE, o aluno clica no botão <strong>⚙️ API</strong> e cola a URL do seu
+                    servidor. Depois, basta importar o pacote:</p>
+                <pre class="code-example"><span class="ex-kw">importar</span> fisica_basica <span class="ex-kw">como</span> fb;
+
+<span class="ex-fn">imprima</span>(fb.mru(0, 10, 5)); <span class="ex-cmt">// Resultado: 50</span></pre>
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn-primary" onclick="toggleTeacherModal()">Entendi</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== SCRIPTS =====
+     Ordem de carregamento obrigatória:
+     1. plotterApi.js  — API externa de gráficos (opcional mas necessário para bib graficos)
+     2. runtime.js     — classes, bibliotecas, I/O
+     3. compiler.js    — tradutor + executor
+     4. editor.js      — UI do editor
+-->
+    <script src="js/plotterApi.js"
+        onerror="console.info('[Pseudo-IDE] plotterApi.js não encontrada — bib graficos indisponível.')"></script>
+    <script src="js/runtime.js"></script>
+    <script src="js/compiler.js"></script>
+    <script src="js/editor.js"></script>
+</body>
+
+</html>

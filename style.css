@@ -1,0 +1,45 @@
+# Pseudo-IDE v4.0
+
+## Estrutura de arquivos
+
+```
+pseudo-ide/
+├── index.html
+├── css/
+│   └── style.css
+├── js/
+│   ├── plotterApi.js   ← SUBSTITUA pelo arquivo PlotterAPI v3 completo
+│   ├── runtime.js      ← Classes, bibliotecas, I/O
+│   ├── compiler.js     ← Tradutor pseudo → JS + executor
+│   └── editor.js       ← UI do editor, linter, autocomplete
+└── README.md
+```
+
+## Configurando o plotterApi.js
+
+Substitua o arquivo `js/plotterApi.js` pelo arquivo completo da PlotterAPI v3
+que você já possui. O arquivo deve expor `window.PlotterAPI`.
+
+Sem o arquivo real, a biblioteca `graficos` exibirá uma mensagem de erro
+educacional, mas todo o resto da IDE funcionará normalmente.
+
+## Ordem de carregamento (já configurada no index.html)
+
+1. `js/plotterApi.js`  — API externa de gráficos
+2. `js/runtime.js`     — Classes e bibliotecas nativas
+3. `js/compiler.js`    — Tradutor e executor
+4. `js/editor.js`      — Interface do editor
+
+## Novidades na v4.0
+
+- `para (i em lista)` / `para (i na estrutura)` — for-of nativo
+- `lançar erro "msg"` / `lançar expr` — throw/throw new Error
+- Symbol.iterator em todas as coleções (Lista, Conjunto, Mapa, Caracter, Vetor, Matriz)
+- Biblioteca `tempo` — benchmark e stress test com tabela Big-O empírica
+- Biblioteca `graficos` — ponte para PlotterAPI (linha, barra, dispersao, 3d)
+- Biblioteca `probabilidade` — Monte Carlo, pesos, dados, distribuição uniforme
+- Classes `PseudoVetor` e `PseudoMatriz` — álgebra linear
+- Linter visual em tempo real (sublinhado amarelo) com tooltips educacionais
+- `console.warn` completo com stack trace no DevTools a cada erro
+- Mapeamento real de linha pseudo → linha de erro (ignora linhas injetadas)
+- compiler.js dividido em runtime.js + compiler.js
