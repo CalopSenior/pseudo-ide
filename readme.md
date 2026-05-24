@@ -236,6 +236,7 @@
                 <button class="tab-btn" onclick="switchTab('tab-tempo',     this)">⏱️ tempo</button>
                 <button class="tab-btn" onclick="switchTab('tab-graficos',  this)">📉 graficos</button>
                 <button class="tab-btn" onclick="switchTab('tab-prob',      this)">🎲 probabilidade</button>
+                <button class="tab-btn" onclick="switchTab('tab-algebra',   this)">📐 algebra</button>
                 <button class="tab-btn" onclick="switchTab('tab-editor',    this)">⌨️ Editor</button>
             </div>
 
@@ -1205,6 +1206,34 @@ A.adicionar(<span class="ex-num">2</span>); <span class="ex-cmt">// ignorado —
 <span class="ex-cmt">// Multiplicação Matriz × Vetor</span>
 <span class="ex-kw">super</span> v = m.vetor([<span class="ex-num">1</span>, <span class="ex-num">2</span>]);
 <span class="ex-fn">imprima</span>(A.mult(v));         <span class="ex-cmt">// Vetor resultante</span></pre>
+                    <h4>Verificadores de tipo — <code>m.eNumero(v)</code> e similares</h4>
+                    <p class="tab-intro">Funções que retornam <code>verdadeiro</code> ou <code>falso</code> para checar
+                        o tipo de qualquer valor em tempo de execução.</p>
+                    <table class="doc-table">
+                        <thead><tr><th>Função</th><th>Retorna verdadeiro quando…</th></tr></thead>
+                        <tbody>
+                            <tr><td><code>m.eNumero(v)</code></td><td><em>v</em> é número (inteiro ou real, não NaN)</td></tr>
+                            <tr><td><code>m.eInteiro(v)</code></td><td><em>v</em> é inteiro sem parte decimal</td></tr>
+                            <tr><td><code>m.eReal(v)</code></td><td><em>v</em> é real com parte decimal</td></tr>
+                            <tr><td><code>m.eTexto(v)</code></td><td><em>v</em> é string ou Caracter</td></tr>
+                            <tr><td><code>m.eBooleano(v)</code></td><td><em>v</em> é <code>verdadeiro</code> ou <code>falso</code></td></tr>
+                            <tr><td><code>m.eLista(v)</code></td><td><em>v</em> é uma Lista</td></tr>
+                            <tr><td><code>m.eMapa(v)</code></td><td><em>v</em> é um Mapa</td></tr>
+                            <tr><td><code>m.eConjunto(v)</code></td><td><em>v</em> é um Conjunto</td></tr>
+                            <tr><td><code>m.eVetor(v)</code></td><td><em>v</em> é um Vetor</td></tr>
+                            <tr><td><code>m.eMatriz(v)</code></td><td><em>v</em> é uma Matriz</td></tr>
+                            <tr><td><code>m.eVazio(v)</code></td><td><em>v</em> é <code>vazio</code> (null)</td></tr>
+                            <tr><td><code>m.eIndefinido(v)</code></td><td><em>v</em> é <code>indefinido</code></td></tr>
+                        </tbody>
+                    </table>
+                    <pre class="code-example"><span class="ex-kw">importar</span> metodos <span class="ex-kw">como</span> m;
+
+<span class="ex-kw">super</span> entrada = <span class="ex-fn">leia</span>(<span class="ex-str">"Digite um número: "</span>);
+<span class="ex-kw">se</span> (m.eNumero(entrada)) {
+    <span class="ex-fn">imprima</span>(<span class="ex-str">"Válido! Dobro:"</span>, entrada * <span class="ex-num">2</span>);
+} <span class="ex-kw">senao</span> {
+    <span class="ex-fn">imprima</span>(<span class="ex-str">"Entrada inválida — esperava um número."</span>);
+}</pre>
                 </div><!-- /tab-metodos -->
 
 
@@ -1954,6 +1983,96 @@ real prob = p.monteCarlo(dadoGrande, <span class="ex-num">50000</span>);
 <span class="ex-fn">imprima</span>(f<span class="ex-str">"P(dado > 4) ≈ {prob * 100}%"</span>);</pre>
                 </div><!-- /tab-prob -->
 
+                <!-- ═══════════════════════════════════════════════════════════
+     📐 ALGEBRA — Álgebra Linear e Geometria Analítica
+     ═══════════════════════════════════════════════════════════ -->
+                <div id="tab-algebra" class="tab-pane hidden">
+
+                    <p class="tab-intro">
+                        A biblioteca <strong>algebra</strong> oferece operações de álgebra linear e geometria
+                        analítica sobre <code>vetor</code> e <code>matriz</code>. Importe-a com
+                        <code>importar algebra como al;</code>
+                    </p>
+
+                    <h3>Álgebra Vetorial</h3>
+                    <table class="doc-table">
+                        <thead><tr><th>Função</th><th>Descrição</th></tr></thead>
+                        <tbody>
+                            <tr><td><code>al.vetorial(v, u)</code></td><td>Produto vetorial de <em>v</em> × <em>u</em> (ambos 3D). Retorna vetor.</td></tr>
+                            <tr><td><code>al.angulo(v, u)</code></td><td>Ângulo entre <em>v</em> e <em>u</em> em radianos.</td></tr>
+                            <tr><td><code>al.anguloDeg(v, u)</code></td><td>Ângulo em graus.</td></tr>
+                            <tr><td><code>al.projecao(v, u)</code></td><td>Projeção de <em>v</em> sobre <em>u</em>. Retorna vetor.</td></tr>
+                            <tr><td><code>al.saoParalelos(v, u)</code></td><td><code>verdadeiro</code> se <em>v</em> ∥ <em>u</em>.</td></tr>
+                            <tr><td><code>al.saoOrtogonais(v, u)</code></td><td><code>verdadeiro</code> se <em>v</em> ⊥ <em>u</em>.</td></tr>
+                        </tbody>
+                    </table>
+
+                    <h3>Álgebra Matricial</h3>
+                    <table class="doc-table">
+                        <thead><tr><th>Função</th><th>Descrição</th></tr></thead>
+                        <tbody>
+                            <tr><td><code>al.identidade(n)</code></td><td>Matriz identidade <em>n×n</em>.</td></tr>
+                            <tr><td><code>al.zeros(m, n)</code></td><td>Matriz zero <em>m×n</em>.</td></tr>
+                            <tr><td><code>al.determinante(M)</code></td><td>det(<em>M</em>) — eliminação gaussiana.</td></tr>
+                            <tr><td><code>al.traco(M)</code></td><td>tr(<em>M</em>) — soma da diagonal principal.</td></tr>
+                            <tr><td><code>al.inversa(M)</code></td><td><em>M</em>⁻¹ — Gauss-Jordan. Lança erro se singular.</td></tr>
+                            <tr><td><code>al.resolverSistema(A, b)</code></td><td>Resolve <em>Ax = b</em>. <em>b</em> deve ser vetor. Retorna vetor <em>x</em>.</td></tr>
+                        </tbody>
+                    </table>
+
+                    <h3>Geometria Analítica</h3>
+                    <table class="doc-table">
+                        <thead><tr><th>Função</th><th>Descrição</th></tr></thead>
+                        <tbody>
+                            <tr><td><code>al.distancia(p1, p2)</code></td><td>Distância euclidiana entre dois pontos (vetores).</td></tr>
+                            <tr><td><code>al.pontoMedio(p1, p2)</code></td><td>Ponto médio entre <em>p1</em> e <em>p2</em>.</td></tr>
+                            <tr><td><code>al.equacaoReta(A, B)</code></td><td>Equação da reta AB. Retorna mapa <code>{a, b, c}</code> tal que <em>ax+by+c=0</em>.</td></tr>
+                            <tr><td><code>al.distPontoReta(P, A, B)</code></td><td>Distância do ponto <em>P</em> à reta <em>AB</em>.</td></tr>
+                            <tr><td><code>al.intersecaoRetas(A, B, C, D)</code></td><td>Ponto de interseção das retas <em>AB</em> e <em>CD</em> (2D). Lança erro se paralelas.</td></tr>
+                            <tr><td><code>al.areaTriangulo(A, B, C)</code></td><td>Área do triângulo <em>ABC</em> (2D ou 3D).</td></tr>
+                            <tr><td><code>al.perimetroTriangulo(A, B, C)</code></td><td>Perímetro do triângulo <em>ABC</em>.</td></tr>
+                            <tr><td><code>al.areaCirculo(r)</code></td><td>π·r²</td></tr>
+                            <tr><td><code>al.perimetroCirculo(r)</code></td><td>2·π·r</td></tr>
+                            <tr><td><code>al.pontoCirculo(cx, cy, r, theta)</code></td><td>Ponto na circunferência de centro (cx,cy) e raio r para ângulo θ.</td></tr>
+                            <tr><td><code>al.equacaoPlano(A, B, C)</code></td><td>Equação do plano <em>ABC</em>. Retorna mapa <code>{a,b,c,d}</code> tal que <em>ax+by+cz+d=0</em>.</td></tr>
+                            <tr><td><code>al.distPontoPlano(P, plano)</code></td><td>Distância do ponto <em>P</em> ao plano (mapa de <code>equacaoPlano</code>).</td></tr>
+                            <tr><td><code>al.saoColineares(A, B, C)</code></td><td><code>verdadeiro</code> se os três pontos são colineares.</td></tr>
+                            <tr><td><code>al.saoCoplanares(A, B, C, D)</code></td><td><code>verdadeiro</code> se os quatro pontos são coplanares.</td></tr>
+                        </tbody>
+                    </table>
+
+                    <h3>Exemplo — Triângulo e plano</h3>
+                    <div class="code-block"><pre>importar algebra como al;
+importar metodos como m;
+
+<span class="ex-kw">super</span> A = m.vetor([0, 0, 0]);
+<span class="ex-kw">super</span> B = m.vetor([3, 0, 0]);
+<span class="ex-kw">super</span> C = m.vetor([0, 4, 0]);
+
+<span class="ex-fn">imprima</span>(<span class="ex-str">"Área:"</span>, al.areaTriangulo(A, B, C));
+<span class="ex-fn">imprima</span>(<span class="ex-str">"Perímetro:"</span>, al.perimetroTriangulo(A, B, C));
+
+<span class="ex-kw">super</span> plano = al.equacaoPlano(A, B, C);
+<span class="ex-kw">super</span> P = m.vetor([1, 1, 5]);
+<span class="ex-fn">imprima</span>(<span class="ex-str">"Dist. ao plano:"</span>, al.distPontoPlano(P, plano));
+<span class="ex-fn">imprima</span>(<span class="ex-str">"Coplanares?"</span>, al.saoCoplanares(A, B, C, P));</pre>
+                    </div>
+
+                    <h3>Exemplo — Sistema linear</h3>
+                    <div class="code-block"><pre>importar algebra como al;
+importar metodos como m;
+
+<span class="ex-comment">// Resolve 2x + y = 5 e x - y = 1</span>
+<span class="ex-kw">super</span> A = m.matriz([[2, 1], [1, -1]]);
+<span class="ex-kw">super</span> b = m.vetor([5, 1]);
+<span class="ex-kw">super</span> x = al.resolverSistema(A, b);
+<span class="ex-fn">imprima</span>(<span class="ex-str">"Solução:"</span>, x);   <span class="ex-comment">// [2, 1]</span>
+
+<span class="ex-fn">imprima</span>(<span class="ex-str">"det(A):"</span>, al.determinante(A));
+<span class="ex-fn">imprima</span>(<span class="ex-str">"A⁻¹:"</span>, al.inversa(A));</pre>
+                    </div>
+
+                </div><!-- /tab-algebra -->
 
                 <!-- ═══════════════════════════════════════════════════════════
      ⌨️ EDITOR
@@ -2245,16 +2364,16 @@ function doGet(e) {
 
     <!-- ===== SCRIPTS =====
      Ordem de carregamento obrigatória:
-     1. plotterApi.js  — API externa de gráficos (opcional mas necessário para bib graficos)
-     2. runtime.js     — classes, bibliotecas, I/O
-     3. compiler.js    — tradutor + executor
-     4. editor.js      — UI do editor
+     1. index.html    — PlotterAPI (opcional, para bib graficos)
+     2. plotterapi.js — runtime v4.3: classes, bibliotecas, I/O
+     3. editor.js     — compiler v4.2: tradutor + executor
+     4. runtime.js    — editor v4.0: UI do editor, highlight, autocomplete
 -->
-    <script src="js/plotterApi.js"
-        onerror="console.info('[Pseudo-IDE] plotterApi.js não encontrada — bib graficos indisponível.')"></script>
-    <script src="js/runtime.js"></script>
-    <script src="js/compiler.js"></script>
-    <script src="js/editor.js"></script>
+    <script src="index.html"
+        onerror="console.info('[Pseudo-IDE] PlotterAPI não encontrada — bib graficos indisponível.')"></script>
+    <script src="plotterapi.js"></script>
+    <script src="editor.js"></script>
+    <script src="runtime.js"></script>
 </body>
 
 </html>

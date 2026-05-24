@@ -249,6 +249,47 @@ const KW_FN = new Set([
   "uniforme",
   "rolarDados",
   "monteCarlo",
+  // metodos — verificadores de tipo
+  "eNumero",
+  "eInteiro",
+  "eReal",
+  "eTexto",
+  "eBooleano",
+  "eLista",
+  "eMapa",
+  "eConjunto",
+  "eVetor",
+  "eMatriz",
+  "eVazio",
+  "eIndefinido",
+  // algebra — vetorial e matricial
+  "vetorial",
+  "angulo",
+  "anguloDeg",
+  "projecao",
+  "saoParalelos",
+  "saoOrtogonais",
+  "identidade",
+  "zeros",
+  "determinante",
+  "traco",
+  "inversa",
+  "resolverSistema",
+  // algebra — geometria analítica
+  "distancia",
+  "pontoMedio",
+  "equacaoReta",
+  "distPontoReta",
+  "intersecaoRetas",
+  "areaTriangulo",
+  "perimetroTriangulo",
+  "areaCirculo",
+  "perimetroCirculo",
+  "pontoCirculo",
+  "equacaoPlano",
+  "distPontoPlano",
+  "saoColineares",
+  "saoCoplanares",
 ]);
 
 function esc(s) {
@@ -984,6 +1025,203 @@ const COMPLETIONS = [
     label: "p.monteCarlo(fn, n)",
     detail: "prob — simulação Monte Carlo",
     insert: "p.monteCarlo(",
+  },
+  // ── algebra ──────────────────────────────────────────────
+  {
+    label: "importar algebra como al",
+    detail: "snippet",
+    insert: "importar algebra como al;\n",
+  },
+  {
+    label: "al.vetorial(v, u)",
+    detail: "algebra — produto vetorial 3D",
+    insert: "al.vetorial(",
+  },
+  {
+    label: "al.angulo(v, u)",
+    detail: "algebra — ângulo entre vetores (rad)",
+    insert: "al.angulo(",
+  },
+  {
+    label: "al.anguloDeg(v, u)",
+    detail: "algebra — ângulo entre vetores (graus)",
+    insert: "al.anguloDeg(",
+  },
+  {
+    label: "al.projecao(v, u)",
+    detail: "algebra — projeção de v sobre u",
+    insert: "al.projecao(",
+  },
+  {
+    label: "al.saoParalelos(v, u)",
+    detail: "algebra — v ∥ u ?",
+    insert: "al.saoParalelos(",
+  },
+  {
+    label: "al.saoOrtogonais(v, u)",
+    detail: "algebra — v ⊥ u ?",
+    insert: "al.saoOrtogonais(",
+  },
+  {
+    label: "al.identidade(n)",
+    detail: "algebra — matriz identidade n×n",
+    insert: "al.identidade(",
+  },
+  {
+    label: "al.zeros(m, n)",
+    detail: "algebra — matriz zero m×n",
+    insert: "al.zeros(",
+  },
+  {
+    label: "al.determinante(M)",
+    detail: "algebra — det(M)",
+    insert: "al.determinante(",
+  },
+  {
+    label: "al.traco(M)",
+    detail: "algebra — tr(M) soma da diagonal",
+    insert: "al.traco(",
+  },
+  {
+    label: "al.inversa(M)",
+    detail: "algebra — M⁻¹",
+    insert: "al.inversa(",
+  },
+  {
+    label: "al.resolverSistema(A, b)",
+    detail: "algebra — Ax = b, retorna vetor x",
+    insert: "al.resolverSistema(",
+  },
+  {
+    label: "al.distancia(p1, p2)",
+    detail: "algebra — distância euclidiana",
+    insert: "al.distancia(",
+  },
+  {
+    label: "al.pontoMedio(p1, p2)",
+    detail: "algebra — ponto médio",
+    insert: "al.pontoMedio(",
+  },
+  {
+    label: "al.equacaoReta(A, B)",
+    detail: "algebra — mapa {a,b,c} de ax+by+c=0",
+    insert: "al.equacaoReta(",
+  },
+  {
+    label: "al.distPontoReta(P, A, B)",
+    detail: "algebra — dist ponto→reta",
+    insert: "al.distPontoReta(",
+  },
+  {
+    label: "al.intersecaoRetas(A, B, C, D)",
+    detail: "algebra — interseção 2D AB∩CD",
+    insert: "al.intersecaoRetas(",
+  },
+  {
+    label: "al.areaTriangulo(A, B, C)",
+    detail: "algebra — área do triângulo",
+    insert: "al.areaTriangulo(",
+  },
+  {
+    label: "al.perimetroTriangulo(A, B, C)",
+    detail: "algebra — perímetro do triângulo",
+    insert: "al.perimetroTriangulo(",
+  },
+  {
+    label: "al.areaCirculo(r)",
+    detail: "algebra — π·r²",
+    insert: "al.areaCirculo(",
+  },
+  {
+    label: "al.perimetroCirculo(r)",
+    detail: "algebra — 2·π·r",
+    insert: "al.perimetroCirculo(",
+  },
+  {
+    label: "al.pontoCirculo(cx, cy, r, theta)",
+    detail: "algebra — ponto na circunferência",
+    insert: "al.pontoCirculo(",
+  },
+  {
+    label: "al.equacaoPlano(A, B, C)",
+    detail: "algebra — mapa {a,b,c,d} de ax+by+cz+d=0",
+    insert: "al.equacaoPlano(",
+  },
+  {
+    label: "al.distPontoPlano(P, plano)",
+    detail: "algebra — dist ponto→plano",
+    insert: "al.distPontoPlano(",
+  },
+  {
+    label: "al.saoColineares(A, B, C)",
+    detail: "algebra — A, B, C colineares?",
+    insert: "al.saoColineares(",
+  },
+  {
+    label: "al.saoCoplanares(A, B, C, D)",
+    detail: "algebra — A,B,C,D coplanares?",
+    insert: "al.saoCoplanares(",
+  },
+  // ── metodos — verificadores de tipo ──────────────────────
+  {
+    label: "m.eNumero(v)",
+    detail: "metodos — v é número (não-NaN)?",
+    insert: "m.eNumero(",
+  },
+  {
+    label: "m.eInteiro(v)",
+    detail: "metodos — v é inteiro?",
+    insert: "m.eInteiro(",
+  },
+  {
+    label: "m.eReal(v)",
+    detail: "metodos — v é real (não inteiro)?",
+    insert: "m.eReal(",
+  },
+  {
+    label: "m.eTexto(v)",
+    detail: "metodos — v é caracter/texto?",
+    insert: "m.eTexto(",
+  },
+  {
+    label: "m.eBooleano(v)",
+    detail: "metodos — v é booleano?",
+    insert: "m.eBooleano(",
+  },
+  {
+    label: "m.eLista(v)",
+    detail: "metodos — v é lista?",
+    insert: "m.eLista(",
+  },
+  {
+    label: "m.eMapa(v)",
+    detail: "metodos — v é mapa?",
+    insert: "m.eMapa(",
+  },
+  {
+    label: "m.eConjunto(v)",
+    detail: "metodos — v é conjunto?",
+    insert: "m.eConjunto(",
+  },
+  {
+    label: "m.eVetor(v)",
+    detail: "metodos — v é vetor?",
+    insert: "m.eVetor(",
+  },
+  {
+    label: "m.eMatriz(v)",
+    detail: "metodos — v é matriz?",
+    insert: "m.eMatriz(",
+  },
+  {
+    label: "m.eVazio(v)",
+    detail: "metodos — v é vazio (null)?",
+    insert: "m.eVazio(",
+  },
+  {
+    label: "m.eIndefinido(v)",
+    detail: "metodos — v é indefinido?",
+    insert: "m.eIndefinido(",
   },
 ];
 

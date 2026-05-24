@@ -22,11 +22,15 @@ function __vp(valor, tipos, metodo, param) {
     if (v instanceof PseudoConjunto) return "Conjunto";
     if (v instanceof PseudoCaracter) return "Caracter";
     if (v instanceof PseudoNumero) return "Numero";
+    if (v instanceof PseudoMapa) return "Mapa";
     if (v instanceof PseudoVetor) return "Vetor";
     if (v instanceof PseudoMatriz) return "Matriz";
     if (typeof v === "boolean") return "booleano";
     if (typeof v === "function") return "função";
-    if (typeof v === "number") return Number.isInteger(v) ? "inteiro" : "real";
+    if (typeof v === "number") {
+      if (isNaN(v)) return "NaN";
+      return Number.isInteger(v) ? "inteiro" : "real";
+    }
     if (typeof v === "string") return "texto";
     return typeof v;
   };
@@ -44,6 +48,8 @@ function __vp(valor, tipos, metodo, param) {
         return typeof valor === "function";
       case "Lista":
         return valor instanceof PseudoLista;
+      case "Mapa":
+        return valor instanceof PseudoMapa;
       case "Conjunto":
         return valor instanceof PseudoConjunto;
       case "Caracter":
@@ -187,6 +193,30 @@ function traduzirErroJS(msg) {
   msg = msg.replace(
     /Invalid left-hand side in assignment/,
     "Erro de Sintaxe: Lado esquerdo da atribuição inválido.",
+  );
+  msg = msg.replace(
+    /Cannot set propert(?:y|ies) of (null|undefined)/g,
+    "Erro de Referência: Tentativa de definir propriedade em valor $1.",
+  );
+  msg = msg.replace(
+    /Invalid array length/,
+    "Erro de Intervalo: Tamanho de lista inválido (negativo ou muito grande).",
+  );
+  msg = msg.replace(
+    /RangeError/g,
+    "Erro de Intervalo",
+  );
+  msg = msg.replace(
+    /TypeError/g,
+    "Erro de Tipo",
+  );
+  msg = msg.replace(
+    /ReferenceError/g,
+    "Erro de Referência",
+  );
+  msg = msg.replace(
+    /SyntaxError/g,
+    "Erro de Sintaxe",
   );
   return msg;
 }
@@ -981,6 +1011,21 @@ const Bibliotecas = {
     mapa: () => new PseudoMapa(),
     conjunto: () => new PseudoConjunto(),
     numero: (v) => new PseudoNumero(v),
+
+    // ── Funções de validação de tipo ──────────────────────────
+    eNumero:    (v) => typeof v === "number" && !isNaN(v),
+    eInteiro:   (v) => typeof v === "number" && Number.isInteger(v),
+    eReal:      (v) => typeof v === "number" && !isNaN(v) && !Number.isInteger(v),
+    eTexto:     (v) => typeof v === "string" || v instanceof PseudoCaracter,
+    eBooleano:  (v) => typeof v === "boolean",
+    eLista:     (v) => v instanceof PseudoLista,
+    eMapa:      (v) => v instanceof PseudoMapa,
+    eConjunto:  (v) => v instanceof PseudoConjunto,
+    eVetor:     (v) => v instanceof PseudoVetor,
+    eMatriz:    (v) => v instanceof PseudoMatriz,
+    eVazio:     (v) => v === null,
+    eIndefinido:(v) => v === undefined,
+
     vetor: function (componentes) {
       return new PseudoVetor(
         componentes instanceof PseudoLista
@@ -1639,6 +1684,370 @@ const Bibliotecas = {
       return d / n;
     },
   },
+
+  /* ================================================================
+       algebra — Álgebra Linear e Geometria Analítica
+       Usa PseudoVetor e PseudoMatriz como representações de pontos/vetores.
+       Importar: importar algebra como al;
+   ================================================================ */
+  algebra: (function () {
+    const _al = {};
+
+    // ── helpers internos ────────────────────────────────────────────
+    function _assertVetor(v, fn, param) { __vp(v, ["Vetor"], fn, param); }
+    function _assertMat(M, fn, param)   { __vp(M, ["Matriz"], fn, param); }
+    function _assertNum(n, fn, param)   { __vp(n, ["numero"], fn, param); }
+    function _assertInt(n, fn, param)   { __vp(n, ["inteiro"], fn, param); }
+    function _assertMapa(m, fn, param)  { __vp(m, ["Mapa"], fn, param); }
+
+    // ── Produto vetorial 3D ─────────────────────────────────────────
+    _al.vetorial = (v, u) => {
+      _assertVetor(v, "algebra.vetorial", "v");
+      _assertVetor(u, "algebra.vetorial", "u");
+      if (v._v.length !== 3 || u._v.length !== 3)
+        throw new Error("algebra.vetorial(): ambos os vetores devem ter dimensão 3.");
+      return new PseudoVetor([
+        v._v[1] * u._v[2] - v._v[2] * u._v[1],
+        v._v[2] * u._v[0] - v._v[0] * u._v[2],
+        v._v[0] * u._v[1] - v._v[1] * u._v[0],
+      ]);
+    };
+
+    // ── Ângulo entre vetores (radianos) ─────────────────────────────
+    _al.angulo = (v, u) => {
+      _assertVetor(v, "algebra.angulo", "v");
+      _assertVetor(u, "algebra.angulo", "u");
+      if (v._v.length !== u._v.length)
+        throw new Error("algebra.angulo(): vetores devem ter a mesma dimensão.");
+      const nv = v.norma(), nu = u.norma();
+      if (nv === 0 || nu === 0)
+        throw new Error("algebra.angulo(): vetor zero não possui ângulo definido.");
+      const cos = Math.min(1, Math.max(-1, v.ponto(u) / (nv * nu)));
+      return Math.acos(cos);
+    };
+
+    // ── Ângulo entre vetores (graus) ────────────────────────────────
+    _al.anguloDeg = (v, u) => _al.angulo(v, u) * (180 / Math.PI);
+
+    // ── Projeção de v sobre u ───────────────────────────────────────
+    _al.projecao = (v, u) => {
+      _assertVetor(v, "algebra.projecao", "v");
+      _assertVetor(u, "algebra.projecao", "u");
+      const nu2 = u.ponto(u);
+      if (nu2 === 0)
+        throw new Error("algebra.projecao(): não é possível projetar sobre o vetor zero.");
+      return u.escalar(v.ponto(u) / nu2);
+    };
+
+    // ── Paralelismo e ortogonalidade ────────────────────────────────
+    _al.saoParalelos = (v, u) => {
+      _assertVetor(v, "algebra.saoParalelos", "v");
+      _assertVetor(u, "algebra.saoParalelos", "u");
+      const nv = v.norma(), nu = u.norma();
+      if (nv === 0 || nu === 0) return true;
+      return Math.abs(Math.abs(v.ponto(u) / (nv * nu)) - 1) < 1e-9;
+    };
+    _al.saoOrtogonais = (v, u) => {
+      _assertVetor(v, "algebra.saoOrtogonais", "v");
+      _assertVetor(u, "algebra.saoOrtogonais", "u");
+      return Math.abs(v.ponto(u)) < 1e-9;
+    };
+
+    // ── Matrizes especiais ──────────────────────────────────────────
+    _al.identidade = (n) => {
+      _assertInt(n, "algebra.identidade", "n");
+      if (n < 1) throw new Error("algebra.identidade(): n deve ser ≥ 1.");
+      return new PseudoMatriz(
+        Array.from({ length: n }, (_, i) => Array.from({ length: n }, (_, j) => (i === j ? 1 : 0)))
+      );
+    };
+    _al.zeros = (m, n) => {
+      _assertInt(m, "algebra.zeros", "m");
+      _assertInt(n, "algebra.zeros", "n");
+      if (m < 1 || n < 1) throw new Error("algebra.zeros(): m e n devem ser ≥ 1.");
+      return new PseudoMatriz(Array.from({ length: m }, () => new Array(n).fill(0)));
+    };
+
+    // ── Determinante (qualquer dimensão via eliminação de Gauss) ───
+    _al.determinante = (M) => {
+      _assertMat(M, "algebra.determinante", "M");
+      if (M.linhas !== M.colunas)
+        throw new Error("algebra.determinante(): a matriz deve ser quadrada.");
+      const n = M.linhas;
+      if (n === 1) return M._v[0][0];
+      if (n === 2) {
+        const a = M._v;
+        return a[0][0] * a[1][1] - a[0][1] * a[1][0];
+      }
+      if (n === 3) {
+        const a = M._v;
+        return (
+          a[0][0] * (a[1][1] * a[2][2] - a[1][2] * a[2][1]) -
+          a[0][1] * (a[1][0] * a[2][2] - a[1][2] * a[2][0]) +
+          a[0][2] * (a[1][0] * a[2][1] - a[1][1] * a[2][0])
+        );
+      }
+      const m = M._v.map((r) => [...r]);
+      let det = 1;
+      for (let col = 0; col < n; col++) {
+        let pivotRow = -1;
+        for (let row = col; row < n; row++) {
+          if (Math.abs(m[row][col]) > 1e-10) { pivotRow = row; break; }
+        }
+        if (pivotRow === -1) return 0;
+        if (pivotRow !== col) { [m[col], m[pivotRow]] = [m[pivotRow], m[col]]; det *= -1; }
+        det *= m[col][col];
+        for (let row = col + 1; row < n; row++) {
+          const f = m[row][col] / m[col][col];
+          for (let j = col; j < n; j++) m[row][j] -= f * m[col][j];
+        }
+      }
+      return det;
+    };
+
+    // ── Traço ───────────────────────────────────────────────────────
+    _al.traco = (M) => {
+      _assertMat(M, "algebra.traco", "M");
+      if (M.linhas !== M.colunas)
+        throw new Error("algebra.traco(): a matriz deve ser quadrada.");
+      let t = 0;
+      for (let i = 0; i < M.linhas; i++) t += M._v[i][i];
+      return t;
+    };
+
+    // ── Inversa (qualquer dimensão via Gauss-Jordan) ─────────────────
+    _al.inversa = (M) => {
+      _assertMat(M, "algebra.inversa", "M");
+      const n = M.linhas;
+      if (n !== M.colunas)
+        throw new Error("algebra.inversa(): a matriz deve ser quadrada.");
+      const det = _al.determinante(M);
+      if (Math.abs(det) < 1e-10)
+        throw new Error("algebra.inversa(): a matriz é singular (determinante = 0).");
+      if (n === 2) {
+        const a = M._v;
+        return new PseudoMatriz([
+          [ a[1][1] / det, -a[0][1] / det],
+          [-a[1][0] / det,  a[0][0] / det],
+        ]);
+      }
+      if (n === 3) {
+        const a = M._v;
+        return new PseudoMatriz([
+          [(a[1][1]*a[2][2]-a[1][2]*a[2][1])/det, (a[0][2]*a[2][1]-a[0][1]*a[2][2])/det, (a[0][1]*a[1][2]-a[0][2]*a[1][1])/det],
+          [(a[1][2]*a[2][0]-a[1][0]*a[2][2])/det, (a[0][0]*a[2][2]-a[0][2]*a[2][0])/det, (a[0][2]*a[1][0]-a[0][0]*a[1][2])/det],
+          [(a[1][0]*a[2][1]-a[1][1]*a[2][0])/det, (a[0][1]*a[2][0]-a[0][0]*a[2][1])/det, (a[0][0]*a[1][1]-a[0][1]*a[1][0])/det],
+        ]);
+      }
+      const aug = M._v.map((row, i) => {
+        const r = [...row];
+        for (let j = 0; j < n; j++) r.push(j === i ? 1 : 0);
+        return r;
+      });
+      for (let col = 0; col < n; col++) {
+        let pRow = col;
+        for (let row = col + 1; row < n; row++)
+          if (Math.abs(aug[row][col]) > Math.abs(aug[pRow][col])) pRow = row;
+        if (Math.abs(aug[pRow][col]) < 1e-10)
+          throw new Error("algebra.inversa(): a matriz é singular.");
+        if (pRow !== col) [aug[col], aug[pRow]] = [aug[pRow], aug[col]];
+        const piv = aug[col][col];
+        for (let j = 0; j < 2 * n; j++) aug[col][j] /= piv;
+        for (let row = 0; row < n; row++) {
+          if (row !== col) {
+            const f = aug[row][col];
+            for (let j = 0; j < 2 * n; j++) aug[row][j] -= f * aug[col][j];
+          }
+        }
+      }
+      return new PseudoMatriz(aug.map((r) => r.slice(n)));
+    };
+
+    // ── Resolução de sistema linear Ax = b (Gauss com pivotamento) ──
+    _al.resolverSistema = (A, b) => {
+      _assertMat(A, "algebra.resolverSistema", "A");
+      _assertVetor(b, "algebra.resolverSistema", "b");
+      const n = A.linhas;
+      if (n !== A.colunas)
+        throw new Error("algebra.resolverSistema(): A deve ser quadrada.");
+      if (n !== b._v.length)
+        throw new Error("algebra.resolverSistema(): b deve ter o mesmo número de linhas que A.");
+      const aug = A._v.map((row, i) => [...row, b._v[i]]);
+      for (let col = 0; col < n; col++) {
+        let pRow = col;
+        for (let row = col + 1; row < n; row++)
+          if (Math.abs(aug[row][col]) > Math.abs(aug[pRow][col])) pRow = row;
+        if (Math.abs(aug[pRow][col]) < 1e-10)
+          throw new Error("algebra.resolverSistema(): sistema sem solução única (matriz singular).");
+        if (pRow !== col) [aug[col], aug[pRow]] = [aug[pRow], aug[col]];
+        for (let row = col + 1; row < n; row++) {
+          const f = aug[row][col] / aug[col][col];
+          for (let j = col; j <= n; j++) aug[row][j] -= f * aug[col][j];
+        }
+      }
+      const x = new Array(n);
+      for (let i = n - 1; i >= 0; i--) {
+        x[i] = aug[i][n];
+        for (let j = i + 1; j < n; j++) x[i] -= aug[i][j] * x[j];
+        x[i] /= aug[i][i];
+      }
+      return new PseudoVetor(x);
+    };
+
+    // ── Geometria Analítica ─────────────────────────────────────────
+
+    // Distância euclidiana entre dois pontos (representados como Vetores)
+    _al.distancia = (p1, p2) => {
+      _assertVetor(p1, "algebra.distancia", "p1");
+      _assertVetor(p2, "algebra.distancia", "p2");
+      if (p1._v.length !== p2._v.length)
+        throw new Error("algebra.distancia(): pontos devem ter a mesma dimensão.");
+      return p1.subtrair(p2).norma();
+    };
+
+    // Ponto médio entre dois pontos
+    _al.pontoMedio = (p1, p2) => {
+      _assertVetor(p1, "algebra.pontoMedio", "p1");
+      _assertVetor(p2, "algebra.pontoMedio", "p2");
+      if (p1._v.length !== p2._v.length)
+        throw new Error("algebra.pontoMedio(): pontos devem ter a mesma dimensão.");
+      return new PseudoVetor(p1._v.map((v, i) => (v + p2._v[i]) / 2));
+    };
+
+    // Equação da reta 2D por dois pontos → Mapa {a, b, c} tal que ax + by + c = 0
+    _al.equacaoReta = (A, B) => {
+      _assertVetor(A, "algebra.equacaoReta", "A");
+      _assertVetor(B, "algebra.equacaoReta", "B");
+      if (A._v.length < 2 || B._v.length < 2)
+        throw new Error("algebra.equacaoReta(): vetores devem ter dimensão ≥ 2.");
+      const dx = B._v[0] - A._v[0], dy = B._v[1] - A._v[1];
+      if (Math.abs(dx) < 1e-10 && Math.abs(dy) < 1e-10)
+        throw new Error("algebra.equacaoReta(): A e B são o mesmo ponto.");
+      const m = new PseudoMapa();
+      m.definir("a", dy);
+      m.definir("b", -dx);
+      m.definir("c", -dy * A._v[0] + dx * A._v[1]);
+      return m;
+    };
+
+    // Distância de um ponto 2D/3D a uma reta definida por dois pontos
+    _al.distPontoReta = (P, A, B) => {
+      _assertVetor(P, "algebra.distPontoReta", "P");
+      _assertVetor(A, "algebra.distPontoReta", "A");
+      _assertVetor(B, "algebra.distPontoReta", "B");
+      const AP = P.subtrair(A), AB = B.subtrair(A);
+      const abNorm = AB.norma();
+      if (abNorm < 1e-10)
+        throw new Error("algebra.distPontoReta(): A e B são o mesmo ponto.");
+      if (AP._v.length === 2)
+        return Math.abs(AP._v[0] * AB._v[1] - AP._v[1] * AB._v[0]) / abNorm;
+      return _al.vetorial(AP, AB).norma() / abNorm;
+    };
+
+    // Intersecção de duas retas 2D, cada uma definida por dois pontos
+    _al.intersecaoRetas = (A, B, C, D) => {
+      _assertVetor(A, "algebra.intersecaoRetas", "A");
+      _assertVetor(B, "algebra.intersecaoRetas", "B");
+      _assertVetor(C, "algebra.intersecaoRetas", "C");
+      _assertVetor(D, "algebra.intersecaoRetas", "D");
+      const d1x = B._v[0] - A._v[0], d1y = B._v[1] - A._v[1];
+      const d2x = D._v[0] - C._v[0], d2y = D._v[1] - C._v[1];
+      const denom = d1x * d2y - d1y * d2x;
+      if (Math.abs(denom) < 1e-10)
+        throw new Error("algebra.intersecaoRetas(): as retas são paralelas ou coincidentes.");
+      const t = ((C._v[0] - A._v[0]) * d2y - (C._v[1] - A._v[1]) * d2x) / denom;
+      return new PseudoVetor([A._v[0] + t * d1x, A._v[1] + t * d1y]);
+    };
+
+    // Área de triângulo por três pontos (2D ou 3D)
+    _al.areaTriangulo = (A, B, C) => {
+      _assertVetor(A, "algebra.areaTriangulo", "A");
+      _assertVetor(B, "algebra.areaTriangulo", "B");
+      _assertVetor(C, "algebra.areaTriangulo", "C");
+      const AB = B.subtrair(A), AC = C.subtrair(A);
+      if (AB._v.length === 2)
+        return Math.abs(AB._v[0] * AC._v[1] - AB._v[1] * AC._v[0]) / 2;
+      return _al.vetorial(AB, AC).norma() / 2;
+    };
+
+    // Perímetro de triângulo por três pontos
+    _al.perimetroTriangulo = (A, B, C) => {
+      _assertVetor(A, "algebra.perimetroTriangulo", "A");
+      _assertVetor(B, "algebra.perimetroTriangulo", "B");
+      _assertVetor(C, "algebra.perimetroTriangulo", "C");
+      return _al.distancia(A, B) + _al.distancia(B, C) + _al.distancia(C, A);
+    };
+
+    // Área e perímetro de círculo
+    _al.areaCirculo = (r) => {
+      _assertNum(r, "algebra.areaCirculo", "r");
+      if (r < 0) throw new Error("algebra.areaCirculo(): raio deve ser ≥ 0.");
+      return Math.PI * r * r;
+    };
+    _al.perimetroCirculo = (r) => {
+      _assertNum(r, "algebra.perimetroCirculo", "r");
+      if (r < 0) throw new Error("algebra.perimetroCirculo(): raio deve ser ≥ 0.");
+      return 2 * Math.PI * r;
+    };
+
+    // Ponto sobre uma circunferência dado ângulo θ em radianos → Vetor 2D
+    _al.pontoCirculo = (cx, cy, r, theta) => {
+      _assertNum(cx, "algebra.pontoCirculo", "cx");
+      _assertNum(cy, "algebra.pontoCirculo", "cy");
+      _assertNum(r,  "algebra.pontoCirculo", "r");
+      _assertNum(theta, "algebra.pontoCirculo", "theta");
+      if (r < 0) throw new Error("algebra.pontoCirculo(): raio deve ser ≥ 0.");
+      return new PseudoVetor([cx + r * Math.cos(theta), cy + r * Math.sin(theta)]);
+    };
+
+    // Equação do plano 3D por três pontos → Mapa {a, b, c, d} tal que ax+by+cz+d=0
+    _al.equacaoPlano = (A, B, C) => {
+      _assertVetor(A, "algebra.equacaoPlano", "A");
+      _assertVetor(B, "algebra.equacaoPlano", "B");
+      _assertVetor(C, "algebra.equacaoPlano", "C");
+      if ([A, B, C].some((v) => v._v.length < 3))
+        throw new Error("algebra.equacaoPlano(): vetores devem ter dimensão 3.");
+      const normal = _al.vetorial(B.subtrair(A), C.subtrair(A));
+      if (normal.norma() < 1e-10)
+        throw new Error("algebra.equacaoPlano(): os três pontos são colineares.");
+      const [a, b, c] = normal._v;
+      const d = -(a * A._v[0] + b * A._v[1] + c * A._v[2]);
+      const m = new PseudoMapa();
+      m.definir("a", a); m.definir("b", b); m.definir("c", c); m.definir("d", d);
+      return m;
+    };
+
+    // Distância de um ponto 3D a um plano (dado como Mapa com chaves a,b,c,d)
+    _al.distPontoPlano = (P, plano) => {
+      _assertVetor(P, "algebra.distPontoPlano", "P");
+      _assertMapa(plano, "algebra.distPontoPlano", "plano");
+      if (!["a","b","c","d"].every((k) => plano._v.has(k)))
+        throw new Error("algebra.distPontoPlano(): use al.equacaoPlano() para gerar o plano.");
+      if (P._v.length < 3)
+        throw new Error("algebra.distPontoPlano(): P deve ser um Vetor 3D.");
+      const a = plano._v.get("a"), b = plano._v.get("b"),
+            c = plano._v.get("c"), d = plano._v.get("d");
+      return Math.abs(a*P._v[0] + b*P._v[1] + c*P._v[2] + d) /
+             Math.sqrt(a*a + b*b + c*c);
+    };
+
+    // Colinearidade e coplanaridade
+    _al.saoColineares = (A, B, C) => {
+      _assertVetor(A, "algebra.saoColineares", "A");
+      _assertVetor(B, "algebra.saoColineares", "B");
+      _assertVetor(C, "algebra.saoColineares", "C");
+      return _al.areaTriangulo(A, B, C) < 1e-10;
+    };
+    _al.saoCoplanares = (A, B, C, D) => {
+      [A,B,C,D].forEach((v,i) => _assertVetor(v, "algebra.saoCoplanares", ["A","B","C","D"][i]));
+      if ([A,B,C,D].some((v) => v._v.length < 3))
+        throw new Error("algebra.saoCoplanares(): vetores devem ter dimensão 3.");
+      const normal = _al.vetorial(B.subtrair(A), C.subtrair(A));
+      return Math.abs(normal.ponto(D.subtrair(A))) < 1e-8;
+    };
+
+    return _al;
+  })(),
 };
 
 /* ============================================================
@@ -1705,13 +2114,24 @@ function leiaAsync(mensagem) {
       field.style.color = "var(--text-muted)";
       field.style.borderColor = "transparent";
       prompt.style.color = "var(--text-muted)";
-      resolve(raw.trim() !== "" && !isNaN(raw) ? parseFloat(raw) : raw);
+      const trimmed = raw.trim();
+      if (trimmed === "Infinito")    { resolve(Infinity);  return; }
+      if (trimmed === "NegInfinito") { resolve(-Infinity); return; }
+      resolve(trimmed !== "" && !isNaN(trimmed) ? parseFloat(trimmed) : trimmed);
     });
   });
 }
 
-const raiz = (x) => Math.sqrt(x);
-const expo = (x, y) => Math.pow(x, y);
+function raiz(x) {
+  if (typeof x !== "number" || isNaN(x)) throw new Error(`raiz(): esperado número, recebeu ${_leg(x)}.`);
+  if (x < 0) throw new Error(`raiz(): raiz quadrada de número negativo (${x}) não é real.`);
+  return Math.sqrt(x);
+}
+function expo(x, y) {
+  if (typeof x !== "number" || isNaN(x)) throw new Error(`expo(): base deve ser número, recebeu ${_leg(x)}.`);
+  if (typeof y !== "number" || isNaN(y)) throw new Error(`expo(): expoente deve ser número, recebeu ${_leg(y)}.`);
+  return Math.pow(x, y);
+}
 
 /* ============================================================
    8. MARCADORES DE PROJETO
