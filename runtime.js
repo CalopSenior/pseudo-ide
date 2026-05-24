@@ -1457,6 +1457,11 @@ codeEditor.addEventListener("keydown", function (e) {
     }
   }
 
+  if (e.ctrlKey && e.altKey && (e.key === "f" || e.key === "F")) {
+    e.preventDefault();
+    window.formatarCodigo();
+    return;
+  }
   if (e.ctrlKey && (e.key === "s" || e.key === "S")) {
     e.preventDefault();
     executarCodigo();
@@ -2074,39 +2079,55 @@ document.getElementById("help-modal").addEventListener("click", function (e) {
    PRETTIER NATIVO (Auto-Formatação)
    ============================================================ */
 window.formatarCodigo = function () {
-  _pushSnap(); // Salva estado atual para o Ctrl+Z funcionar
+  _pushSnap();
 
-  let linhas = codeEditor.value.split("\n");
+  // Tokenize strings ("...") e comentários (//) para não distorcer
+  // a contagem de chaves nem o espaçamento aplicados abaixo.
+  const toks = [];
+  let s = codeEditor.value.replace(
+    /"(?:[^"\\]|\\.)*"|\/\/[^\n]*/g,
+    (m) => { toks.push(m); return `\x00${toks.length - 1}\x00`; }
+  );
+
+  // Vírgula sem espaço → vírgula + espaço  ("a,b" → "a, b")
+  s = s.replace(/,(?!\s)/g, ", ");
+
+  // Garante exatamente um espaço antes de "{"  ("f(){" → "f() {")
+  s = s.replace(/([^\s])\s*\{/g, "$1 {");
+
+  // Indentação (4 espaços) + colapso de linhas em branco consecutivas
+  const linhas = s.split("\n");
   let nivel = 0;
-  let formatado = [];
+  const out = [];
+  let ultBranco = false;
 
-  linhas.forEach((linha) => {
-    let l = linha.trim();
+  for (const linha of linhas) {
+    const l = linha.trim();
+
     if (!l) {
-      formatado.push("");
-      return;
-    } // Mantém linhas em branco
-
-    let aberturas = (l.match(/\{/g) || []).length;
-    let fechamentos = (l.match(/\}/g) || []).length;
-
-    // Se a linha começa fechando bloco (ex: "}" ou "} senao {")
-    if (l.startsWith("}")) nivel = Math.max(0, nivel - 1);
-
-    formatado.push("    ".repeat(nivel) + l);
-
-    // Ajusta a indentação para a PRÓXIMA linha
-    if (!l.startsWith("}")) {
-      nivel += aberturas - fechamentos;
-    } else {
-      nivel += aberturas; // Se for "} senao {", sobe o nível de novo
+      if (!ultBranco) out.push("");
+      ultBranco = true;
+      continue;
     }
-    nivel = Math.max(0, nivel);
-  });
+    ultBranco = false;
 
-  codeEditor.value = formatado.join("\n");
+    const ab = (l.match(/\{/g) || []).length;
+    const fe = (l.match(/\}/g) || []).length;
+
+    if (l[0] === "}") nivel = Math.max(0, nivel - 1);
+    out.push("    ".repeat(nivel) + l);
+    // Se a linha começa com "}" (ex: "} senao {"), apenas adiciona
+    // as aberturas de volta; as fechamentos já foram descontadas acima.
+    nivel = l[0] === "}" ? Math.max(0, nivel + ab) : Math.max(0, nivel + ab - fe);
+  }
+
+  // Remove linhas em branco no final
+  while (out.length && out[out.length - 1] === "") out.pop();
+
+  // Restaura tokens protegidos
+  codeEditor.value = out.join("\n").replace(/\x00(\d+)\x00/g, (_, i) => toks[+i]);
   atualizarEditor();
-  imprima("Código formatado com sucesso!");
+  imprima("✓ Código formatado.");
 };
 
 window.gerarLinkCompartilhamento = async function () {
@@ -2158,15 +2179,16 @@ window.gerarLinkCompartilhamento = async function () {
 window.addEventListener("keydown", (e) => {
   if (e.ctrlKey && (e.key === "s" || e.key === "S")) e.preventDefault();
   if (e.ctrlKey && (e.key === "m" || e.key === "M")) e.preventDefault();
-  /* BLOQUEIA O CTRL+F DO NAVEGADOR E ABRE A NOSSA BUSCA */
-  if (e.ctrlKey && (e.key === "f" || e.key === "F")) {
-    e.preventDefault();
-    window.openSearch();
-    return;
-  }
-  if (e.shiftKey && e.altKey && (e.key === "f" || e.key === "F")) {
+  /* Ctrl+Alt+F → formatar código (Prettier nativo) */
+  if (e.ctrlKey && e.altKey && (e.key === "f" || e.key === "F")) {
     e.preventDefault();
     window.formatarCodigo();
+    return;
+  }
+  /* BLOQUEIA O CTRL+F DO NAVEGADOR E ABRE A NOSSA BUSCA */
+  if (e.ctrlKey && !e.altKey && (e.key === "f" || e.key === "F")) {
+    e.preventDefault();
+    window.openSearch();
     return;
   }
   if (e.key === "F1") e.preventDefault();
