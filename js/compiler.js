@@ -44,7 +44,10 @@ function __vp(valor, tipos, metodo, param) {
     if (v instanceof PseudoNumero) return "Numero";
     if (typeof v === "boolean") return "booleano";
     if (typeof v === "function") return "função";
-    if (typeof v === "number") return Number.isInteger(v) ? "inteiro" : "real";
+    if (typeof v === "number") {
+      if (isNaN(v)) return "NaN";
+      return Number.isInteger(v) ? "inteiro" : "real";
+    }
     if (typeof v === "string") return "texto";
     return typeof v;
   };
@@ -148,6 +151,21 @@ function traduzirErroJS(msg) {
     /Invalid left-hand side in assignment/,
     "Erro de Sintaxe: Lado esquerdo da atribuição inválido (não é possível atribuir a esse valor).",
   );
+  // Cannot set properties of null/undefined
+  msg = msg.replace(
+    /Cannot set propert(?:y|ies) of (null|undefined)/g,
+    "Erro de Referência: Tentativa de modificar uma propriedade de um valor $1 (vazio/indefinido).",
+  );
+  // Out of range / Invalid array length
+  msg = msg.replace(
+    /Invalid array length/,
+    "Erro de Intervalo: Tamanho de lista inválido (valor negativo ou muito grande).",
+  );
+  // RangeError: Maximum call stack / already handled above, but add generic range
+  msg = msg.replace(
+    /^RangeError:\s*/,
+    "Erro de Intervalo: ",
+  );
   return msg;
 }
 
@@ -172,23 +190,48 @@ const _EVAL_HEADER_LINES = 2; // linhas do wrapper async antes do código do usu
 function _extrairLinhaErro(stack) {
   if (!stack || !_lastTranslatedCode) return null;
 
-  // Padrões de stack trace — do mais específico para o mais genérico
+  const transLines = _lastTranslatedCode.split("\n");
+  const minEval = _EVAL_HEADER_LINES + 1;
+  const maxEval = _EVAL_HEADER_LINES + transLines.length;
+
+  // Padrões de stack trace — do mais específico para o mais genérico (todos com flag /g)
   const padroes = [
-    /<anonymous>:(\d+):\d+/, // Chrome / Edge
-    /debugger eval code:(\d+):\d+/i, // Firefox
-    /eval code:(\d+):\d+/i, // Firefox (variante)
-    /Function code:(\d+):\d+/i, // Edge legacy
-    /@[^\n@]*:(\d+):\d+/, // Firefox genérico  (@url:L:C)
+    /<anonymous>:(\d+):\d+/g,       // Chrome / Edge
+    /debugger eval code:(\d+):\d+/gi, // Firefox
+    /eval code:(\d+):\d+/gi,          // Firefox (variante)
+    /Function code:(\d+):\d+/gi,      // Edge legacy
+    /@[^\n@]*?:(\d+):\d+/g,           // Firefox genérico (@url:L:C)
   ];
 
   let linhaEval = null;
-  for (const re of padroes) {
-    const m = stack.match(re);
-    if (m) {
-      linhaEval = parseInt(m[1]);
-      break;
+
+  // 1ª tentativa: primeiro frame dentro do intervalo válido do código do usuário
+  // (evita capturar frames de funções de biblioteca que também aparecem como <anonymous>)
+  outer: for (const re of padroes) {
+    re.lastIndex = 0;
+    let m;
+    while ((m = re.exec(stack)) !== null) {
+      const candidate = parseInt(m[1]);
+      if (candidate >= minEval && candidate <= maxEval) {
+        linhaEval = candidate;
+        break outer;
+      }
     }
   }
+
+  // Fallback: primeiro match de qualquer padrão (casos em que o código não foi
+  // traduzido ainda ou o intervalo não pode ser determinado com precisão)
+  if (linhaEval === null) {
+    for (const re of padroes) {
+      re.lastIndex = 0;
+      const m = re.exec(stack);
+      if (m) {
+        linhaEval = parseInt(m[1]);
+        break;
+      }
+    }
+  }
+
   if (!linhaEval) return null;
 
   // Linha no corpo traduzido (1-based)
@@ -196,19 +239,13 @@ function _extrairLinhaErro(stack) {
   if (bodyLine <= 0) return null;
 
   // Mapear linha JS → linha pseudo ignorando linhas injetadas pelo
-  // processarParametrosTipados (reconhecidas pelo prefixo __p_).
-  const transLines = _lastTranslatedCode.split("\n");
+  // processarParametrosTipados (marcadas com o token /*__I*/).
   let pseudoLine = 0;
   const linhasParaVarrer = Math.min(bodyLine, transLines.length);
 
   for (let i = 0; i < linhasParaVarrer; i++) {
-    const t = transLines[i].trim();
-    // Linha injetada? (validação de tipo/valor de parâmetro tipado)
-    const injetada =
-      /^let __p_\w+\s*=/.test(t) ||
-      /^if\s*\(\s*__p_\w+\s*===\s*undefined\s*\)/.test(t) ||
-      /^if\s*\(\s*!\s*\(__p_\w+/.test(t);
-    if (!injetada) pseudoLine++;
+    const t = transLines[i];
+    if (!t.includes("/*__I*/")) pseudoLine++;
   }
 
   return pseudoLine > 0 ? pseudoLine : null;
@@ -254,7 +291,9 @@ class PseudoCaracter {
     return new PseudoCaracter(this._v.trim());
   }
   mesclar(s) {
-    return new PseudoCaracter(this._v + String(s));
+    __vp(s, ["texto", "Caracter", "numero", "inteiro", "booleano"], "caracter.mesclar", "s");
+    const sv = s instanceof PseudoCaracter ? s._v : String(s);
+    return new PseudoCaracter(this._v + sv);
   }
   toString() {
     return this._v;
@@ -314,6 +353,10 @@ class PseudoMapa {
     return this;
   }
   obter(chave) {
+    if (!this._v.has(chave))
+      throw new Error(
+        `mapa.obter(): a chave '${String(chave)}' não existe no mapa. Use .tem() para verificar antes.`,
+      );
     return this._v.get(chave);
   }
   remover(chave) {
@@ -504,7 +547,8 @@ function _vtx(v) {
   if (v === true) return "verdadeiro";
   if (v === false) return "falso";
   if (v === Infinity) return "Infinito";
-  if (v === -Infinity) return "-Infinito";
+  if (v === -Infinity) return "NegInfinito";
+  if (typeof v === "number" && isNaN(v)) return "NaN";
   return String(v);
 }
 
@@ -522,10 +566,10 @@ function _validarListaNumerica(lista, metodo) {
   if (lista._v.length === 0)
     throw new Error(`${metodo}(): a lista não pode estar vazia.`);
   lista._v.forEach((v, i) => {
-    if (typeof v !== "number")
+    if (typeof v !== "number" || isNaN(v))
       throw new Error(
-        `${metodo}(): a lista deve conter apenas números. ` +
-          `Elemento na posição ${i} é do tipo "${typeof v}" (valor: "${v}").`,
+        `${metodo}(): a lista deve conter apenas números válidos. ` +
+          `Elemento na posição ${i} é ${isNaN(v) ? "NaN" : `do tipo "${typeof v}"`} (valor: "${v}").`,
       );
   });
 }
@@ -627,19 +671,27 @@ const Bibliotecas = {
 
     ln: (x) => {
       __vp(x, ["numero"], "mat.ln", "x");
+      if (x < 0)
+        throw new Error(`mat.ln(): x deve ser ≥ 0 no domínio real (recebido: ${x}).`);
       return Math.log(x);
     },
     log2: (x) => {
       __vp(x, ["numero"], "mat.log2", "x");
+      if (x < 0)
+        throw new Error(`mat.log2(): x deve ser ≥ 0 no domínio real (recebido: ${x}).`);
       return Math.log2(x);
     },
     log10: (x) => {
       __vp(x, ["numero"], "mat.log10", "x");
+      if (x < 0)
+        throw new Error(`mat.log10(): x deve ser ≥ 0 no domínio real (recebido: ${x}).`);
       return Math.log10(x);
     },
     log: (x, base) => {
       __vp(x, ["numero"], "mat.log", "x");
       __vp(base, ["numero"], "mat.log", "base");
+      if (x < 0)
+        throw new Error(`mat.log(): x deve ser ≥ 0 no domínio real (recebido: ${x}).`);
       if (base <= 0 || base === 1)
         throw new Error("mat.log(): base deve ser > 0 e ≠ 1.");
       return Math.log(x) / Math.log(base);
@@ -937,6 +989,10 @@ const Bibliotecas = {
 
       if (typeof L !== "number" || typeof R !== "number")
         throw new Error("calculo.limite(): fn deve retornar um número.");
+      if (isNaN(L) || isNaN(R))
+        throw new Error(
+          `calculo.limite(): fn retornou NaN em x=${ponto} — verifique o domínio da função.`,
+        );
       if (!isFinite(L) && !isFinite(R)) return L; // Ambos ±Infinity — retorna Infinity/NegInfinito
       if (Math.abs(L - R) > 1e-4)
         throw new Error(
@@ -964,10 +1020,20 @@ const Bibliotecas = {
 
       const h = 1e-5;
       if (ordem === 1) {
-        return (fn(ponto + h) - fn(ponto - h)) / (2 * h);
+        const r = (fn(ponto + h) - fn(ponto - h)) / (2 * h);
+        if (isNaN(r))
+          throw new Error(
+            `calculo.derivada(): resultado indefinido (NaN) em x=${ponto} — verifique o domínio da função.`,
+          );
+        return r;
       }
       if (ordem === 2) {
-        return (fn(ponto + h) - 2 * fn(ponto) + fn(ponto - h)) / (h * h);
+        const r = (fn(ponto + h) - 2 * fn(ponto) + fn(ponto - h)) / (h * h);
+        if (isNaN(r))
+          throw new Error(
+            `calculo.derivada(): resultado indefinido (NaN) em x=${ponto} — verifique o domínio da função.`,
+          );
+        return r;
       }
       // Ordens 3 e 4 via recursão sobre a derivada de ordem 1
       const fnDeriv = (x) => Bibliotecas.calculo.derivada(fn, x, ordem - 1);
@@ -988,7 +1054,12 @@ const Bibliotecas = {
 
       const n = 1000; // par, obrigatório para Simpson
       const h = (b - a) / n;
-      let soma = fn(a) + fn(b);
+      const fa = fn(a), fb = fn(b);
+      if (typeof fa !== "number" || isNaN(fa))
+        throw new Error("calculo.integral(): fn deve retornar um número real válido no ponto inicial.");
+      if (typeof fb !== "number" || isNaN(fb))
+        throw new Error("calculo.integral(): fn deve retornar um número real válido no ponto final.");
+      let soma = fa + fb;
 
       for (let i = 1; i < n; i++) {
         const y = fn(a + i * h);
@@ -1179,13 +1250,31 @@ function leiaAsync(mensagem) {
       field.style.color = "var(--text-muted)";
       field.style.borderColor = "transparent";
       prompt.style.color = "var(--text-muted)";
-      resolve(raw.trim() !== "" && !isNaN(raw) ? parseFloat(raw) : raw);
+      const trimmed = raw.trim();
+      let parsed;
+      if (trimmed === "Infinito") parsed = Infinity;
+      else if (trimmed === "NegInfinito") parsed = -Infinity;
+      else if (trimmed !== "" && !isNaN(trimmed)) parsed = parseFloat(trimmed);
+      else parsed = raw;
+      resolve(parsed);
     });
   });
 }
 
-const raiz = (x) => Math.sqrt(x);
-const expo = (x, y) => Math.pow(x, y);
+function raiz(x) {
+  if (typeof x !== "number" || isNaN(x))
+    throw new Error(`raiz(): argumento deve ser um número válido (recebido: ${_vtx(x)}).`);
+  if (x < 0)
+    throw new Error(`raiz(): não é possível calcular a raiz quadrada de número negativo (${x}) no domínio real.`);
+  return Math.sqrt(x);
+}
+function expo(x, y) {
+  if (typeof x !== "number" || isNaN(x))
+    throw new Error(`expo(): a base deve ser um número válido (recebido: ${_vtx(x)}).`);
+  if (typeof y !== "number" || isNaN(y))
+    throw new Error(`expo(): o expoente deve ser um número válido (recebido: ${_vtx(y)}).`);
+  return Math.pow(x, y);
+}
 
 /* ============================================================
    8. MARCADORES DE PROJETO
@@ -1304,15 +1393,17 @@ function processarParametrosTipados(codigo) {
         jsParams.push(
           jsDef === "__OBRIG__" ? `${ip}=undefined` : `${ip}=${jsDef}`,
         );
-        let vb = `let ${pn}=${ip};`;
+        // Cada linha recebe o marcador /*__I*/ para que _extrairLinhaErro
+        // possa ignorá-las ao mapear linhas JS de volta ao pseudocódigo.
+        let vb = `let ${pn}=${ip};/*__I*/`;
         if (jsDef === "__OBRIG__")
-          vb += `\nif(${pn}===undefined)throw new Error("${nome}: parâmetro '${pn}' é obrigatório.");`;
+          vb += `\nif(${pn}===undefined)throw new Error("${nome}: parâmetro '${pn}' é obrigatório.");/*__I*/`;
         const r = restricao && restricao.trim();
         if (r) {
           const rJS = r
             .replace(/\bverdadeiro\b/g, "true")
             .replace(/\bfalso\b/g, "false");
-          vb += `\nif(!(${pn} ${rJS}))throw new Error("${nome}: '${pn}' deve satisfazer: ${pn} ${r.replace(/"/g, "'")}.");`;
+          vb += `\nif(!(${pn} ${rJS}))throw new Error("${nome}: '${pn}' deve satisfazer: ${pn} ${r.replace(/"/g, "'")}.");/*__I*/`;
         }
         validations.push(vb);
       } else {
