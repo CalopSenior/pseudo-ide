@@ -423,7 +423,7 @@ section {
 }
 /* Regra genérica para ocultar elementos com classe .hidden */
 .hidden {
-  display: none !important;
+  display: none;
 }
 
 /* As quatro camadas do editor ficam sobrepostas, preenchendo #editor-wrapper */
