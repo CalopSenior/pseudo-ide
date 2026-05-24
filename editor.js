@@ -288,7 +288,7 @@ function traduzirCodigo(fonte, isDebug = false) {
     (_, bib, sub, alias) => {
       const obj = sub ? `['${bib}']['${sub}']` : `['${bib}']`;
       const aliasStr = alias || sub || bib;
-      return `if (!Bibliotecas['${bib}']) { await window._baixarDaNuvem('${bib}'); }\nconst ${aliasStr}=Bibliotecas${obj};`;
+      return `if (!Bibliotecas['${bib}']) { await window._baixarDaNuvem('${bib}'); }\nvar ${aliasStr}=Bibliotecas${obj};`;
     },
   );
 
@@ -310,10 +310,10 @@ function traduzirCodigo(fonte, isDebug = false) {
   c = c.replace(/(?<!\.)\bNegInfinito\b/g, "-Infinity");
   c = c.replace(/\bmod\b/g, "%");
   c = c.replace(/\bou\b/g, "||");
-  // Substituição context-aware: só casa 'e' quando precedido por fim de
-  // expressão ()\]}\w) e seguido por início de expressão ((\[!\w).
-  // Isso evita corromper 'e' em capturar(e), imprima(e), e = 5, e.msg, etc.
-  c = c.replace(/(?<=[)\]}\w])\s*e\s*(?=[(\[!\w])/g, " && ");
+  // Substituição context-aware: casa 'e' (operador lógico) somente quando
+  // cercado por espaços E precedido por fim de expressão. \s+ (não \s*)
+  // é essencial para não casar 'e' dentro de palavras como "Bibliotecas".
+  c = c.replace(/(?<=[)\]}\w])\s+e\s+(?=[(\[!\w])/g, " && ");
   c = c.replace(/\bnao\b/g, "!");
   c = c.replace(/\blançar\s+erro(?=\s*\()/g, "throw _pseudoLancar");
   // lançar erro "msg"  →  throw new Error("msg")  [string já tokenizada como \x00N\x00]
