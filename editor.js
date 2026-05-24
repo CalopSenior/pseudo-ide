@@ -297,11 +297,11 @@ function traduzirCodigo(fonte, isDebug = false) {
     (_, varName, expr) => `for(let ${varName.trim()} of ${expr.trim()})`,
   );
 
-  c = c.replace(/\bsuper\b/g, "let");
-  c = c.replace(/\bbooleano\b/g, "let");
-  c = c.replace(/\binteiro\b/g, "let");
-  c = c.replace(/\breal\b/g, "let");
-  c = c.replace(/\bcaracter\b/g, "let");
+  c = c.replace(/(?<!')\bsuper\b/g, "let");
+  c = c.replace(/(?<!')\bbooleano\b/g, "let");
+  c = c.replace(/(?<!')\binteiro\b/g, "let");
+  c = c.replace(/(?<!')\breal\b/g, "let");
+  c = c.replace(/(?<!')\bcaracter\b/g, "let");
   c = c.replace(/(?<!\.)\bverdadeiro\b/g, "true");
   c = c.replace(/(?<!\.)\bfalso\b/g, "false");
   c = c.replace(/(?<!\.)\bvazio\b/g, "null");
@@ -313,6 +313,16 @@ function traduzirCodigo(fonte, isDebug = false) {
   c = c.replace(/\bou\b/g, "||");
   c = c.replace(/\bnao\b/g, "!");
   c = c.replace(/\blançar\s+erro(?=\s*\()/g, "throw _pseudoLancar");
+  // lançar erro "msg"  →  throw new Error("msg")  [string já tokenizada como \x00N\x00]
+  c = c.replace(
+    new RegExp("\\blançar\\s+erro\\s+(" + S + "\\d+" + S + ")", "g"),
+    (_, tok) => "throw new Error(" + tok + ")",
+  );
+  // lançar erro variavel  →  throw new Error(variavel)
+  c = c.replace(
+    /\blançar\s+erro\s+([A-Za-zÀ-ÖØ-öø-ÿ_][\w]*)/g,
+    "throw new Error($1)",
+  );
   c = c.replace(/\blançar\s+erro\b/g, "throw new Error");
   c = c.replace(/\blançar\b/g, "throw");
 
