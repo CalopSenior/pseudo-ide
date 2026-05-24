@@ -282,10 +282,10 @@ meuPrimeiroAlgoritmo()
                         </thead>
                         <tbody>
                             <tr>
-                                <td><code>imprima(valor)</code></td>
-                                <td>Mostra um valor no console de saída. Aceita qualquer coisa: números, textos, listas…
+                                <td><code>imprima(v1, v2, …)</code></td>
+                                <td>Mostra um ou mais valores no console, separados por espaço. Aceita qualquer tipo: números, textos, listas…
                                 </td>
-                                <td><code>imprima("olá")</code></td>
+                                <td><code>imprima("x =", 42)</code></td>
                             </tr>
                             <tr>
                                 <td><code>leia("pergunta")</code></td>
@@ -893,13 +893,13 @@ saudar(<span class="ex-str">"Bruno"</span>, <span class="ex-str">"Oi"</span>);  
                         </thead>
                         <tbody>
                             <tr>
-                                <td><code>m.pi</code></td>
+                                <td><code>m.pi</code> / <code>m.PI</code></td>
                                 <td>π ≈ 3.14159265…</td>
-                                <td><code>real area = m.pi * raio * raio</code></td>
+                                <td><code>real area = m.PI * raio * raio</code></td>
                             </tr>
                             <tr>
-                                <td><code>m.E</code></td>
-                                <td>e ≈ 2.71828182…</td>
+                                <td><code>m.e</code> / <code>m.E</code></td>
+                                <td>e ≈ 2.71828182… (número de Euler)</td>
                                 <td><code>imprima(m.E)</code></td>
                             </tr>
                             <tr>
@@ -959,8 +959,7 @@ saudar(<span class="ex-str">"Bruno"</span>, <span class="ex-str">"Oi"</span>);  
                     </table>
 
                     <h4>Trigonometria (ângulos em radianos)</h4>
-                    <p class="tab-intro">Para converter graus em radianos: <code>radianos = graus * m.pi / 180</code>
-                    </p>
+                    <p class="tab-intro">Use <code>m.grauParaRad(g)</code> e <code>m.radParaGrau(r)</code> para converter entre graus e radianos.</p>
                     <table class="doc-table">
                         <thead>
                             <tr>
@@ -973,7 +972,7 @@ saudar(<span class="ex-str">"Bruno"</span>, <span class="ex-str">"Oi"</span>);  
                             <tr>
                                 <td><code>m.sen(x)</code></td>
                                 <td>Seno de x</td>
-                                <td><code>m.sen(m.pi / 2)</code> → 1</td>
+                                <td><code>m.sen(m.PI / 2)</code> → 1</td>
                             </tr>
                             <tr>
                                 <td><code>m.cos(x)</code></td>
@@ -983,7 +982,103 @@ saudar(<span class="ex-str">"Bruno"</span>, <span class="ex-str">"Oi"</span>);  
                             <tr>
                                 <td><code>m.tan(x)</code></td>
                                 <td>Tangente de x</td>
-                                <td><code>m.tan(m.pi / 4)</code> → ≈ 1</td>
+                                <td><code>m.tan(m.PI / 4)</code> → ≈ 1</td>
+                            </tr>
+                            <tr>
+                                <td><code>m.arcsen(x)</code></td>
+                                <td>Arco-seno — domínio [−1, 1], retorna [−π/2, π/2]</td>
+                                <td><code>m.arcsen(1)</code> → π/2</td>
+                            </tr>
+                            <tr>
+                                <td><code>m.arccos(x)</code></td>
+                                <td>Arco-cosseno — domínio [−1, 1], retorna [0, π]</td>
+                                <td><code>m.arccos(0)</code> → π/2</td>
+                            </tr>
+                            <tr>
+                                <td><code>m.arctan(x)</code></td>
+                                <td>Arco-tangente de x, retorna (−π/2, π/2)</td>
+                                <td><code>m.arctan(1)</code> → π/4</td>
+                            </tr>
+                            <tr>
+                                <td><code>m.arctan2(y, x)</code></td>
+                                <td>Arco-tangente de y/x no quadrante correto (−π, π]</td>
+                                <td><code>m.arctan2(1, 1)</code> → π/4</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <h4>Trigonometria hiperbólica</h4>
+                    <table class="doc-table">
+                        <thead>
+                            <tr>
+                                <th>Função</th>
+                                <th>Descrição</th>
+                                <th>Exemplo → Resultado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>m.senh(x)</code></td>
+                                <td>Seno hiperbólico sinh(x)</td>
+                                <td><code>m.senh(0)</code> → 0</td>
+                            </tr>
+                            <tr>
+                                <td><code>m.cosh(x)</code></td>
+                                <td>Cosseno hiperbólico cosh(x)</td>
+                                <td><code>m.cosh(0)</code> → 1</td>
+                            </tr>
+                            <tr>
+                                <td><code>m.tanh(x)</code></td>
+                                <td>Tangente hiperbólica tanh(x)</td>
+                                <td><code>m.tanh(0)</code> → 0</td>
+                            </tr>
+                            <tr>
+                                <td><code>m.arcsenh(x)</code></td>
+                                <td>Inversa do senh — domínio ℝ</td>
+                                <td><code>m.arcsenh(0)</code> → 0</td>
+                            </tr>
+                            <tr>
+                                <td><code>m.arccosh(x)</code></td>
+                                <td>Inversa do cosh — domínio [1, +∞)</td>
+                                <td><code>m.arccosh(1)</code> → 0</td>
+                            </tr>
+                            <tr>
+                                <td><code>m.arctanh(x)</code></td>
+                                <td>Inversa do tanh — domínio (−1, 1)</td>
+                                <td><code>m.arctanh(0)</code> → 0</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <h4>Utilitários numéricos</h4>
+                    <table class="doc-table">
+                        <thead>
+                            <tr>
+                                <th>Função</th>
+                                <th>Descrição</th>
+                                <th>Exemplo → Resultado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>m.hipot(a, b, …)</code></td>
+                                <td>Hipotenusa √(a²+b²+…) — aceita qualquer nº de args</td>
+                                <td><code>m.hipot(3, 4)</code> → 5</td>
+                            </tr>
+                            <tr>
+                                <td><code>m.truncar(x)</code></td>
+                                <td>Remove a parte decimal (trunca em direção ao zero)</td>
+                                <td><code>m.truncar(3.9)</code> → 3</td>
+                            </tr>
+                            <tr>
+                                <td><code>m.grauParaRad(g)</code></td>
+                                <td>Converte graus em radianos</td>
+                                <td><code>m.grauParaRad(180)</code> → π</td>
+                            </tr>
+                            <tr>
+                                <td><code>m.radParaGrau(r)</code></td>
+                                <td>Converte radianos em graus</td>
+                                <td><code>m.radParaGrau(m.PI)</code> → 180</td>
                             </tr>
                         </tbody>
                     </table>
@@ -2091,6 +2186,10 @@ importar metodos como m;
                             <tr>
                                 <td><code>Ctrl + S</code></td>
                                 <td>Executar o algoritmo</td>
+                            </tr>
+                            <tr>
+                                <td><code>Ctrl + Alt + F</code></td>
+                                <td>Formatar / indentar o código automaticamente (Prettier nativo)</td>
                             </tr>
                             <tr>
                                 <td><code>Ctrl + M</code></td>
