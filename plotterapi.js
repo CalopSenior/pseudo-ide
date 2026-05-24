@@ -716,6 +716,12 @@ const Bibliotecas = {
     get e() {
       return Math.E;
     },
+    get E() {
+      return Math.E;
+    },
+    get PI() {
+      return Math.PI;
+    },
     get Infinito() {
       return Infinity;
     },
@@ -759,6 +765,67 @@ const Bibliotecas = {
     tan: (x) => {
       __vp(x, ["numero"], "mat.tan", "x");
       return Math.tan(x);
+    },
+    arcsen: (x) => {
+      __vp(x, ["numero"], "mat.arcsen", "x");
+      if (x < -1 || x > 1) throw new Error(`mat.arcsen(): domínio é [-1, 1], recebeu ${x}.`);
+      return Math.asin(x);
+    },
+    arccos: (x) => {
+      __vp(x, ["numero"], "mat.arccos", "x");
+      if (x < -1 || x > 1) throw new Error(`mat.arccos(): domínio é [-1, 1], recebeu ${x}.`);
+      return Math.acos(x);
+    },
+    arctan: (x) => {
+      __vp(x, ["numero"], "mat.arctan", "x");
+      return Math.atan(x);
+    },
+    arctan2: (y, x) => {
+      __vp(y, ["numero"], "mat.arctan2", "y");
+      __vp(x, ["numero"], "mat.arctan2", "x");
+      return Math.atan2(y, x);
+    },
+    senh: (x) => {
+      __vp(x, ["numero"], "mat.senh", "x");
+      return Math.sinh(x);
+    },
+    cosh: (x) => {
+      __vp(x, ["numero"], "mat.cosh", "x");
+      return Math.cosh(x);
+    },
+    tanh: (x) => {
+      __vp(x, ["numero"], "mat.tanh", "x");
+      return Math.tanh(x);
+    },
+    arcsenh: (x) => {
+      __vp(x, ["numero"], "mat.arcsenh", "x");
+      return Math.asinh(x);
+    },
+    arccosh: (x) => {
+      __vp(x, ["numero"], "mat.arccosh", "x");
+      if (x < 1) throw new Error(`mat.arccosh(): domínio é [1, ∞), recebeu ${x}.`);
+      return Math.acosh(x);
+    },
+    arctanh: (x) => {
+      __vp(x, ["numero"], "mat.arctanh", "x");
+      if (x <= -1 || x >= 1) throw new Error(`mat.arctanh(): domínio é (-1, 1), recebeu ${x}.`);
+      return Math.atanh(x);
+    },
+    hipot: (...ns) => {
+      ns.forEach((n, i) => __vp(n, ["numero"], "mat.hipot", `n${i + 1}`));
+      return Math.hypot(...ns);
+    },
+    truncar: (x) => {
+      __vp(x, ["numero"], "mat.truncar", "x");
+      return Math.trunc(x);
+    },
+    grauParaRad: (g) => {
+      __vp(g, ["numero"], "mat.grauParaRad", "g");
+      return (g * Math.PI) / 180;
+    },
+    radParaGrau: (r) => {
+      __vp(r, ["numero"], "mat.radParaGrau", "r");
+      return (r * 180) / Math.PI;
     },
     ln: (x) => {
       __vp(x, ["numero"], "mat.ln", "x");
@@ -2123,13 +2190,13 @@ function leiaAsync(mensagem) {
 }
 
 function raiz(x) {
-  if (typeof x !== "number" || isNaN(x)) throw new Error(`raiz(): esperado número, recebeu ${_leg(x)}.`);
+  if (typeof x !== "number" || isNaN(x)) throw new Error(`raiz(): esperado número, recebeu ${_vtx(x)}.`);
   if (x < 0) throw new Error(`raiz(): raiz quadrada de número negativo (${x}) não é real.`);
   return Math.sqrt(x);
 }
 function expo(x, y) {
-  if (typeof x !== "number" || isNaN(x)) throw new Error(`expo(): base deve ser número, recebeu ${_leg(x)}.`);
-  if (typeof y !== "number" || isNaN(y)) throw new Error(`expo(): expoente deve ser número, recebeu ${_leg(y)}.`);
+  if (typeof x !== "number" || isNaN(x)) throw new Error(`expo(): base deve ser número, recebeu ${_vtx(x)}.`);
+  if (typeof y !== "number" || isNaN(y)) throw new Error(`expo(): expoente deve ser número, recebeu ${_vtx(y)}.`);
   return Math.pow(x, y);
 }
 
