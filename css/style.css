@@ -421,8 +421,15 @@ section {
   flex: 1;
   overflow: hidden;
 }
+/* Regra genérica para ocultar elementos com classe .hidden */
+.hidden {
+  display: none !important;
+}
+
+/* As quatro camadas do editor ficam sobrepostas, preenchendo #editor-wrapper */
 #highlight-layer,
 #error-layer,
+#warning-layer,
 #code-editor {
   position: absolute;
   top: 0;
@@ -448,7 +455,7 @@ section {
   overflow: hidden;
 }
 #code-editor {
-  z-index: 2;
+  z-index: 3;
   color: transparent;
   background: transparent;
   caret-color: var(--accent);
@@ -461,14 +468,13 @@ section {
   background: rgba(124, 131, 255, 0.25);
   color: transparent;
 }
-/* Regras exclusivas para a camada de erro */
+/* Camada de erros (sublinhado ondulado vermelho) */
 #error-layer {
   pointer-events: none;
-  z-index: 1;
-  color: transparent; /* O texto fica invisível, só o sublinhado aparece */
+  z-index: 2;
+  color: transparent;
   background: transparent;
 }
-/* O sublinhado ondulado vermelho */
 .error-squiggle {
   text-decoration: underline;
   text-decoration-style: wavy;
@@ -476,10 +482,28 @@ section {
   text-decoration-thickness: 1.5px;
   text-underline-offset: 3px;
 }
-/* Destaque vermelho no número da linha */
+/* Camada de avisos do linter (sublinhado ondulado amarelo) */
+#warning-layer {
+  pointer-events: none;
+  z-index: 2;
+  color: transparent;
+  background: transparent;
+  overflow: hidden;
+}
+.warning-squiggle {
+  text-decoration: underline;
+  text-decoration-style: wavy;
+  text-decoration-color: #fbbf24;
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 3px;
+}
+/* Destaque no número da linha */
 .ln-row.has-error .ln-num {
   color: #f87171;
   font-weight: bold;
+}
+.ln-row.has-warning .ln-num {
+  color: #fbbf24;
 }
 
 /* ---- Console ---- */
