@@ -309,8 +309,11 @@ function traduzirCodigo(fonte, isDebug = false) {
   c = c.replace(/(?<!\.)\bInfinito\b/g, "Infinity");
   c = c.replace(/(?<!\.)\bNegInfinito\b/g, "-Infinity");
   c = c.replace(/\bmod\b/g, "%");
-  c = c.replace(/\be\b/g, "&&");
   c = c.replace(/\bou\b/g, "||");
+  // Substituição context-aware: só casa 'e' quando precedido por fim de
+  // expressão ()\]}\w) e seguido por início de expressão ((\[!\w).
+  // Isso evita corromper 'e' em capturar(e), imprima(e), e = 5, e.msg, etc.
+  c = c.replace(/(?<=[)\]}\w])\s*e\s*(?=[(\[!\w])/g, " && ");
   c = c.replace(/\bnao\b/g, "!");
   c = c.replace(/\blançar\s+erro(?=\s*\()/g, "throw _pseudoLancar");
   // lançar erro "msg"  →  throw new Error("msg")  [string já tokenizada como \x00N\x00]
