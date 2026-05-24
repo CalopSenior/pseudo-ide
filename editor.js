@@ -155,16 +155,22 @@ function injectAwait(codigo, funcsToAwait) {
 
 function _isLinhaInjetada(t) {
   return (
-    /let \w+ = __p_\w+;/.test(t) ||
+    /^let \w+=__p_\w+;/.test(t) ||
     /^if\s*\(\s*\w+\s*===\s*undefined\s*\)\s*throw/.test(t) ||
     /^if\s*\(\s*!\s*\(/.test(t) ||
     /^(async )?function \w+\(__p_/.test(t) ||
     /^await window\._dbg/.test(t) ||
+    /^if\s*\(!Bibliotecas\[/.test(t) ||
+    /^function __getVars\s*\(/.test(t) ||
+    /^try\s*\{\s*r\[/.test(t) ||
+    /^return r;\s*\}/.test(t) ||
     t === "" ||
     t === "{" ||
     t === "}"
   );
 }
+
+let _dbgPrefixLines = 0;
 
 /* ============================================================
    TRADUTOR  pseudo → JavaScript
@@ -323,7 +329,17 @@ function traduzirCodigo(fonte, isDebug = false) {
   c = c.replace(/\bfaca\b/g, "do");
   c = c.replace(/\bpara\b/g, "for");
   c = c.replace(/\btentar\b/g, "try");
-  c = c.replace(/\bcapturar\b/g, "catch");
+  if (isDebug) {
+    c = c.replace(
+      /\bcapturar\s*\(([^)]+)\)\s*\{/g,
+      (_, param) => {
+        const p = param.trim();
+        return `catch (${p}) { if (${p} && ${p}.message === "DEBUG_ABORT") throw ${p};`;
+      },
+    );
+  } else {
+    c = c.replace(/\bcapturar\b/g, "catch");
+  }
   c = c.replace(/\bleia\b/g, "await leiaAsync");
   c = c.replace(new RegExp(S + "(\\d+)" + S, "g"), (_, i) => tks[parseInt(i)]);
 
@@ -334,34 +350,44 @@ function traduzirCodigo(fonte, isDebug = false) {
     `$1 ${watchdogCode}\n`,
   );
 
-  if (isDebug) c = dbgInjetor + c;
+  if (isDebug) {
+    _dbgPrefixLines = (dbgInjetor.match(/\n/g) || []).length;
+    c = dbgInjetor + c;
+  } else {
+    _dbgPrefixLines = 0;
+  }
   _lastTranslatedCode = c;
   return c;
 }
 
 function _extrairLinhaErro(stack) {
   if (!stack || !_lastTranslatedCode) return null;
-  const padroes = [
-    /<anonymous>:(\d+):\d+/,
-    /debugger eval code:(\d+):\d+/i,
-    /eval code:(\d+):\d+/i,
-    /Function code:(\d+):\d+/i,
-    /@[^\n@]*:(\d+):\d+/,
-  ];
-  let linhaEval = null;
-  for (const re of padroes) {
-    const m = stack.match(re);
-    if (m) {
-      linhaEval = parseInt(m[1]);
-      break;
+  const transLines = _lastTranslatedCode.split("\n");
+  const maxJS = transLines.length;
+
+  // Collect all anonymous-eval frame line numbers from the full stack
+  const frameRe =
+    /(?:<anonymous>|debugger eval code|eval code|Function code).*?:(\d+):\d+/gi;
+  const atRe = /@[^\n@]*?:(\d+):\d+/gi;
+  const candidatos = [];
+  let m;
+  for (const re of [frameRe, atRe]) {
+    re.lastIndex = 0;
+    while ((m = re.exec(stack)) !== null) {
+      const bodyLine = parseInt(m[1]) - 2;
+      if (bodyLine > _dbgPrefixLines && bodyLine <= maxJS + 4)
+        candidatos.push(bodyLine);
     }
   }
-  if (!linhaEval) return null;
-  const bodyLine = linhaEval - 2;
+  if (candidatos.length === 0) return null;
+
+  // The first candidate is the deepest (most specific) frame — closest to where the error threw
+  const bodyLine = candidatos[0];
   if (bodyLine <= 0) return null;
-  const transLines = _lastTranslatedCode.split("\n");
+
+  // Count non-injected lines from after the dbgInjetor prefix up to bodyLine
   let pseudoLine = 0;
-  for (let i = 0; i < Math.min(bodyLine, transLines.length); i++) {
+  for (let i = _dbgPrefixLines; i < Math.min(bodyLine, transLines.length); i++) {
     if (!_isLinhaInjetada(transLines[i].trim())) pseudoLine++;
   }
   return pseudoLine > 0 ? pseudoLine : null;
