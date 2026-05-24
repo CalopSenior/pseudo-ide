@@ -254,7 +254,7 @@ function traduzirCodigo(fonte, isDebug = false) {
     for (let i = 0; i < linhas.length; i++) {
       let l = linhas[i].trim();
       if (
-        /^(senao|caso\b|padrao\b|faca\b|\{|\})/.test(l) ||
+        /^(senao|caso\b|padrao\b|faca\b|capturar\b|\{|\})/.test(l) ||
         /^funcao\b/.test(l)
       )
         continue;
