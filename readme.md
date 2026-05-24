@@ -2364,12 +2364,12 @@ function doGet(e) {
 
     <!-- ===== SCRIPTS =====
      Ordem de carregamento obrigatória:
-     1. index.html    — PlotterAPI (opcional, para bib graficos)
-     2. plotterapi.js — runtime v4.3: classes, bibliotecas, I/O
-     3. editor.js     — compiler v4.2: tradutor + executor
-     4. runtime.js    — editor v4.0: UI do editor, highlight, autocomplete
+     1. js/plotterApi.js — PlotterAPI (opcional, para bib graficos)
+     2. plotterapi.js    — runtime v4.3: classes, bibliotecas, I/O
+     3. editor.js        — compiler v4.2: tradutor + executor
+     4. runtime.js       — editor v4.0: UI do editor, highlight, autocomplete
 -->
-    <script src="index.html"
+    <script src="js/plotterApi.js"
         onerror="console.info('[Pseudo-IDE] PlotterAPI não encontrada — bib graficos indisponível.')"></script>
     <script src="plotterapi.js"></script>
     <script src="editor.js"></script>
