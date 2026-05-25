@@ -183,7 +183,7 @@ function traduzirCodigo(fonte, isDebug = false) {
   );
   if (wm) c = wm[1];
 
-  c = c.replace(/f(["'])((?:[^\\]|\\.)*?)\1/g, (_, q, body) => {
+  c = c.replace(/f(["'])((?:[^\\\n]|\\.)*?)\1/g, (_, q, body) => {
     const tpl = body.replace(/\{([^}]+)\}/g, "${$1}");
     return "`" + tpl + "`";
   });
