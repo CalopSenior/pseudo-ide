@@ -179,7 +179,7 @@ function traduzirCodigo(fonte, isDebug = false) {
   let c = String(fonte).trimEnd();
   c = removerMarcadores(c);
   const wm = c.match(
-    /^[ \t]*[A-Za-zÀ-ÖØ-öø-ÿ_]\w*[ \t]*\(\s*\)\s*\{([\s\S]*)\}[ \t]*$/,
+    /^\s*[A-Za-zÀ-ÖØ-öø-ÿ_]\w*\s*\(\s*\)\s*\{([\s\S]*)\}\s*$/,
   );
   if (wm) c = wm[1];
 
