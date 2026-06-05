@@ -1738,7 +1738,7 @@ const Bibliotecas = {
           return { func: item, color: cor, label: legendas[i] || `f${i + 1}(x)` };
         const obj = item instanceof PseudoMapa ? Object.fromEntries(item._v)
           : (item && typeof item === "object" ? item : {});
-        const fn = obj.funcao || obj.func;
+        const fn = obj.funcao || obj.func || obj["function"];
         const ptsSrc = obj.pontos || obj.points;
         return {
           func: typeof fn === "function" ? fn : undefined,
