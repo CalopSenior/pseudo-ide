@@ -1667,6 +1667,215 @@ const Bibliotecas = {
       );
       Bibliotecas.graficos._inserir(canvas);
     },
+
+    // ── HELPER INTERNO ─────────────────────────────────────────────
+    // Aceita múltiplos formatos e devolve sempre [{x,y}, ...]
+    _extrairPontos: (item, f) => {
+      const normUm = (raw) => {
+        if (raw instanceof PseudoLista || raw instanceof PseudoVetor) raw = raw._v;
+        // Resultado de método numérico: { root, raiz, x }
+        if (raw && typeof raw === "object" && !Array.isArray(raw)) {
+          const x = raw.root ?? raw.raiz ?? raw.x ?? null;
+          if (x != null) {
+            const xN = Number(x);
+            return { x: xN, y: raw.y != null ? Number(raw.y) : (f ? f(xN) : 0) };
+          }
+          return null;
+        }
+        // [x, y] — par explícito de coordenadas (2 elementos numéricos)
+        if (Array.isArray(raw) && raw.length === 2 &&
+            typeof raw[0] === "number" && typeof raw[1] === "number") {
+          return { x: raw[0], y: raw[1] };
+        }
+        // número → x-coordenada, y calculado de f
+        if (typeof raw === "number" && isFinite(raw)) {
+          return { x: raw, y: f ? f(raw) : 0 };
+        }
+        return null;
+      };
+
+      if (item instanceof PseudoLista || item instanceof PseudoVetor) item = item._v;
+
+      if (Array.isArray(item)) {
+        const first = item[0];
+        // Array de arrays/objetos/PseudoListas → lista de pontos
+        if (first != null && (Array.isArray(first) ||
+            first instanceof PseudoLista || first instanceof PseudoVetor ||
+            (typeof first === "object" && !Array.isArray(first)))) {
+          return item.map(normUm).filter(Boolean);
+        }
+        // [number, number] → par de coordenadas explícito
+        if (item.length === 2 && typeof item[0] === "number" && typeof item[1] === "number") {
+          return [{ x: item[0], y: item[1] }];
+        }
+        // Lista de números → x-coordenadas, y = f(x)
+        if (item.every((v) => typeof v === "number")) {
+          return item.map((x) => ({ x, y: f ? f(x) : 0 }));
+        }
+        return item.map(normUm).filter(Boolean);
+      }
+      const p = normUm(item);
+      return p ? [p] : [];
+    },
+
+    // ── GRÁFICO COMPOSTO ────────────────────────────────────────────
+    // grafico(funcoes | [f1, f2, ...] | [{funcao, cor, rotulo}, ...], opcoes)
+    grafico: (funcoes, opcoes = {}) => {
+      const g = Bibliotecas.graficos;
+      const api = g._api();
+      const opc = g._opc(opcoes);
+      const CORES = ["#7c83ff","#4ade80","#f87171","#fbbf24","#c084fc","#38bdf8","#fb923c","#e879f9"];
+      const intervalo = opc.intervalo instanceof PseudoLista
+        ? opc.intervalo._v : (opc.intervalo || [-10, 10]);
+      const legendas = opc.legendas instanceof PseudoLista
+        ? opc.legendas._v : (Array.isArray(opc.legendas) ? opc.legendas : []);
+      const fns = funcoes instanceof PseudoLista ? funcoes._v
+        : typeof funcoes === "function" ? [funcoes]
+        : Array.isArray(funcoes) ? funcoes : [funcoes];
+      const datasets = fns.map((item, i) => {
+        const cor = CORES[i % CORES.length];
+        if (typeof item === "function")
+          return { func: item, color: cor, label: legendas[i] || `f${i + 1}(x)` };
+        const obj = item instanceof PseudoMapa ? Object.fromEntries(item._v)
+          : (item && typeof item === "object" ? item : {});
+        const fn = obj.funcao || obj.func;
+        const ptsSrc = obj.pontos || obj.points;
+        return {
+          func: typeof fn === "function" ? fn : undefined,
+          points: ptsSrc != null ? g._extrairPontos(ptsSrc, fn || null) : undefined,
+          color: obj.cor || obj.color || cor,
+          label: obj.rotulo || obj.label || legendas[i] || `série${i + 1}`,
+          pointRadius: obj.raio || obj.pointRadius || 4,
+        };
+      });
+      const canvas = api.multiLineGraph2D(datasets, intervalo, {
+        width: opc.largura || 500, height: opc.altura || 320,
+        title: opc.titulo || "", theme: "dark",
+        legend: opc.legenda !== false, pointHover: true,
+      });
+      g._inserir(canvas);
+    },
+
+    // ── NUVEM / LISTA DE PONTOS ─────────────────────────────────────
+    // pontos([[x,y], ...] | [{x,y}, ...], opcoes)
+    pontos: (listaPontos, opcoes = {}) => {
+      const g = Bibliotecas.graficos;
+      const api = g._api();
+      const opc = g._opc(opcoes);
+      const raw = listaPontos instanceof PseudoLista ? listaPontos._v
+        : (Array.isArray(listaPontos) ? listaPontos : []);
+      const pts = g._extrairPontos(raw, null);
+      if (pts.length === 0) return;
+      let xMin = Math.min(...pts.map((p) => p.x));
+      let xMax = Math.max(...pts.map((p) => p.x));
+      if (Math.abs(xMax - xMin) < 1e-10) { xMin -= 2; xMax += 2; }
+      const cor = opc.cor || "#a78bfa";
+      const canvas = api.multiLineGraph2D([{
+        points: pts, color: cor, pointColor: cor,
+        pointRadius: opc.raio || 5, label: opc.rotulo || "",
+      }], [xMin, xMax], {
+        width: opc.largura || 500, height: opc.altura || 320,
+        title: opc.titulo || "", theme: "dark",
+        pointHover: true, legend: false,
+      });
+      g._inserir(canvas);
+    },
+
+    // ── CÔNICAS ─────────────────────────────────────────────────────
+    // conica(A, B, C, D, E, F, opcoes)  →  Ax²+Bxy+Cy²+Dx+Ey+F=0
+    conica: (A, B, C, D, E, F, opcoes = {}) => {
+      const g = Bibliotecas.graficos;
+      const api = g._api();
+      const opc = g._opc(opcoes);
+      const [ramo1, ramo2] = api.conic2D(A, B, C, D, E, F);
+      const intervalo = opc.intervalo instanceof PseudoLista
+        ? opc.intervalo._v : (opc.intervalo || [-8, 8]);
+      const cor = opc.cor || "#7c83ff";
+      const canvas = api.multiLineGraph2D([
+        { func: ramo1, color: cor, label: opc.rotulo || "cônica" },
+        { func: ramo2, color: cor },
+      ], intervalo, {
+        width: opc.largura || 500, height: opc.altura || 320,
+        title: opc.titulo || "", theme: "dark", legend: false,
+      });
+      g._inserir(canvas);
+    },
+
+    // ── RELAÇÕES (RAMOS / PARAMÉTRICA) ─────────────────────────────
+    // relacao([f1, f2])              → dois ramos (ex: saída de conic2D)
+    // relacao({x: t=>..., y: t=>..., t: [0, 2*PI]}) → curva paramétrica
+    // relacao(f)                     → atalho para função simples
+    relacao: (rel, opcoes = {}) => {
+      const g = Bibliotecas.graficos;
+      const api = g._api();
+      const opc = g._opc(opcoes);
+      const intervalo = opc.intervalo instanceof PseudoLista
+        ? opc.intervalo._v : (opc.intervalo || [-10, 10]);
+      let canvas;
+      const arr = rel instanceof PseudoLista ? rel._v : (Array.isArray(rel) ? rel : null);
+      if (arr && arr.length >= 2 && arr.every((f) => typeof f === "function")) {
+        const CORES = ["#7c83ff","#4ade80","#f87171","#fbbf24","#c084fc","#38bdf8"];
+        const datasets = arr.map((f, i) => ({
+          func: f, color: CORES[i % CORES.length],
+          label: i === 0 ? (opc.rotulo || "relação") : "",
+        }));
+        canvas = api.multiLineGraph2D(datasets, intervalo, {
+          width: opc.largura || 500, height: opc.altura || 320,
+          title: opc.titulo || "", theme: "dark", legend: false,
+        });
+      } else if (rel && typeof rel === "object" && !Array.isArray(rel) &&
+                 !(rel instanceof PseudoLista) && !(rel instanceof PseudoVetor)) {
+        const fx = rel.x || rel.fx, fy = rel.y || rel.fy;
+        if (typeof fx !== "function" || typeof fy !== "function")
+          throw new Error("graficos.relacao(): objeto paramétrico precisa de x e y como funções de t.");
+        const tRange = rel.t instanceof PseudoLista ? rel.t._v : (rel.t || [0, 2 * Math.PI]);
+        canvas = api.parametricCurve2D(fx, fy, tRange, {
+          width: opc.largura || 500, height: opc.altura || 320,
+          title: opc.titulo || "", theme: "dark", color: opc.cor || "#7c83ff",
+        });
+      } else if (typeof rel === "function") {
+        canvas = api.lineGraph2D(rel, intervalo, {
+          width: opc.largura || 500, height: opc.altura || 320,
+          title: opc.titulo || "", theme: "dark",
+        });
+      } else {
+        throw new Error("graficos.relacao(): esperava [f1,f2], {x,y,t} ou uma função.");
+      }
+      g._inserir(canvas);
+    },
+
+    // ── GRÁFICO ANOTADO ─────────────────────────────────────────────
+    // anotado(f, [[x,y], listaDeXs, {root:x}, ...], opcoes)
+    // Cada elemento de marcadores pode ser: [x,y], número, {root/raiz/x},
+    // array de qualquer um deles, ou PseudoLista/PseudoVetor.
+    anotado: (f, marcadores, opcoes = {}) => {
+      __vp(f, ["funcao"], "graficos.anotado", "f");
+      const g = Bibliotecas.graficos;
+      const api = g._api();
+      const opc = g._opc(opcoes);
+      const CORES_ANOT = ["#22c55e","#ef4444","#f59e0b","#a78bfa","#38bdf8","#fb923c","#e879f9"];
+      const intervalo = opc.intervalo instanceof PseudoLista
+        ? opc.intervalo._v : (opc.intervalo || [-10, 10]);
+      const legendas = opc.legendas instanceof PseudoLista
+        ? opc.legendas._v : (Array.isArray(opc.legendas) ? opc.legendas : []);
+      const datasets = [{ func: f, color: opc.cor || "#7c83ff", label: opc.rotulo || "f(x)" }];
+      const marcArr = marcadores instanceof PseudoLista ? marcadores._v
+        : (Array.isArray(marcadores) ? marcadores : [marcadores]);
+      marcArr.forEach((m, i) => {
+        const pts = g._extrairPontos(m, f);
+        if (pts.length > 0) {
+          const cor = CORES_ANOT[i % CORES_ANOT.length];
+          datasets.push({ points: pts, color: cor, pointRadius: 7,
+            label: legendas[i] || "", pointColor: cor });
+        }
+      });
+      const canvas = api.multiLineGraph2D(datasets, intervalo, {
+        width: opc.largura || 500, height: opc.altura || 320,
+        title: opc.titulo || "Gráfico Anotado", theme: "dark",
+        legend: datasets.length > 1, pointHover: true,
+      });
+      g._inserir(canvas);
+    },
   },
 
   /* ---- probabilidade ---- */
