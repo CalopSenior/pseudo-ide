@@ -581,6 +581,79 @@ Visualização matemática (requer PlotterAPI).
 importar graficos como g;
 ```
 
+#### Funções modulares (recomendadas)
+
+| Função | Descrição |
+|---|---|
+| `g.grafico(funcoes, opcoes?)` | Plota função única, lista de funções ou datasets `{funcao,cor,rotulo,pontos}` compostos |
+| `g.pontos(lista, opcoes?)` | Plota lista de pontos `[[x,y],...]` via linha contínua — sem ser dispersão |
+| `g.conica(A,B,C,D,E,F, opcoes?)` | Plota cônica `Ax²+Bxy+Cy²+Dx+Ey+F=0` — desenha os dois ramos automaticamente |
+| `g.relacao(rel, opcoes?)` | `[f1,f2,...]` (ramos), `{x,y,t}` (paramétrica) ou função simples |
+| `g.anotado(f, marcadores, opcoes?)` | Plota `f` como linha + grupos de pontos marcados em cores distintas |
+
+**Campos de `opcoes` comuns** (todos opcionais):
+
+| Campo | Tipo | Padrão | Descrição |
+|---|---|---|---|
+| `titulo` | caracter | `""` | Título exibido no topo |
+| `largura` | inteiro | `500` | Largura do canvas em pixels |
+| `altura` | inteiro | `320` | Altura do canvas em pixels |
+| `intervalo` | `[min, max]` | `[-10, 10]` | Intervalo do eixo X |
+| `cor` | caracter | automática | Cor da curva principal (hex ou nome CSS) |
+| `rotulo` | caracter | automático | Rótulo no legend |
+| `legendas` | lista | `[]` | Lista de rótulos para múltiplas séries |
+| `legenda` | booleano | `verdadeiro` | Exibe ou oculta o legend |
+| `raio` | inteiro | `4`–`7` | Raio dos pontos marcados |
+
+**Formatos aceitos por `marcadores` em `g.anotado`:**
+
+```
+// Cada elemento da lista pode ser qualquer um destes formatos:
+[1.5, 0]          // par [x, y] explícito
+2.3               // x só — y calculado por f(x)
+{root: 1.5}       // objeto de método numérico (também aceita raiz:, x:)
+[-2.0, 0.0, 1.0]  // lista de x-values — y = f(x) para cada um
+[[0,0], [1,1]]    // lista de pares
+```
+
+**Exemplos:**
+
+```
+importar graficos como g;
+importar mat como m;
+importar calculo como c;
+
+// Funções compostas
+funcao f(x) { retorno m.sen(x); }
+funcao h(x) { retorno m.cos(x); }
+g.grafico([f, h], { intervalo: [-6.28, 6.28], titulo: "sen e cos" });
+
+// Com datasets configurados individualmente
+g.grafico([
+    { funcao: f, cor: "#7c83ff", rotulo: "sen(x)" },
+    { funcao: h, cor: "#4ade80", rotulo: "cos(x)" }
+], { titulo: "Trigonometria" });
+
+// Lista de pontos (curva contínua)
+g.pontos([[0,0], [1,1], [2,4], [3,9]], { titulo: "Quadrados" });
+
+// Cônica — elipse x²/4 + y²/9 = 1 → x²/4 + y²/9 - 1 = 0
+// Multiplicando por 36: 9x² + 4y² - 36 = 0 → A=9,B=0,C=4,D=0,E=0,F=-36
+g.conica(9, 0, 4, 0, 0, -36, { titulo: "Elipse" });
+
+// Relação paramétrica: círculo (x=cos t, y=sen t)
+g.relacao({ x: (t) => m.cos(t), y: (t) => m.sen(t), t: [0, 6.28] },
+          { titulo: "Círculo Unitário" });
+
+// Gráfico anotado — f com raízes e pontos críticos marcados
+funcao g2(x) { retorno x**3 - 3*x; }
+super raizes = c.raizes(g2, [-3, 3]);
+super criticos = c.pontosCriticos(g2, [-3, 3]);
+g.anotado(g2, [[1,0], raizes, criticos], { titulo: "f com marcadores" });
+```
+
+#### Funções legadas
+
 | Função | Descrição |
 |---|---|
 | `g.plotar(dados, config?)` | Interface unificada de plotagem |

@@ -1895,6 +1895,212 @@ g.superficie3D(onda, {
     largura:   <span class="ex-num">600</span>,
     altura:    <span class="ex-num">400</span>
 });</pre>
+                    <!-- ─── NOVAS FUNÇÕES MODULARES ─────────────────────── -->
+                    <h4 style="margin-top:2rem;">Funções modulares <span style="font-weight:400;font-size:.85em;color:var(--accent)">(recomendadas)</span></h4>
+                    <p class="tab-intro">Alternativas mais expressivas a <code>plotarFuncao</code> e <code>dispersao</code>.
+                        Aceitam múltiplos formatos de entrada e geram gráficos de linha contínua via PlotterAPI nativa.</p>
+
+                    <!-- g.grafico -->
+                    <h4>g.grafico(funcoes, opcoes?)</h4>
+                    <p class="tab-intro">Plota uma ou várias funções numa só chamada. <code>funcoes</code> pode ser uma
+                        função, uma lista de funções, ou uma lista de objetos dataset.</p>
+                    <table class="doc-table">
+                        <thead>
+                            <tr><th colspan="3">Objeto dataset (quando <code>funcoes</code> é uma lista de objetos)</th></tr>
+                            <tr><th>Campo</th><th>Tipo</th><th>Descrição</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td><code>funcao</code></td><td>funcao</td><td>A função a plotar nesta série</td></tr>
+                            <tr><td><code>pontos</code></td><td>lista / vazio</td><td>Pontos extras sobrepostos à função</td></tr>
+                            <tr><td><code>cor</code></td><td>caracter</td><td>Cor da série (hex ou CSS)</td></tr>
+                            <tr><td><code>rotulo</code></td><td>caracter</td><td>Rótulo no legend</td></tr>
+                        </tbody>
+                    </table>
+                    <table class="doc-table">
+                        <thead>
+                            <tr><th colspan="3">Objeto <code>opcoes</code></th></tr>
+                            <tr><th>Campo</th><th>Padrão</th><th>Descrição</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td><code>intervalo</code></td><td>[-10, 10]</td><td>Intervalo do eixo X</td></tr>
+                            <tr><td><code>legendas</code></td><td>[]</td><td>Lista de rótulos (uma entrada por função)</td></tr>
+                            <tr><td><code>legenda</code></td><td>verdadeiro</td><td>Exibe ou oculta o legend</td></tr>
+                            <tr><td><code>titulo</code></td><td>""</td><td>Título do gráfico</td></tr>
+                            <tr><td><code>largura</code></td><td>500</td><td>Largura em pixels</td></tr>
+                            <tr><td><code>altura</code></td><td>320</td><td>Altura em pixels</td></tr>
+                        </tbody>
+                    </table>
+                    <pre class="code-example"><span class="ex-kw">importar</span> graficos <span class="ex-kw">como</span> g;
+<span class="ex-kw">importar</span> mat <span class="ex-kw">como</span> m;
+
+<span class="ex-cmt">// Lista simples de funções — cores atribuídas automaticamente</span>
+<span class="ex-kw">funcao</span> f(x) { <span class="ex-kw">retorno</span> m.sen(x); }
+<span class="ex-kw">funcao</span> h(x) { <span class="ex-kw">retorno</span> m.cos(x); }
+g.grafico([f, h], { intervalo: [-<span class="ex-num">6.28</span>, <span class="ex-num">6.28</span>], titulo: <span class="ex-str">"sen e cos"</span> });
+
+<span class="ex-cmt">// Datasets individuais com cor e rótulo</span>
+g.grafico([
+    { funcao: f, cor: <span class="ex-str">"#7c83ff"</span>, rotulo: <span class="ex-str">"sen(x)"</span> },
+    { funcao: h, cor: <span class="ex-str">"#4ade80"</span>, rotulo: <span class="ex-str">"cos(x)"</span> }
+], { titulo: <span class="ex-str">"Trigonometria"</span>, largura: <span class="ex-num">600</span> });</pre>
+
+                    <!-- g.pontos -->
+                    <h4>g.pontos(lista, opcoes?)</h4>
+                    <p class="tab-intro">Plota uma lista de pontos como curva contínua (sem ser scatter plot).
+                        Aceita <code>[[x,y], ...]</code> ou <code>[{x, y}, ...]</code>. O intervalo é calculado
+                        automaticamente a partir dos dados.</p>
+                    <table class="doc-table">
+                        <thead>
+                            <tr><th>Campo de opcoes</th><th>Padrão</th><th>Descrição</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td><code>cor</code></td><td>#a78bfa</td><td>Cor dos pontos</td></tr>
+                            <tr><td><code>raio</code></td><td>5</td><td>Raio dos pontos em pixels</td></tr>
+                            <tr><td><code>rotulo</code></td><td>""</td><td>Rótulo no legend</td></tr>
+                            <tr><td><code>titulo</code></td><td>""</td><td>Título do gráfico</td></tr>
+                            <tr><td><code>largura</code></td><td>500</td><td>Largura em pixels</td></tr>
+                            <tr><td><code>altura</code></td><td>320</td><td>Altura em pixels</td></tr>
+                        </tbody>
+                    </table>
+                    <pre class="code-example"><span class="ex-kw">importar</span> graficos <span class="ex-kw">como</span> g;
+
+<span class="ex-cmt">// Pares [x, y] explícitos</span>
+g.pontos([[<span class="ex-num">0</span>,<span class="ex-num">0</span>], [<span class="ex-num">1</span>,<span class="ex-num">1</span>], [<span class="ex-num">2</span>,<span class="ex-num">4</span>], [<span class="ex-num">3</span>,<span class="ex-num">9</span>]], { titulo: <span class="ex-str">"Quadrados"</span> });
+
+<span class="ex-cmt">// Objetos {x, y}</span>
+g.pontos([{x:<span class="ex-num">0</span>,y:<span class="ex-num">0</span>},{x:<span class="ex-num">1</span>,y:<span class="ex-num">2</span>},{x:<span class="ex-num">2</span>,y:<span class="ex-num">1</span>}], { cor: <span class="ex-str">"#f87171"</span>, raio: <span class="ex-num">8</span> });</pre>
+
+                    <!-- g.conica -->
+                    <h4>g.conica(A, B, C, D, E, F, opcoes?)</h4>
+                    <p class="tab-intro">Plota a cônica definida por
+                        <code>Ax² + Bxy + Cy² + Dx + Ey + F = 0</code>.
+                        Os dois ramos são desenhados automaticamente na mesma cor.</p>
+                    <table class="doc-table">
+                        <thead>
+                            <tr><th>Campo de opcoes</th><th>Padrão</th><th>Descrição</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td><code>intervalo</code></td><td>[-8, 8]</td><td>Intervalo do eixo X</td></tr>
+                            <tr><td><code>cor</code></td><td>#7c83ff</td><td>Cor dos dois ramos</td></tr>
+                            <tr><td><code>rotulo</code></td><td>"cônica"</td><td>Rótulo no legend</td></tr>
+                            <tr><td><code>titulo</code></td><td>""</td><td>Título do gráfico</td></tr>
+                            <tr><td><code>largura</code></td><td>500</td><td>Largura em pixels</td></tr>
+                            <tr><td><code>altura</code></td><td>320</td><td>Altura em pixels</td></tr>
+                        </tbody>
+                    </table>
+                    <pre class="code-example"><span class="ex-kw">importar</span> graficos <span class="ex-kw">como</span> g;
+
+<span class="ex-cmt">// Elipse: x²/4 + y²/9 = 1  ⟹  9x² + 4y² - 36 = 0</span>
+g.conica(<span class="ex-num">9</span>, <span class="ex-num">0</span>, <span class="ex-num">4</span>, <span class="ex-num">0</span>, <span class="ex-num">0</span>, -<span class="ex-num">36</span>, { titulo: <span class="ex-str">"Elipse a=2, b=3"</span> });
+
+<span class="ex-cmt">// Hipérbole: x² - y² = 1  ⟹  x² - y² - 1 = 0</span>
+g.conica(<span class="ex-num">1</span>, <span class="ex-num">0</span>, -<span class="ex-num">1</span>, <span class="ex-num">0</span>, <span class="ex-num">0</span>, -<span class="ex-num">1</span>, { titulo: <span class="ex-str">"Hipérbole"</span>, cor: <span class="ex-str">"#f87171"</span> });
+
+<span class="ex-cmt">// Parábola: y = x²  ⟹  x² - y = 0</span>
+g.conica(<span class="ex-num">1</span>, <span class="ex-num">0</span>, <span class="ex-num">0</span>, <span class="ex-num">0</span>, -<span class="ex-num">1</span>, <span class="ex-num">0</span>, { titulo: <span class="ex-str">"Parábola y = x²"</span> });</pre>
+
+                    <!-- g.relacao -->
+                    <h4>g.relacao(rel, opcoes?)</h4>
+                    <p class="tab-intro">Plota relações matemáticas em três formatos:</p>
+                    <table class="doc-table">
+                        <thead>
+                            <tr><th>Formato de <code>rel</code></th><th>Efeito</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>[f1, f2, ...]</code></td>
+                                <td>Ramos da relação — cada função é uma série (ex: saída de <code>conic2D</code>)</td>
+                            </tr>
+                            <tr>
+                                <td><code>{x: fn, y: fn, t: [t0, t1]}</code></td>
+                                <td>Curva paramétrica — renderiza <code>(fx(t), fy(t))</code> para t ∈ [t0, t1]</td>
+                            </tr>
+                            <tr>
+                                <td><code>funcao</code></td>
+                                <td>Atalho simples para uma única função y = f(x)</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <table class="doc-table">
+                        <thead>
+                            <tr><th>Campo de opcoes</th><th>Padrão</th><th>Descrição</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td><code>intervalo</code></td><td>[-10, 10]</td><td>Intervalo para ramos/função simples</td></tr>
+                            <tr><td><code>cor</code></td><td>#7c83ff</td><td>Cor da curva paramétrica</td></tr>
+                            <tr><td><code>titulo</code></td><td>""</td><td>Título do gráfico</td></tr>
+                            <tr><td><code>largura</code></td><td>500</td><td>Largura em pixels</td></tr>
+                            <tr><td><code>altura</code></td><td>320</td><td>Altura em pixels</td></tr>
+                        </tbody>
+                    </table>
+                    <pre class="code-example"><span class="ex-kw">importar</span> graficos <span class="ex-kw">como</span> g;
+<span class="ex-kw">importar</span> mat <span class="ex-kw">como</span> m;
+
+<span class="ex-cmt">// Curva paramétrica — círculo unitário</span>
+g.relacao(
+    { x: (t) => m.cos(t), y: (t) => m.sen(t), t: [<span class="ex-num">0</span>, <span class="ex-num">6.28</span>] },
+    { titulo: <span class="ex-str">"Círculo Unitário"</span> }
+);
+
+<span class="ex-cmt">// Espiral de Arquimedes</span>
+g.relacao(
+    { x: (t) => t * m.cos(t), y: (t) => t * m.sen(t), t: [<span class="ex-num">0</span>, <span class="ex-num">20</span>] },
+    { titulo: <span class="ex-str">"Espiral"</span>, cor: <span class="ex-str">"#fbbf24"</span> }
+);
+
+<span class="ex-cmt">// Dois ramos de uma relação (ex: √x e -√x)</span>
+<span class="ex-kw">funcao</span> ramoPos(x) { <span class="ex-kw">retorno</span>  raiz(x); }
+<span class="ex-kw">funcao</span> ramoNeg(x) { <span class="ex-kw">retorno</span> -raiz(x); }
+g.relacao([ramoPos, ramoNeg], { intervalo: [<span class="ex-num">0</span>, <span class="ex-num">10</span>], titulo: <span class="ex-str">"y² = x"</span> });</pre>
+
+                    <!-- g.anotado -->
+                    <h4>g.anotado(f, marcadores, opcoes?)</h4>
+                    <p class="tab-intro">Plota a função <code>f</code> e sobrepõe grupos de pontos de interesse em cores
+                        distintas. Ideal para visualizar raízes, pontos críticos e pontos especiais calculados por
+                        métodos numéricos.</p>
+                    <div class="doc-note">
+                        <strong>Formatos aceitos por cada elemento de <code>marcadores</code>:</strong>
+                        <ul style="margin:.4rem 0 0 1.2rem;line-height:1.8">
+                            <li><code>[x, y]</code> — par de coordenadas explícito</li>
+                            <li><code>numero</code> — x-coordenada; y calculado por <code>f(x)</code></li>
+                            <li><code>{root: x}</code> ou <code>{raiz: x}</code> ou <code>{x: x}</code> — objeto de resultado de método numérico</li>
+                            <li><code>[n1, n2, ...]</code> — lista de x-values; y calculado por <code>f(x)</code> para cada um</li>
+                            <li><code>[[x1,y1], [x2,y2], ...]</code> — lista de pares</li>
+                        </ul>
+                    </div>
+                    <table class="doc-table">
+                        <thead>
+                            <tr><th>Campo de opcoes</th><th>Padrão</th><th>Descrição</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td><code>intervalo</code></td><td>[-10, 10]</td><td>Intervalo do eixo X</td></tr>
+                            <tr><td><code>cor</code></td><td>#7c83ff</td><td>Cor da curva principal</td></tr>
+                            <tr><td><code>rotulo</code></td><td>"f(x)"</td><td>Rótulo da curva principal</td></tr>
+                            <tr><td><code>legendas</code></td><td>[]</td><td>Rótulos para cada grupo de marcadores</td></tr>
+                            <tr><td><code>titulo</code></td><td>"Gráfico Anotado"</td><td>Título do gráfico</td></tr>
+                            <tr><td><code>largura</code></td><td>500</td><td>Largura em pixels</td></tr>
+                            <tr><td><code>altura</code></td><td>320</td><td>Altura em pixels</td></tr>
+                        </tbody>
+                    </table>
+                    <pre class="code-example"><span class="ex-kw">importar</span> graficos <span class="ex-kw">como</span> g;
+<span class="ex-kw">importar</span> calculo <span class="ex-kw">como</span> c;
+
+<span class="ex-kw">funcao</span> f(x) { <span class="ex-kw">retorno</span> x**<span class="ex-num">3</span> - <span class="ex-num">3</span>*x; }
+
+<span class="ex-cmt">// Atalho mínimo: só a função + ponto avulso</span>
+g.anotado(f, [[<span class="ex-num">1</span>, <span class="ex-num">0</span>]]);
+
+<span class="ex-cmt">// Com raízes e pontos críticos calculados</span>
+super raizes   = c.raizes(f, [-<span class="ex-num">3</span>, <span class="ex-num">3</span>]);        <span class="ex-cmt">// retorna lista de {root}</span>
+super criticos = c.pontosCriticos(f, [-<span class="ex-num">3</span>, <span class="ex-num">3</span>]); <span class="ex-cmt">// retorna lista de {root}</span>
+
+g.anotado(f, [[<span class="ex-num">1</span>,<span class="ex-num">0</span>], raizes, criticos], {
+    titulo:   <span class="ex-str">"f(x) = x³ - 3x"</span>,
+    rotulo:   <span class="ex-str">"f(x)"</span>,
+    legendas: [<span class="ex-str">"ponto avulso"</span>, <span class="ex-str">"raízes"</span>, <span class="ex-str">"críticos"</span>],
+    intervalo: [-<span class="ex-num">3</span>, <span class="ex-num">3</span>]
+});</pre>
+
                 </div><!-- /tab-graficos -->
 
 
