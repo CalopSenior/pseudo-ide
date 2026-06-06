@@ -2165,17 +2165,15 @@ window.gerarLinkCompartilhamento = async function () {
 
   imprima("⏳ Gerando link de compartilhamento...");
 
-  // A IDE gera um ID único com prefixo 'snp_' (snippet) localmente
   const shortId = "snp_" + Math.random().toString(36).substring(2, 8);
 
   try {
-    // Usamos a mesma estrutura de payload que o servidor já aceita
     const payload = {
       tipo: "snippet",
       nome: shortId,
       autor: "Compartilhamento",
       versao: "1.0",
-      codigoInjetor: codigo, // Mandamos o código cru em vez do código compilado
+      codigoInjetor: codigo,
     };
 
     const res = await fetch(urlNuvem, {
@@ -2185,9 +2183,11 @@ window.gerarLinkCompartilhamento = async function () {
 
     if (!res.ok) throw new Error();
 
-    // Embute a URL da API no link para que o destinatário não precise configurá-la
+    // Codifica {id, api} como base64url — evita exposição direta na barra de endereços
+    // e mantém o formato extensível para campos futuros.
+    const token = _encodeShareToken({ id: shortId, api: urlNuvem });
     const urlBase = window.location.href.split("?")[0];
-    const linkFinal = `${urlBase}?id=${shortId}&api=${encodeURIComponent(urlNuvem)}`;
+    const linkFinal = `${urlBase}?c=${token}`;
 
     await navigator.clipboard.writeText(linkFinal);
     imprima(`🔗 Link copiado para a área de transferência:\n${linkFinal}`);
@@ -2195,6 +2195,24 @@ window.gerarLinkCompartilhamento = async function () {
     _imprimaErro("Falha ao gerar o link. Verifique o servidor.");
   }
 };
+
+/* Codifica um objeto como base64url (URL-safe, sem padding). */
+function _encodeShareToken(obj) {
+  return btoa(JSON.stringify(obj))
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/, "");
+}
+
+/* Decodifica um token base64url gerado por _encodeShareToken. */
+function _decodeShareToken(token) {
+  try {
+    const b64 = token.replace(/-/g, "+").replace(/_/g, "/");
+    return JSON.parse(atob(b64));
+  } catch {
+    return null;
+  }
+}
 
 /* ============================================================
    ATALHOS GLOBAIS + INIT
@@ -2238,11 +2256,23 @@ window.addEventListener("load", async () => {
   atualizarEditor();
 
   const urlParams = new URLSearchParams(window.location.search);
-  const idSnippet = urlParams.get("id");
-  // Prefer the API URL embedded in the link; fall back to the locally saved one.
-  // This lets recipients open shared links without having to configure anything.
-  const urlNuvem =
-    urlParams.get("api") || localStorage.getItem("pseudo_ide_cloud_url");
+
+  // Resolve id + api a partir de qualquer formato de link suportado:
+  //   ?c=<base64url>        — formato atual (v3)
+  //   ?id=X&api=Y           — formato anterior (v2)
+  //   ?id=X                 — formato original sem api (v1, requer localStorage)
+  let idSnippet = null;
+  let urlNuvem = null;
+
+  const tokenParam = urlParams.get("c");
+  if (tokenParam) {
+    const decoded = _decodeShareToken(tokenParam);
+    if (decoded) { idSnippet = decoded.id; urlNuvem = decoded.api; }
+  } else {
+    idSnippet = urlParams.get("id");
+    urlNuvem = urlParams.get("api");
+  }
+  urlNuvem = urlNuvem || localStorage.getItem("pseudo_ide_cloud_url");
 
   if (idSnippet && urlNuvem) {
     try {
@@ -2266,7 +2296,7 @@ window.addEventListener("load", async () => {
       console.error("Falha ao puxar snippet do servidor", e);
     }
   } else if (idSnippet && !urlNuvem) {
-    imprima("⚠️ Este link de compartilhamento não contém a URL da API. Peça ao autor um link mais recente, ou configure a API manualmente (botão ⚙️ API).");
+    imprima("⚠️ Este link não contém a URL da API. Peça ao autor um link mais recente, ou configure a API manualmente (botão ⚙️ API).");
   } else {
     codeEditor.focus();
     codeEditor.selectionStart = codeEditor.selectionEnd =
