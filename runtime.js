@@ -1209,6 +1209,32 @@ const COMPLETIONS = [
     detail: "latex — retorna string TeX sem renderizar",
     insert: "lt.texString(",
   },
+  // ── arquivos ──────────────────────────────────────────────
+  {
+    label: "importar arquivos como arq",
+    detail: "snippet",
+    insert: "importar arquivos como arq;\n",
+  },
+  {
+    label: "arq.lerCSV(opcoes)",
+    detail: "arquivos — lê CSV e retorna dados",
+    insert: "arq.lerCSV({tipo: \"lista-mapas\"})",
+  },
+  {
+    label: "arq.lerJSON(opcoes)",
+    detail: "arquivos — lê JSON e retorna objeto",
+    insert: "arq.lerJSON()",
+  },
+  {
+    label: "arq.lerTXT(opcoes)",
+    detail: "arquivos — lê TXT e retorna lista de linhas",
+    insert: "arq.lerTXT()",
+  },
+  {
+    label: "arq.abrirImportador()",
+    detail: "arquivos — abre a tela de importação visual",
+    insert: "arq.abrirImportador()",
+  },
   // ── metodos — verificadores de tipo ──────────────────────
   {
     label: "m.eNumero(v)",
