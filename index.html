@@ -538,6 +538,25 @@ inteiro idade = <span class="ex-num">25</span>;
 <span class="ex-fn">imprima</span>(f<span class="ex-str">"O dobro de {idade} é {idade * 2}."</span>);
 <span class="ex-cmt">// Saída: O dobro de 25 é 50.</span></pre>
 
+                    <h4>Strings brutas (raw strings) — prefixo <code>#</code></h4>
+                    <p class="tab-intro">
+                        Use <code>#"..."</code> ou <code>#'...'</code> quando a string contém <code>\</code> que <strong>não devem ser interpretados</strong> como escape do JavaScript.
+                        Isso é essencial para escrever comandos LaTeX sem precisar dobrar cada barra:
+                    </p>
+                    <pre class="code-example"><span class="ex-kw">importar</span> latex <span class="ex-kw">como</span> lt;
+
+<span class="ex-cmt">// Com raw string: funciona direto</span>
+lt.linha(<span class="ex-str">#"\frac{1}{2} + \frac{1}{3} = \frac{5}{6}"</span>)
+lt.bloco(<span class="ex-str">#"\sum_{k=1}^{n} k = \frac{n(n+1)}{2}"</span>)
+lt.linha(<span class="ex-str">#"e^{i\pi} + 1 = 0"</span>)
+
+<span class="ex-cmt">// Sem raw string: \f vira form feed, \p vira p — LaTeX corrompido</span>
+lt.linha(<span class="ex-str">"\frac{1}{2}"</span>) <span class="ex-cmt">// ERRADO — \f é interpretado pelo JS</span></pre>
+                    <p class="tab-intro">
+                        <strong>Quando usar:</strong> sempre que a string contiver <code>\</code> — para LaTeX, expressões regulares literais ou qualquer texto com barras.<br>
+                        <strong>Limitação:</strong> não é possível incluir o mesmo caractere de aspas dentro do raw string (use <code>#'...'</code> se precisar de <code>"</code> no conteúdo).
+                    </p>
+
                     <h4>Repetição de texto</h4>
                     <pre
                         class="code-example"><span class="ex-fn">imprima</span>(<span class="ex-num">3</span> * <span class="ex-str">"ha"</span>);    <span class="ex-cmt">// hahaha</span>
@@ -2371,24 +2390,24 @@ importar metodos como m;
                     </p>
 
                     <h4>lt.linha(tex)</h4>
-                    <p class="tab-intro">Renderiza uma expressão LaTeX <strong>inline</strong> (altura de linha) na saída da célula.</p>
+                    <p class="tab-intro">Renderiza uma expressão LaTeX <strong>inline</strong> (altura de linha) na saída da célula. Use <code>#"..."</code> (raw string) para que as barras não sejam interpretadas pelo JavaScript.</p>
                     <pre class="code-example"><span class="ex-kw">importar</span> latex <span class="ex-kw">como</span> lt;
 
-lt.linha(<span class="ex-str">"\frac{1}{2} + \frac{1}{3} = \frac{5}{6}"</span>)
-lt.linha(<span class="ex-str">"e^{i\pi} + 1 = 0"</span>)
-lt.linha(<span class="ex-str">"\sum_{k=1}^{n} k = \frac{n(n+1)}{2}"</span>)</pre>
+lt.linha(<span class="ex-str">#"\frac{1}{2} + \frac{1}{3} = \frac{5}{6}"</span>)
+lt.linha(<span class="ex-str">#"e^{i\pi} + 1 = 0"</span>)
+lt.linha(<span class="ex-str">#"\sum_{k=1}^{n} k = \frac{n(n+1)}{2}"</span>)</pre>
 
                     <h4>lt.bloco(tex)</h4>
                     <p class="tab-intro">Renderiza em <strong>bloco centralizado</strong> (display mode). Ao passar múltiplos argumentos, as expressões são alinhadas verticalmente.</p>
                     <pre class="code-example"><span class="ex-kw">importar</span> latex <span class="ex-kw">como</span> lt;
 
 <span class="ex-cmt">// Fórmula única em bloco</span>
-lt.bloco(<span class="ex-str">"\int_0^\infty e^{-x^2}\,dx = \frac{\sqrt{\pi}}{2}"</span>)
+lt.bloco(<span class="ex-str">#"\int_0^\infty e^{-x^2}\,dx = \frac{\sqrt{\pi}}{2}"</span>)
 
 <span class="ex-cmt">// Múltiplas expressões alinhadas (tipo \begin{aligned})</span>
 lt.bloco(
-    <span class="ex-str">"f(x) = ax^2 + bx + c"</span>,
-    <span class="ex-str">"x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}"</span>
+    <span class="ex-str">#"f(x) = ax^2 + bx + c"</span>,
+    <span class="ex-str">#"x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}"</span>
 )</pre>
 
                     <h4>lt.converterParaLatex(fn)</h4>
