@@ -25,6 +25,7 @@ Ambiente educacional de pseudocódigo em Português. O pseudocódigo é transpil
     - [tempo](#tempo)
     - [graficos](#graficos)
     - [probabilidade](#probabilidade)
+    - [latex](#latex)
 11. [Editor](#editor)
 
 ---
@@ -709,6 +710,57 @@ importar probabilidade como p;
 | `p.aleatorioInteiro(min, max)` | Inteiro aleatório em [min, max] |
 | `p.rolarDados(qtd, faces)` | Simula `qtd` dados de `faces` lados |
 | `p.monteCarlo(fn, n)` | Simulação Monte Carlo — fn retorna booleano |
+
+### latex <a name="latex"></a>
+
+Renderização de fórmulas matemáticas via **KaTeX**. Suporta toda a sintaxe LaTeX padrão.
+
+```
+importar latex como lt;
+```
+
+| Função | Descrição |
+|---|---|
+| `lt.linha(tex)` | Renderiza expressão LaTeX **inline** na saída |
+| `lt.bloco(tex)` | Renderiza expressão LaTeX em **bloco** (display mode) |
+| `lt.bloco(tex1, tex2, …)` | Renderiza múltiplas expressões alinhadas num bloco |
+| `lt.converterParaLatex(fn)` | Converte uma função Pseudo/JS para string TeX e renderiza |
+| `lt.texString(fn)` | Retorna a string TeX sem renderizar |
+
+**Conversões automáticas em `converterParaLatex` / `texString`:**
+
+| Expressão Pseudo | LaTeX gerado |
+|---|---|
+| `mat.sen(x)` | `\sin\!\left(x\right)` |
+| `mat.cos(x)` | `\cos\!\left(x\right)` |
+| `mat.ln(x)` | `\ln\!\left(x\right)` |
+| `mat.sqrt(x)` | `\sqrt{x}` |
+| `mat.abs(x)` | `\left\|x\right\|` |
+| `mat.PI` | `\pi` |
+| `x ** n` | `x^{n}` |
+| `a * b` | `a \cdot b` |
+
+**Exemplos:**
+
+```
+importar latex como lt;
+importar mat como mat;
+
+// Fórmula inline dentro de texto (via imprima + texString)
+lt.linha("\frac{1}{2} + \frac{1}{3} = \frac{5}{6}")
+
+// Bloco de fórmulas alinhadas
+lt.bloco(
+    "f(x) = ax^2 + bx + c",
+    "x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}"
+)
+
+// Converter função Pseudo para LaTeX
+lt.converterParaLatex((x) => mat.sen(x) ** 2 + mat.cos(x) ** 2)
+// Renderiza: \sin^{2}\!\left(x\right) + \cos^{2}\!\left(x\right)
+```
+
+> **Nota:** O Pseudo Notebook também suporta `$expressão$` (inline) e `$$expressão$$` (bloco) diretamente nas células de texto Markdown, sem precisar importar a biblioteca.
 
 ---
 

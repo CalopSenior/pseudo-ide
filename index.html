@@ -248,6 +248,7 @@
                 <button class="tab-btn" onclick="switchTab('tab-graficos',  this)">📉 graficos</button>
                 <button class="tab-btn" onclick="switchTab('tab-prob',      this)">🎲 probabilidade</button>
                 <button class="tab-btn" onclick="switchTab('tab-algebra',   this)">📐 algebra</button>
+                <button class="tab-btn" onclick="switchTab('tab-latex',     this)">∑ latex</button>
                 <button class="tab-btn" onclick="switchTab('tab-editor',    this)">⌨️ Editor</button>
             </div>
 
@@ -2359,6 +2360,96 @@ importar metodos como m;
                     </div>
 
                 </div><!-- /tab-algebra -->
+
+                <!-- ═══════════════════════════════════════════════════════════
+     ∑ LATEX — Renderização de Fórmulas Matemáticas
+     ═══════════════════════════════════════════════════════════ -->
+                <div id="tab-latex" class="tab-pane hidden">
+                    <h3>Biblioteca latex</h3>
+                    <p class="tab-intro">Renderiza fórmulas matemáticas usando <strong>KaTeX</strong>. Suporta toda a sintaxe LaTeX padrão. Importe com
+                        <code>importar latex como lt;</code>
+                    </p>
+
+                    <h4>lt.linha(tex)</h4>
+                    <p class="tab-intro">Renderiza uma expressão LaTeX <strong>inline</strong> (altura de linha) na saída da célula.</p>
+                    <pre class="code-example"><span class="ex-kw">importar</span> latex <span class="ex-kw">como</span> lt;
+
+lt.linha(<span class="ex-str">"\frac{1}{2} + \frac{1}{3} = \frac{5}{6}"</span>)
+lt.linha(<span class="ex-str">"e^{i\pi} + 1 = 0"</span>)
+lt.linha(<span class="ex-str">"\sum_{k=1}^{n} k = \frac{n(n+1)}{2}"</span>)</pre>
+
+                    <h4>lt.bloco(tex)</h4>
+                    <p class="tab-intro">Renderiza em <strong>bloco centralizado</strong> (display mode). Ao passar múltiplos argumentos, as expressões são alinhadas verticalmente.</p>
+                    <pre class="code-example"><span class="ex-kw">importar</span> latex <span class="ex-kw">como</span> lt;
+
+<span class="ex-cmt">// Fórmula única em bloco</span>
+lt.bloco(<span class="ex-str">"\int_0^\infty e^{-x^2}\,dx = \frac{\sqrt{\pi}}{2}"</span>)
+
+<span class="ex-cmt">// Múltiplas expressões alinhadas (tipo \begin{aligned})</span>
+lt.bloco(
+    <span class="ex-str">"f(x) = ax^2 + bx + c"</span>,
+    <span class="ex-str">"x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}"</span>
+)</pre>
+
+                    <h4>lt.converterParaLatex(fn)</h4>
+                    <p class="tab-intro">Converte uma função Pseudo/JS para LaTeX automaticamente e renderiza em bloco. Reconhece funções <code>mat.*</code>, operadores <code>**</code> e <code>*</code>.</p>
+                    <pre class="code-example"><span class="ex-kw">importar</span> latex <span class="ex-kw">como</span> lt;
+<span class="ex-kw">importar</span> mat <span class="ex-kw">como</span> mat;
+
+<span class="ex-cmt">// Identidade trigonométrica</span>
+lt.converterParaLatex((x) => mat.sen(x) ** <span class="ex-num">2</span> + mat.cos(x) ** <span class="ex-num">2</span>)
+<span class="ex-cmt">// → sin²(x) + cos²(x)</span>
+
+<span class="ex-cmt">// Função com logaritmo</span>
+lt.converterParaLatex((x) => mat.ln(x - <span class="ex-num">1</span>))
+<span class="ex-cmt">// → ln(x − 1)</span>
+
+<span class="ex-cmt">// Raiz quadrada</span>
+lt.converterParaLatex((x) => mat.sqrt(x ** <span class="ex-num">2</span> + <span class="ex-num">1</span>))
+<span class="ex-cmt">// → √(x² + 1)</span></pre>
+
+                    <h4>lt.texString(fn)</h4>
+                    <p class="tab-intro">Igual a <code>converterParaLatex</code>, mas <strong>retorna a string TeX</strong> sem renderizar. Útil para compor expressões maiores.</p>
+                    <pre class="code-example"><span class="ex-kw">importar</span> latex <span class="ex-kw">como</span> lt;
+<span class="ex-kw">importar</span> mat <span class="ex-kw">como</span> mat;
+
+super parte1 = lt.texString((x) => mat.sen(x));
+super parte2 = lt.texString((x) => mat.cos(x));
+lt.bloco(f<span class="ex-str">"{parte1}^2 + {parte2}^2 = 1"</span>)</pre>
+
+                    <h4>LaTeX no Markdown (Notebook)</h4>
+                    <p class="tab-intro">Nas células de texto do Notebook, use diretamente sem importar a biblioteca:</p>
+                    <pre class="code-example"><span class="ex-cmt">Inline: $\frac{\sin x}{x}$ tende a 1 quando $x \to 0$</span>
+
+<span class="ex-cmt">Bloco numa linha:</span>
+$$e^{i\pi} + 1 = 0$$
+
+<span class="ex-cmt">Bloco multilinha:</span>
+$$
+\int_0^\infty e^{-x^2}\,dx = \frac{\sqrt{\pi}}{2}
+$$</pre>
+
+                    <h4>Referência de conversões automáticas</h4>
+                    <table class="ref-table">
+                        <thead><tr><th>Pseudo / JS</th><th>LaTeX gerado</th></tr></thead>
+                        <tbody>
+                            <tr><td><code>mat.sen(x)</code></td><td><code>\sin\!\left(x\right)</code></td></tr>
+                            <tr><td><code>mat.cos(x)</code></td><td><code>\cos\!\left(x\right)</code></td></tr>
+                            <tr><td><code>mat.tan(x)</code></td><td><code>\tan\!\left(x\right)</code></td></tr>
+                            <tr><td><code>mat.arcsen(x)</code></td><td><code>\arcsin\!\left(x\right)</code></td></tr>
+                            <tr><td><code>mat.ln(x)</code></td><td><code>\ln\!\left(x\right)</code></td></tr>
+                            <tr><td><code>mat.log(x)</code></td><td><code>\log\!\left(x\right)</code></td></tr>
+                            <tr><td><code>mat.sqrt(x)</code></td><td><code>\sqrt{x}</code></td></tr>
+                            <tr><td><code>mat.cbrt(x)</code></td><td><code>\sqrt[3]{x}</code></td></tr>
+                            <tr><td><code>mat.abs(x)</code></td><td><code>\left|x\right|</code></td></tr>
+                            <tr><td><code>mat.PI</code></td><td><code>\pi</code></td></tr>
+                            <tr><td><code>mat.E</code></td><td><code>e</code></td></tr>
+                            <tr><td><code>x ** n</code></td><td><code>x^{n}</code></td></tr>
+                            <tr><td><code>a * b</code></td><td><code>a \cdot b</code></td></tr>
+                        </tbody>
+                    </table>
+
+                </div><!-- /tab-latex -->
 
                 <!-- ═══════════════════════════════════════════════════════════
      ⌨️ EDITOR
