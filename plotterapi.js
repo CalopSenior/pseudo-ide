@@ -707,7 +707,7 @@ class PseudoMatriz {
    5. HELPERS PRIVADOS
    ============================================================ */
 function _c() {
-  return document.getElementById("console-saida");
+  return window._nbCurrentCell || document.getElementById("console-saida");
 }
 function _sc() {
   const c = _c();
