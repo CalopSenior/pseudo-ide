@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Importador de Dados — Pseudo-IDE</title>
+  <title>Importador / Editor .pdados — Pseudo-IDE</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,400;0,500;0,600;1,400&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
@@ -21,7 +21,8 @@
           <polyline points="15 18 9 12 15 6"/>
         </svg>IDE
       </a>
-      <span class="imp-app-name">Importador de Dados</span>
+      <span class="imp-app-name" id="imp-app-name">Importador de Dados</span>
+      <!-- File badge (import mode) -->
       <span class="imp-file-badge" id="imp-file-badge" style="display:none">
         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="vertical-align:-1px;margin-right:4px">
           <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
@@ -32,117 +33,203 @@
       </span>
     </div>
     <div class="imp-header-right">
-      <span class="imp-header-hint">Importe CSV, JSON, TXT ou .pdados — clique nos cabeçalhos para selecionar colunas.</span>
+      <span class="imp-header-hint" id="imp-header-hint">Importe CSV, JSON, TXT ou .pdados — clique nos cabeçalhos para selecionar colunas.</span>
     </div>
   </header>
 
-  <!-- ===== DROP ZONE ===== -->
-  <div class="imp-drop-wrap">
-    <div id="imp-drop" class="imp-drop" role="button" tabindex="0" aria-label="Selecionar arquivo para importar">
-      <input type="file" id="imp-file-input" accept=".csv,.json,.txt,.tsv,.pdados" style="display:none">
-      <div class="imp-drop-icon">
-        <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-          <polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
-        </svg>
-      </div>
-      <div class="imp-drop-text">Arraste um arquivo aqui ou clique para selecionar</div>
-      <div class="imp-drop-hint">
-        <strong>.csv</strong> / <strong>.tsv</strong> / <strong>.json</strong> / <strong>.txt</strong> / <strong>.pdados</strong>
-      </div>
-    </div>
+  <!-- ===== MODE SWITCHER ===== -->
+  <div class="imp-mode-bar">
+    <button class="imp-mode-btn imp-mode-active" id="mode-import-btn" onclick="setImpMode('import')">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="vertical-align:-2px;margin-right:5px">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+        <polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+      </svg>Importar arquivo
+    </button>
+    <button class="imp-mode-btn" id="mode-editor-btn" onclick="setImpMode('editor')">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="vertical-align:-2px;margin-right:5px">
+        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+      </svg>Editor .pdados
+    </button>
   </div>
 
-  <!-- ===== MAIN CONTENT (hidden until file loaded) ===== -->
-  <div id="imp-main-content" class="imp-main" style="display:none">
+  <!-- ===== IMPORT SECTION ===== -->
+  <div id="imp-import-section">
 
-    <!-- ── SPLIT: Preview (left) + Selection panel (right) ── -->
+    <!-- Drop zone -->
+    <div class="imp-drop-wrap">
+      <div id="imp-drop" class="imp-drop" role="button" tabindex="0" aria-label="Selecionar arquivo para importar">
+        <input type="file" id="imp-file-input" accept=".csv,.json,.txt,.tsv,.pdados" style="display:none">
+        <div class="imp-drop-icon">
+          <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+        </div>
+        <div class="imp-drop-text">Arraste um arquivo aqui ou clique para selecionar</div>
+        <div class="imp-drop-hint">
+          <strong>.csv</strong> / <strong>.tsv</strong> / <strong>.json</strong> / <strong>.txt</strong> / <strong>.pdados</strong>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main content (hidden until file loaded) -->
+    <div id="imp-main-content" class="imp-main" style="display:none">
+      <div class="imp-split">
+        <!-- Left: interactive file preview -->
+        <div class="imp-pane imp-preview-pane">
+          <div class="imp-pane-title">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="vertical-align:-2px;margin-right:6px">
+              <rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/>
+              <line x1="9" y1="21" x2="9" y2="9"/>
+            </svg>Visualização
+            <span style="margin-left:8px;font-size:11px;color:var(--text-muted);font-weight:400;text-transform:none;letter-spacing:0">
+              — clique no cabeçalho de uma coluna para selecioná-la
+            </span>
+          </div>
+          <div id="imp-preview" class="imp-preview-body"></div>
+        </div>
+
+        <!-- Right: selection + variable list -->
+        <div class="imp-right-col">
+          <!-- Selection panel -->
+          <div class="imp-pane imp-sel-pane">
+            <div class="imp-pane-title">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="vertical-align:-2px;margin-right:6px">
+                <polyline points="9 11 12 14 22 4"/>
+                <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+              </svg>Criar variável
+            </div>
+            <div class="imp-sel-body">
+              <p id="imp-sel-info" class="imp-sel-info imp-sel-empty">
+                Clique nos cabeçalhos da tabela para selecionar colunas.
+              </p>
+              <div id="imp-row-controls" class="imp-row-controls">
+                <span class="imp-field-label">Linhas:</span>
+                <input type="number" id="imp-row-start" class="imp-num-inp" value="0" min="0" placeholder="início">
+                <span class="imp-range-sep">–</span>
+                <input type="number" id="imp-row-end" class="imp-num-inp" value="" min="0" placeholder="fim">
+                <label class="imp-auto-label">
+                  <input type="checkbox" id="imp-auto-type" checked> auto-tipo
+                </label>
+              </div>
+              <div id="imp-txt-controls" class="imp-txt-controls" style="display:none">
+                <span class="imp-field-label">Separador:</span>
+                <input type="text" id="imp-txt-sep" class="imp-text-inp imp-sep-inp" value="\n" placeholder="\n">
+              </div>
+              <div class="imp-create-form">
+                <input type="text" id="imp-vname-inp" class="imp-text-inp imp-vname-inp"
+                  placeholder="nome da variável" autocomplete="off" spellcheck="false">
+                <select id="imp-vtype-sel" class="imp-select">
+                  <option value="lista-mapas" selected>lista-mapas</option>
+                </select>
+                <button id="imp-create-btn" class="imp-create-btn" onclick="impCreateVar()" disabled>
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="vertical-align:-1px;margin-right:4px">
+                    <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                  </svg>Criar variável
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Variable list -->
+          <div class="imp-pane imp-vars-pane">
+            <div class="imp-pane-title">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="vertical-align:-2px;margin-right:6px">
+                <polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>
+              </svg>Variáveis definidas
+            </div>
+            <div id="imp-vars-list" class="imp-vars-list">
+              <p class="imp-empty imp-vars-empty">Nenhuma variável ainda.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Code output -->
+      <div class="imp-code-pane">
+        <div class="imp-code-header">
+          <span class="imp-pane-title" style="text-transform:none;letter-spacing:0;font-size:12px">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="vertical-align:-2px;margin-right:6px">
+              <polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>
+            </svg>Código gerado
+          </span>
+          <span class="imp-code-hint">Edite livremente. Sintaxe Pseudo.</span>
+          <div class="imp-code-actions">
+            <button id="imp-export-btn" class="imp-export-btn" onclick="impExportPDADOS()" style="display:none"
+              title="Exporta os dados como arquivo .pdados">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="vertical-align:-2px;margin-right:4px">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>Exportar .pdados
+            </button>
+            <button id="imp-copy-btn" class="imp-copy-btn" onclick="impCopyCode()">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="vertical-align:-2px;margin-right:4px">
+                <rect x="9" y="9" width="13" height="13" rx="2"/>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+              </svg>Copiar código
+            </button>
+          </div>
+        </div>
+        <textarea id="imp-code-out" class="imp-code-out" spellcheck="false"
+          placeholder="// O código Pseudo aparecerá aqui quando você criar variáveis acima."></textarea>
+      </div>
+    </div>
+
+  </div><!-- /imp-import-section -->
+
+  <!-- ===== EDITOR SECTION ===== -->
+  <div id="imp-editor-section" class="imp-main" style="display:none">
+
     <div class="imp-split">
 
-      <!-- Left pane: interactive file preview -->
-      <div class="imp-pane imp-preview-pane">
+      <!-- Left: column definitions -->
+      <div class="imp-pane ed-cols-pane">
         <div class="imp-pane-title">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="vertical-align:-2px;margin-right:6px">
             <rect x="3" y="3" width="18" height="18" rx="2"/>
             <line x1="3" y1="9" x2="21" y2="9"/>
             <line x1="9" y1="21" x2="9" y2="9"/>
-          </svg>Visualização
-          <span class="imp-pane-hint" id="imp-table-hint" style="margin-left:8px;font-size:11px;color:var(--text-muted);font-weight:400;text-transform:none;letter-spacing:0">
-            — clique no cabeçalho de uma coluna para selecioná-la
-          </span>
+          </svg>Colunas
+          <div class="ed-header-actions">
+            <button class="imp-add-btn" onclick="edAddCol()" title="Adicionar nova coluna">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="vertical-align:-1px;margin-right:3px">
+                <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+              </svg>Nova coluna
+            </button>
+            <button class="imp-export-btn ed-load-btn" onclick="edLoadPDADOS()" title="Abrir arquivo .pdados existente para editar">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="vertical-align:-1px;margin-right:3px">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+              </svg>Abrir .pdados
+            </button>
+          </div>
         </div>
-        <div id="imp-preview" class="imp-preview-body"></div>
+        <div id="ed-cols-list" class="ed-cols-list">
+          <p class="imp-empty ed-empty-hint">
+            Clique em <strong>+ Nova coluna</strong> para começar, ou <strong>Abrir .pdados</strong> para editar um arquivo existente.
+          </p>
+        </div>
+        <div class="ed-libs-hint">
+          <code>mat.</code> <code>metodos.</code> <code>algebra.</code> disponíveis nas expressões
+        </div>
       </div>
 
-      <!-- Right pane: selection + variable list -->
-      <div class="imp-right-col">
-
-        <!-- Selection panel -->
-        <div class="imp-pane imp-sel-pane">
-          <div class="imp-pane-title">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="vertical-align:-2px;margin-right:6px">
-              <polyline points="9 11 12 14 22 4"/>
-              <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
-            </svg>Criar variável
-          </div>
-          <div class="imp-sel-body">
-
-            <!-- Selection info (updated by JS) -->
-            <p id="imp-sel-info" class="imp-sel-info imp-sel-empty">
-              Clique nos cabeçalhos da tabela para selecionar colunas.
-            </p>
-
-            <!-- Row range (CSV / .pdados only) -->
-            <div id="imp-row-controls" class="imp-row-controls">
-              <span class="imp-field-label">Linhas:</span>
-              <input type="number" id="imp-row-start" class="imp-num-inp" value="0" min="0" placeholder="início">
-              <span class="imp-range-sep">–</span>
-              <input type="number" id="imp-row-end"   class="imp-num-inp" value="" min="0" placeholder="fim">
-              <label class="imp-auto-label">
-                <input type="checkbox" id="imp-auto-type" checked>
-                auto-tipo
-              </label>
-            </div>
-
-            <!-- TXT separator (TXT only) -->
-            <div id="imp-txt-controls" class="imp-txt-controls" style="display:none">
-              <span class="imp-field-label">Separador:</span>
-              <input type="text" id="imp-txt-sep" class="imp-text-inp imp-sep-inp" value="\n" placeholder="\n">
-            </div>
-
-            <!-- Create form: name + type + button -->
-            <div class="imp-create-form">
-              <input type="text" id="imp-vname-inp" class="imp-text-inp imp-vname-inp"
-                placeholder="nome da variável" autocomplete="off" spellcheck="false">
-              <select id="imp-vtype-sel" class="imp-select">
-                <option value="lista-mapas" selected>lista-mapas</option>
-              </select>
-              <button id="imp-create-btn" class="imp-create-btn" onclick="impCreateVar()" disabled>
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="vertical-align:-1px;margin-right:4px">
-                  <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-                </svg>Criar variável
-              </button>
-            </div>
-
-          </div>
+      <!-- Right: live table preview -->
+      <div class="imp-pane imp-preview-pane">
+        <div class="imp-pane-title">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="vertical-align:-2px;margin-right:6px">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+            <circle cx="12" cy="12" r="3"/>
+          </svg>Prévia da tabela
         </div>
-
-        <!-- Variable list -->
-        <div class="imp-pane imp-vars-pane">
-          <div class="imp-pane-title">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="vertical-align:-2px;margin-right:6px">
-              <polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>
-            </svg>Variáveis definidas
-          </div>
-          <div id="imp-vars-list" class="imp-vars-list">
-            <p class="imp-empty imp-vars-empty">Nenhuma variável ainda.</p>
-          </div>
+        <div id="ed-preview" class="imp-preview-body ed-preview-body">
+          <p class="imp-empty">A tabela aparecerá aqui conforme você definir colunas.</p>
         </div>
+      </div>
+    </div>
 
-      </div><!-- /imp-right-col -->
-    </div><!-- /imp-split -->
-
-    <!-- ── CODE OUTPUT ── -->
+    <!-- Code output + export -->
     <div class="imp-code-pane">
       <div class="imp-code-header">
         <span class="imp-pane-title" style="text-transform:none;letter-spacing:0;font-size:12px">
@@ -150,16 +237,16 @@
             <polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>
           </svg>Código gerado
         </span>
-        <span class="imp-code-hint">Edite livremente. Sintaxe Pseudo.</span>
+        <span class="imp-code-hint">Código Pseudo com as expressões originais. Edite livremente.</span>
         <div class="imp-code-actions">
-          <button id="imp-export-btn" class="imp-export-btn" onclick="impExportPDADOS()" style="display:none"
-            title="Exporta os dados como arquivo .pdados (formato nativo Pseudo-IDE)">
+          <button class="imp-export-btn ed-save-btn" onclick="edExport()" title="Salvar como arquivo .pdados com os dados calculados">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="vertical-align:-2px;margin-right:4px">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-              <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
-            </svg>Exportar .pdados
+              <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+              <polyline points="17 21 17 13 7 13 7 21"/>
+              <polyline points="7 3 7 8 15 8"/>
+            </svg>Salvar .pdados
           </button>
-          <button id="imp-copy-btn" class="imp-copy-btn" onclick="impCopyCode()">
+          <button class="imp-copy-btn" id="ed-copy-btn" onclick="edCopyCode()">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="vertical-align:-2px;margin-right:4px">
               <rect x="9" y="9" width="13" height="13" rx="2"/>
               <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
@@ -167,12 +254,15 @@
           </button>
         </div>
       </div>
-      <textarea id="imp-code-out" class="imp-code-out" spellcheck="false"
-        placeholder="// O código Pseudo aparecerá aqui quando você criar variáveis acima."></textarea>
+      <textarea id="ed-code-out" class="imp-code-out" spellcheck="false"
+        placeholder="// O código aparecerá aqui conforme você definir colunas."></textarea>
     </div>
 
-  </div><!-- /imp-main-content -->
+  </div><!-- /imp-editor-section -->
 
+  <!-- plotterapi provides Bibliotecas.mat, .metodos, .algebra for expression eval -->
+  <div id="console-saida" style="display:none"></div>
+  <script src="plotterapi.js"></script>
   <script src="js/importador.js"></script>
 </body>
 </html>
