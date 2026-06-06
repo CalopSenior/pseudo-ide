@@ -1589,3 +1589,77 @@ section {
   cursor: wait;
   pointer-events: none;
 }
+
+/* ---- Notebook highlight overlay (textarea + layer pattern) ---- */
+.nb-editor-wrap {
+  position: relative;
+  background: var(--bg-editor);
+}
+/*
+ * Both layers share identical typography so text alignment is pixel-perfect.
+ * The textarea sits above (z-index 2) and is the natural-flow size anchor;
+ * the highlight layer is absolute and fills the same space behind it.
+ */
+.nb-cell-editor {
+  position: relative;
+  z-index: 2;
+  display: block;
+  width: 100%;
+  min-height: 56px;
+  padding: 12px 16px;
+  font-family: var(--font-code);
+  font-size: 13px;
+  line-height: 1.65;
+  tab-size: 2;
+  white-space: pre-wrap;
+  overflow: hidden;
+  resize: none;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: transparent;
+  caret-color: var(--accent);
+}
+.nb-cell-editor::selection {
+  background: rgba(124, 131, 255, 0.25);
+  color: transparent;
+}
+.nb-cell-editor::placeholder {
+  color: var(--text-muted);
+}
+.nb-hl-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  padding: 12px 16px;
+  font-family: var(--font-code);
+  font-size: 13px;
+  line-height: 1.65;
+  tab-size: 2;
+  white-space: pre-wrap;
+  word-break: break-word;
+  pointer-events: none;
+  z-index: 1;
+  color: var(--text);
+  overflow: hidden;
+}
+
+/* Console-input styles reused inside cell outputs */
+.nb-cell-output .console-input-line {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+}
+.nb-cell-output .console-input-field {
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--border-light);
+  color: var(--text);
+  font-family: var(--font-code);
+  font-size: 13px;
+  outline: none;
+  min-width: 160px;
+  padding: 1px 4px;
+}
