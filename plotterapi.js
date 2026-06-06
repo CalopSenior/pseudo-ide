@@ -2751,6 +2751,38 @@ const Bibliotecas = {
         return conteudo.split(sep).filter((l) => l.trim() !== "");
       },
 
+      lerPDADOS: async function (opcoes) {
+        const opts = opcoes || {};
+        const tipo = opts.tipo || "lista-mapas";
+        const { conteudo } = await _lerArquivo(".pdados");
+        const lines = conteudo.split(/\r?\n/);
+        if (!lines[0].startsWith("§PSEUDO-DADOS:"))
+          throw new Error("Arquivo .pdados inválido: cabeçalho não reconhecido.");
+        let cabecalhos = [], dados = [], inData = false;
+        for (const line of lines.slice(1)) {
+          if (line === "§DADOS") { inData = true; continue; }
+          if (inData) { if (line.trim()) dados.push(JSON.parse(line)); }
+          else if (line.startsWith("colunas=")) cabecalhos = JSON.parse(line.slice(8));
+        }
+        const useAuto = opts.converterNumeros !== false;
+        function cell(row, ci) {
+          const v = row[ci] ?? "";
+          return useAuto ? _autoType(v) : v;
+        }
+        if (tipo === "lista")       return dados.map((r) => cell(r, 0));
+        if (tipo === "lista-listas") return dados.map((r) => cabecalhos.map((_, ci) => cell(r, ci)));
+        if (tipo === "lista-mapas") return dados.map((r) => {
+          const m = {}; cabecalhos.forEach((h, ci) => (m[h] = cell(r, ci))); return m;
+        });
+        if (tipo === "mapa-listas") {
+          const mapa = {};
+          cabecalhos.forEach((h, ci) => (mapa[h] = dados.map((r) => cell(r, ci))));
+          return mapa;
+        }
+        if (tipo === "matriz") return dados.map((r) => cabecalhos.map((_, ci) => parseFloat(r[ci]) || 0));
+        return dados;
+      },
+
       abrirImportador: function () {
         window.open("importador.html", "_blank");
       },

@@ -363,7 +363,7 @@ function traduzirCodigo(fonte, isDebug = false) {
     const _arqM = c.match(/var\s+(\w+)\s*=\s*Bibliotecas\['arquivos'\]/);
     if (_arqM) {
       const _a = _arqM[1];
-      ["lerCSV", "lerJSON", "lerTXT"].forEach((fn) => {
+      ["lerCSV", "lerJSON", "lerTXT", "lerPDADOS"].forEach((fn) => {
         c = c.replace(
           new RegExp(`(?<!await )\\b${_a}\\.${fn}\\b`, "g"),
           `await ${_a}.${fn}`

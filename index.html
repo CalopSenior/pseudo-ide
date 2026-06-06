@@ -258,6 +258,7 @@
                 <button class="tab-btn" onclick="switchTab('tab-prob',      this)">🎲 probabilidade</button>
                 <button class="tab-btn" onclick="switchTab('tab-algebra',   this)">📐 algebra</button>
                 <button class="tab-btn" onclick="switchTab('tab-latex',     this)">∑ latex</button>
+                <button class="tab-btn" onclick="switchTab('tab-arquivos',  this)">📂 arquivos</button>
                 <button class="tab-btn" onclick="switchTab('tab-editor',    this)">⌨️ Editor</button>
             </div>
 
@@ -2478,6 +2479,100 @@ $$</pre>
                     </table>
 
                 </div><!-- /tab-latex -->
+
+                <!-- ═══════════════════════════════════════════════════════════
+     📂 ARQUIVOS
+     ═══════════════════════════════════════════════════════════ -->
+                <div id="tab-arquivos" class="tab-pane hidden">
+                    <h3>Biblioteca arquivos</h3>
+                    <p class="tab-intro">Lê arquivos locais (CSV, JSON, TXT, .pdados) com seletor nativo do navegador. O arquivo nunca sai do dispositivo. Importe com <code>importar arquivos como arq;</code></p>
+
+                    <h4>arq.lerCSV(opcoes)</h4>
+                    <p class="tab-intro">Abre um seletor de arquivo, lê o CSV e retorna os dados no tipo especificado.</p>
+                    <table class="ref-table">
+                        <thead><tr><th>Opção</th><th>Padrão</th><th>Descrição</th></tr></thead>
+                        <tbody>
+                            <tr><td><code>tipo</code></td><td><code>"lista-mapas"</code></td><td>Formato de saída: <code>"lista"</code>, <code>"lista-listas"</code>, <code>"lista-mapas"</code>, <code>"mapa-listas"</code>, <code>"matriz"</code></td></tr>
+                            <tr><td><code>separador</code></td><td><code>","</code></td><td>Caractere separador de colunas (<code>","</code>, <code>";"</code>, <code>"\t"</code> etc.)</td></tr>
+                            <tr><td><code>cabecalho</code></td><td><code>verdadeiro</code></td><td>Se a primeira linha é de cabeçalho</td></tr>
+                            <tr><td><code>converterNumeros</code></td><td><code>verdadeiro</code></td><td>Converte campos numéricos automaticamente</td></tr>
+                        </tbody>
+                    </table>
+                    <pre class="code-example"><span class="ex-kw">importar</span> arquivos <span class="ex-kw">como</span> arq;
+
+<span class="ex-cmt">// lista-mapas: cada linha vira um mapa com as chaves do cabeçalho</span>
+<span class="ex-kw">super</span> alunos = arq.lerCSV({tipo: <span class="ex-str">"lista-mapas"</span>});
+imprima(alunos[<span class="ex-num">0</span>])  <span class="ex-cmt">// → {nome: "Ana", nota: 9.5, ...}</span>
+
+<span class="ex-cmt">// mapa-listas: cada coluna vira uma lista</span>
+<span class="ex-kw">super</span> colunas = arq.lerCSV({tipo: <span class="ex-str">"mapa-listas"</span>});
+imprima(colunas[<span class="ex-str">"nota"</span>])  <span class="ex-cmt">// → [9.5, 8.0, 7.5, ...]</span>
+
+<span class="ex-cmt">// matriz numérica (usa mat.criar)</span>
+<span class="ex-kw">super</span> M = arq.lerCSV({tipo: <span class="ex-str">"matriz"</span>});</pre>
+
+                    <h4>arq.lerJSON(opcoes)</h4>
+                    <p class="tab-intro">Lê um arquivo JSON. Use <code>caminho</code> para extrair uma propriedade aninhada.</p>
+                    <table class="ref-table">
+                        <thead><tr><th>Opção</th><th>Padrão</th><th>Descrição</th></tr></thead>
+                        <tbody>
+                            <tr><td><code>caminho</code></td><td><code>indefinido</code></td><td>Caminho com pontos para extrair (ex: <code>"dados.alunos"</code>)</td></tr>
+                        </tbody>
+                    </table>
+                    <pre class="code-example"><span class="ex-kw">importar</span> arquivos <span class="ex-kw">como</span> arq;
+
+<span class="ex-kw">super</span> obj = arq.lerJSON();                          <span class="ex-cmt">// objeto completo</span>
+<span class="ex-kw">super</span> lista = arq.lerJSON({caminho: <span class="ex-str">"dados.alunos"</span>}); <span class="ex-cmt">// propriedade aninhada</span></pre>
+
+                    <h4>arq.lerTXT(opcoes)</h4>
+                    <p class="tab-intro">Lê um arquivo de texto. Por padrão retorna uma lista de linhas.</p>
+                    <table class="ref-table">
+                        <thead><tr><th>Opção</th><th>Padrão</th><th>Descrição</th></tr></thead>
+                        <tbody>
+                            <tr><td><code>tipo</code></td><td><code>"lista"</code></td><td><code>"lista"</code> (linhas) ou <code>"texto"</code> (string bruta)</td></tr>
+                            <tr><td><code>separador</code></td><td><code>"\n"</code></td><td>Separador para dividir em lista</td></tr>
+                        </tbody>
+                    </table>
+                    <pre class="code-example"><span class="ex-kw">importar</span> arquivos <span class="ex-kw">como</span> arq;
+
+<span class="ex-kw">super</span> linhas = arq.lerTXT();                   <span class="ex-cmt">// lista de linhas</span>
+<span class="ex-kw">super</span> bruto  = arq.lerTXT({tipo: <span class="ex-str">"texto"</span>});    <span class="ex-cmt">// string completa</span></pre>
+
+                    <h4>arq.lerPDADOS(opcoes)</h4>
+                    <p class="tab-intro">Lê um arquivo <strong>.pdados</strong> — o formato nativo da Pseudo-IDE gerado pelo Importador de Dados. Reconhece automaticamente cabeçalhos e linhas sem configuração adicional.</p>
+                    <pre class="code-example"><span class="ex-kw">importar</span> arquivos <span class="ex-kw">como</span> arq;
+
+<span class="ex-cmt">// .pdados gerado pelo Importador — todas as opções de tipo funcionam igual ao CSV</span>
+<span class="ex-kw">super</span> alunos = arq.lerPDADOS();                         <span class="ex-cmt">// lista-mapas por padrão</span>
+<span class="ex-kw">super</span> M      = arq.lerPDADOS({tipo: <span class="ex-str">"matriz"</span>});         <span class="ex-cmt">// matriz numérica</span>
+<span class="ex-kw">super</span> cols   = arq.lerPDADOS({tipo: <span class="ex-str">"mapa-listas"</span>});    <span class="ex-cmt">// coluna → lista</span></pre>
+
+                    <h4>arq.abrirImportador()</h4>
+                    <p class="tab-intro">Abre a tela visual do Importador em nova aba. Também acessível pelo botão "Importar" no cabeçalho da IDE.</p>
+                    <pre class="code-example"><span class="ex-kw">importar</span> arquivos <span class="ex-kw">como</span> arq;
+arq.abrirImportador();</pre>
+
+                    <h4>Formato .pdados</h4>
+                    <p class="tab-intro">Arquivo de texto com cabeçalho de identificação <code>§PSEUDO-DADOS:1.0</code> e dados em JSONL (uma linha por registro). Pode ser gerado pelo Importador de Dados (botão "Exportar .pdados") e lido por <code>arq.lerPDADOS()</code> sem precisar de opções.</p>
+                    <pre class="code-example"><span class="ex-cmt">§PSEUDO-DADOS:1.0
+tipo=csv
+colunas=["nome","nota","aprovado"]
+§DADOS
+["Ana",9.5,true]
+["João",7.2,true]
+["Carlos",4.8,false]</span></pre>
+
+                    <h4>Fluxo recomendado</h4>
+                    <table class="ref-table">
+                        <thead><tr><th>Situação</th><th>Recomendação</th></tr></thead>
+                        <tbody>
+                            <tr><td>Exploração interativa de CSV/JSON/TXT</td><td>Use o <strong>Importador de Dados</strong> — clique nas colunas, gere o código e cole no editor</td></tr>
+                            <tr><td>Leitura em código (dinâmica)</td><td><code>arq.lerCSV()</code> / <code>arq.lerJSON()</code> / <code>arq.lerTXT()</code></td></tr>
+                            <tr><td>Reutilizar o mesmo arquivo sem reimportar</td><td>Exporte como <code>.pdados</code> e use <code>arq.lerPDADOS()</code></td></tr>
+                        </tbody>
+                    </table>
+
+                </div><!-- /tab-arquivos -->
 
                 <!-- ═══════════════════════════════════════════════════════════
      ⌨️ EDITOR

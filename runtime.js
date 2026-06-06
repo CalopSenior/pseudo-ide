@@ -1231,6 +1231,11 @@ const COMPLETIONS = [
     insert: "arq.lerTXT()",
   },
   {
+    label: "arq.lerPDADOS(opcoes)",
+    detail: "arquivos — lê arquivo .pdados (formato nativo Pseudo-IDE)",
+    insert: "arq.lerPDADOS()",
+  },
+  {
     label: "arq.abrirImportador()",
     detail: "arquivos — abre a tela de importação visual",
     insert: "arq.abrirImportador()",
