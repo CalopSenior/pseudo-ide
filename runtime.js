@@ -2185,9 +2185,9 @@ window.gerarLinkCompartilhamento = async function () {
 
     if (!res.ok) throw new Error();
 
-    // Pega a URL atual da IDE e adiciona o parâmetro
+    // Embute a URL da API no link para que o destinatário não precise configurá-la
     const urlBase = window.location.href.split("?")[0];
-    const linkFinal = `${urlBase}?id=${shortId}`;
+    const linkFinal = `${urlBase}?id=${shortId}&api=${encodeURIComponent(urlNuvem)}`;
 
     await navigator.clipboard.writeText(linkFinal);
     imprima(`🔗 Link copiado para a área de transferência:\n${linkFinal}`);
@@ -2239,22 +2239,23 @@ window.addEventListener("load", async () => {
 
   const urlParams = new URLSearchParams(window.location.search);
   const idSnippet = urlParams.get("id");
-  const urlNuvem = localStorage.getItem("pseudo_ide_cloud_url");
+  // Prefer the API URL embedded in the link; fall back to the locally saved one.
+  // This lets recipients open shared links without having to configure anything.
+  const urlNuvem =
+    urlParams.get("api") || localStorage.getItem("pseudo_ide_cloud_url");
 
   if (idSnippet && urlNuvem) {
     try {
       const char = urlNuvem.includes("?") ? "&" : "?";
-      // Pede ao servidor agnóstico usando a mesma query de busca de biblioteca (?nome=)
       const res = await fetch(`${urlNuvem}${char}nome=${idSnippet}`);
       const libData = await res.json();
 
-      // Se o servidor devolveu o JSON e ele tem o código cru
       if (libData && libData.codigoInjetor) {
         codeEditor.value = libData.codigoInjetor;
         atualizarEditor();
         imprima(`✓ Código compartilhado carregado com sucesso!`);
 
-        // Limpa a URL da barra de endereços para não recarregar caso o aluno dê F5
+        // Limpa a URL para não recarregar caso o usuário dê F5
         window.history.replaceState(
           {},
           document.title,
@@ -2264,6 +2265,8 @@ window.addEventListener("load", async () => {
     } catch (e) {
       console.error("Falha ao puxar snippet do servidor", e);
     }
+  } else if (idSnippet && !urlNuvem) {
+    imprima("⚠️ Este link de compartilhamento não contém a URL da API. Peça ao autor um link mais recente, ou configure a API manualmente (botão ⚙️ API).");
   } else {
     codeEditor.focus();
     codeEditor.selectionStart = codeEditor.selectionEnd =
