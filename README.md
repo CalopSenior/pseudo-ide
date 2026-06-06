@@ -332,27 +332,6 @@ importar mat como m;
 | `m.somatorio(fn, min, max)` | Σ fn(i) de min até max |
 | `m.produtorio(fn, min, max)` | Π fn(i) de min até max |
 | `m.sinal(x)` | -1, 0 ou 1 |
-| `m.transformar(lista, fn)` | Map — aplica `fn` a cada elemento; aceita função ou expressão |
-| `m.filtrar(lista, pred)` | Filter — mantém só os elementos que satisfazem `pred` |
-| `m.reduzir(lista, fn, ini?)` | Reduce — acumula um único valor; `ini` é o acumulador inicial |
-| `m.percorrer(lista, fn)` | ForEach — executa `fn(item, i)` para cada elemento (sem retorno) |
-
-**Expressões curtas aceitas por `transformar` e `filtrar`:**
-
-| String | Significado |
-|---|---|
-| `"*2"` | multiplicar por 2 |
-| `"/3.14"` | dividir por 3.14 |
-| `"+1"` | somar 1 |
-| `"-5"` | subtrair 5 |
-| `"**2"` | elevar ao quadrado |
-| `"mod 2"` | resto por 2 (sempre positivo) |
-| `">0"` | maior que 0 |
-| `"<=10"` | menor ou igual a 10 |
-| `"==5"` | igual a 5 |
-| `"!=0"` | diferente de 0 |
-
-**Operadores string aceitos por `reduzir`:** `"+"`, `"-"`, `"*"`, `"max"`, `"min"`
 
 ---
 
@@ -391,6 +370,36 @@ importar metodos.mapa como mp;
 | `.contem(v)` | Verdadeiro se `v` está na lista |
 | `.ordenar()` | Ordena in-place (crescente) |
 | `.inverter()` | Inverte a ordem |
+| `.transformar(fn)` | Devolve nova lista com `fn` aplicada a cada elemento |
+| `.filtrar(pred)` | Devolve nova lista apenas com os elementos que passam no predicado |
+| `.reduzir(fn, ini?)` | Acumula um único valor; `ini` é o acumulador inicial |
+| `.percorrer(fn)` | Executa `fn(item, i)` para cada elemento (sem retorno) |
+
+`transformar` e `filtrar` aceitam **expressões curtas em string** além de funções:
+
+| String | Efeito em `transformar` | Efeito em `filtrar` |
+|---|---|---|
+| `"*2"` / `"/3"` / `"+1"` / `"-5"` | operação aritmética | — |
+| `"**2"` | x² | — |
+| `"mod 2"` | resto (sempre ≥ 0) | mantém onde resto ≠ 0 |
+| `">0"` / `"<=10"` / `"!=0"` / `"==5"` | — | comparação booleana |
+
+`reduzir` aceita operadores string: `"+"`, `"-"`, `"*"`, `"max"`, `"min"`
+
+```
+importar metodos como m;
+
+super nums = m.lista(1, 2, 3, 4, 5, 6);
+
+nums.transformar("*2")          // → [2, 4, 6, 8, 10, 12]
+nums.transformar("**2")         // → [1, 4, 9, 16, 25, 36]
+nums.filtrar(">3")              // → [4, 5, 6]
+nums.filtrar("mod 2")           // → [1, 3, 5]  (ímpares)
+nums.reduzir("+")               // → 21
+nums.reduzir("max")             // → 6
+nums.reduzir("*", 1)            // → 720
+nums.percorrer((x, i) => imprima(f"[{i}] {x}"))
+```
 
 #### m.mapa()
 
