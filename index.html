@@ -39,6 +39,16 @@
                 </svg>
                 Docs
             </button>
+            <a href="notebook.html" class="btn-icon" title="Abrir Pseudo Notebook" style="text-decoration:none">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                    <line x1="3" y1="9" x2="21" y2="9"></line>
+                    <line x1="3" y1="15" x2="21" y2="15"></line>
+                    <line x1="9" y1="9" x2="9" y2="21"></line>
+                </svg>
+                Notebook
+            </a>
             <div class="btn-group">
                 <button class="btn-icon" onclick="abrirArquivo()" title="Abrir arquivo">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
@@ -1070,71 +1080,6 @@ saudar(<span class="ex-str">"Bruno"</span>, <span class="ex-str">"Oi"</span>);  
 <span class="ex-cmt">// Fatorial via produtório: Π i de 1 a 5 = 120</span>
 <span class="ex-kw">funcao</span> id(i) { <span class="ex-kw">retorno</span> i; }
 <span class="ex-fn">imprima</span>(m.produtorio(id, <span class="ex-num">1</span>, <span class="ex-num">5</span>)); <span class="ex-cmt">// 120</span></pre>
-
-                    <!-- Métodos de lista -->
-                    <h4 style="margin-top:1.6rem;">Métodos de lista</h4>
-                    <p class="tab-intro">Operações funcionais sobre <code>Lista</code>: <code>transformar</code>, <code>filtrar</code>,
-                        <code>reduzir</code> e <code>percorrer</code> aceitam funções completas <strong>ou expressões curtas em string</strong>.</p>
-
-                    <table class="doc-table">
-                        <thead>
-                            <tr><th colspan="3">Expressões curtas (string) — <code>transformar</code> e <code>filtrar</code></th></tr>
-                            <tr><th>String</th><th>Significa</th><th>Exemplo de uso</th></tr>
-                        </thead>
-                        <tbody>
-                            <tr><td><code>"*2"</code></td><td>× 2</td><td><code>m.transformar(lista, "*2")</code></td></tr>
-                            <tr><td><code>"/3.14"</code></td><td>÷ 3.14</td><td>—</td></tr>
-                            <tr><td><code>"+1"</code> / <code>"-5"</code></td><td>± constante</td><td>—</td></tr>
-                            <tr><td><code>"**2"</code></td><td>x²</td><td>—</td></tr>
-                            <tr><td><code>"mod 2"</code></td><td>resto (sempre ≥ 0)</td><td><code>m.filtrar(lista, "mod 2")</code> → ímpares</td></tr>
-                            <tr><td><code>">0"</code> / <code>"&lt;=10"</code></td><td>comparação</td><td><code>m.filtrar(lista, ">0")</code></td></tr>
-                            <tr><td><code>"==5"</code> / <code>"!=0"</code></td><td>igualdade</td><td>—</td></tr>
-                        </tbody>
-                    </table>
-                    <table class="doc-table" style="margin-top:6px">
-                        <thead>
-                            <tr><th colspan="2">Operadores string — <code>reduzir</code></th></tr>
-                            <tr><th>String</th><th>Função</th></tr>
-                        </thead>
-                        <tbody>
-                            <tr><td><code>"+"</code></td><td>soma acumulada</td></tr>
-                            <tr><td><code>"*"</code></td><td>produto acumulado</td></tr>
-                            <tr><td><code>"max"</code> / <code>"min"</code></td><td>máximo / mínimo</td></tr>
-                        </tbody>
-                    </table>
-
-                    <pre class="code-example"><span class="ex-kw">importar</span> mat <span class="ex-kw">como</span> m;
-<span class="ex-kw">importar</span> metodos <span class="ex-kw">como</span> mt;
-
-<span class="ex-kw">super</span> nums = mt.lista(<span class="ex-num">1</span>, <span class="ex-num">2</span>, <span class="ex-num">3</span>, <span class="ex-num">4</span>, <span class="ex-num">5</span>, <span class="ex-num">6</span>);
-
-<span class="ex-cmt">// transformar: expressão curta</span>
-<span class="ex-fn">imprima</span>(m.transformar(nums, <span class="ex-str">"*2"</span>));   <span class="ex-cmt">// [2,4,6,8,10,12]</span>
-<span class="ex-fn">imprima</span>(m.transformar(nums, <span class="ex-str">"**2"</span>));  <span class="ex-cmt">// [1,4,9,16,25,36]</span>
-
-<span class="ex-cmt">// transformar: função de biblioteca diretamente</span>
-<span class="ex-fn">imprima</span>(m.transformar(nums, m.ln));   <span class="ex-cmt">// [ln(1), ln(2), ...]</span>
-
-<span class="ex-cmt">// transformar: função própria</span>
-<span class="ex-fn">imprima</span>(m.transformar(nums, (x) => x * x - <span class="ex-num">1</span>));
-
-<span class="ex-cmt">// filtrar: expressão comparativa</span>
-<span class="ex-fn">imprima</span>(m.filtrar(nums, <span class="ex-str">">3"</span>));       <span class="ex-cmt">// [4,5,6]</span>
-<span class="ex-fn">imprima</span>(m.filtrar(nums, <span class="ex-str">"mod 2"</span>));   <span class="ex-cmt">// [1,3,5]  ← ímpares (mod ≠ 0)</span>
-
-<span class="ex-cmt">// filtrar: função predicado</span>
-<span class="ex-fn">imprima</span>(m.filtrar(nums, (x) => x mod <span class="ex-num">2</span> == <span class="ex-num">0</span>)); <span class="ex-cmt">// [2,4,6]</span>
-
-<span class="ex-cmt">// reduzir: operador string</span>
-<span class="ex-fn">imprima</span>(m.reduzir(nums, <span class="ex-str">"+"</span>));        <span class="ex-cmt">// 21  (soma)</span>
-<span class="ex-fn">imprima</span>(m.reduzir(nums, <span class="ex-str">"max"</span>));     <span class="ex-cmt">// 6</span>
-<span class="ex-fn">imprima</span>(m.reduzir(nums, <span class="ex-str">"*"</span>, <span class="ex-num">1</span>));   <span class="ex-cmt">// 720 (fatorial 6)</span>
-
-<span class="ex-cmt">// reduzir: função acumuladora</span>
-<span class="ex-fn">imprima</span>(m.reduzir(nums, (acc, x) => acc + x * x, <span class="ex-num">0</span>)); <span class="ex-cmt">// Σ x² = 91</span>
-
-<span class="ex-cmt">// percorrer: sem retorno, só efeito colateral</span>
-m.percorrer(nums, (x, i) => <span class="ex-fn">imprima</span>(f<span class="ex-str">"[{i}] = {x}"</span>));</pre>
                 </div><!-- /tab-mat -->
 
 
@@ -1178,15 +1123,88 @@ m.percorrer(nums, (x, i) => <span class="ex-fn">imprima</span>(f<span class="ex-
 
 notas.adicionar(<span class="ex-num">9.0</span>);           <span class="ex-cmt">// [7.0, 8.5, 6.0, 9.0]</span>
 notas.remover(<span class="ex-num">6.0</span>);            <span class="ex-cmt">// [7.0, 8.5, 9.0]</span>
-<span class="ex-fn">imprima</span>(notas.obter(<span class="ex-num">0</span>));        <span class="ex-cmt">// 7.0 (primeiro elemento)</span>
+<span class="ex-fn">imprima</span>(notas.obter(<span class="ex-num">0</span>));        <span class="ex-cmt">// 7.0</span>
 <span class="ex-fn">imprima</span>(notas.tamanho());       <span class="ex-cmt">// 3</span>
-<span class="ex-fn">imprima</span>(notas.contem(<span class="ex-num">8.5</span>));    <span class="ex-cmt">// verdadeiro</span>
-notas.ordenar();                 <span class="ex-cmt">// [7.0, 8.5, 9.0] (crescente)</span>
+notas.ordenar();                 <span class="ex-cmt">// [7.0, 8.5, 9.0]</span>
 
-<span class="ex-cmt">// Percorrer com para em</span>
-<span class="ex-kw">para</span> (nota <span class="ex-op">em</span> notas) {
-    <span class="ex-fn">imprima</span>(nota);
-}</pre>
+<span class="ex-cmt">// Para em</span>
+<span class="ex-kw">para</span> (nota <span class="ex-op">em</span> notas) { <span class="ex-fn">imprima</span>(nota); }</pre>
+
+                    <h4>Métodos funcionais de lista</h4>
+                    <p class="tab-intro">
+                        <code>transformar</code>, <code>filtrar</code>, <code>reduzir</code> e <code>percorrer</code>
+                        aceitam funções completas <strong>ou expressões curtas em string</strong>.
+                    </p>
+                    <table class="doc-table">
+                        <thead>
+                            <tr><th>Método</th><th>Retorna</th><th>Descrição</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>.transformar(fn)</code></td>
+                                <td>Lista nova</td>
+                                <td>Aplica <code>fn</code> a cada elemento (map)</td>
+                            </tr>
+                            <tr>
+                                <td><code>.filtrar(pred)</code></td>
+                                <td>Lista nova</td>
+                                <td>Mantém só os elementos que passam no predicado (filter)</td>
+                            </tr>
+                            <tr>
+                                <td><code>.reduzir(fn, ini?)</code></td>
+                                <td>valor</td>
+                                <td>Acumula um único valor da esquerda (reduce); sem <code>ini</code> usa o 1º elemento</td>
+                            </tr>
+                            <tr>
+                                <td><code>.percorrer(fn)</code></td>
+                                <td>vazio</td>
+                                <td>Executa <code>fn(item, i)</code> para cada elemento (forEach)</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <table class="doc-table" style="margin-top:6px">
+                        <thead>
+                            <tr><th colspan="3">Expressões curtas — <code>transformar</code> e <code>filtrar</code></th></tr>
+                            <tr><th>String</th><th>Transforma</th><th>Filtra (mantém onde…)</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td><code>"*2"</code> / <code>"/3"</code> / <code>"+1"</code> / <code>"-5"</code></td><td>op. aritmética</td><td>—</td></tr>
+                            <tr><td><code>"**2"</code></td><td>x²</td><td>—</td></tr>
+                            <tr><td><code>"mod 2"</code></td><td>resto (≥ 0)</td><td>resto ≠ 0 → ímpares</td></tr>
+                            <tr><td><code>">0"</code> / <code>"&lt;=10"</code> / <code>"!=0"</code></td><td>—</td><td>comparação</td></tr>
+                        </tbody>
+                    </table>
+                    <p class="tab-intro" style="margin-top:6px"><code>reduzir</code> aceita operadores string:
+                        <code>"+"</code>, <code>"-"</code>, <code>"*"</code>, <code>"max"</code>, <code>"min"</code>.
+                    </p>
+                    <pre class="code-example"><span class="ex-kw">importar</span> metodos <span class="ex-kw">como</span> m;
+<span class="ex-kw">importar</span> mat <span class="ex-kw">como</span> mat;
+
+<span class="ex-kw">super</span> nums = m.lista(<span class="ex-num">1</span>, <span class="ex-num">2</span>, <span class="ex-num">3</span>, <span class="ex-num">4</span>, <span class="ex-num">5</span>, <span class="ex-num">6</span>);
+
+<span class="ex-cmt">// transformar — expressão curta</span>
+<span class="ex-fn">imprima</span>(nums.transformar(<span class="ex-str">"*2"</span>));    <span class="ex-cmt">// [2,4,6,8,10,12]</span>
+<span class="ex-fn">imprima</span>(nums.transformar(<span class="ex-str">"**2"</span>));   <span class="ex-cmt">// [1,4,9,16,25,36]</span>
+
+<span class="ex-cmt">// transformar — função de biblioteca diretamente</span>
+<span class="ex-fn">imprima</span>(nums.transformar(mat.ln));    <span class="ex-cmt">// [ln(1), ln(2), ...]</span>
+
+<span class="ex-cmt">// transformar — função própria</span>
+<span class="ex-fn">imprima</span>(nums.transformar((x) => x * x - <span class="ex-num">1</span>));
+
+<span class="ex-cmt">// filtrar</span>
+<span class="ex-fn">imprima</span>(nums.filtrar(<span class="ex-str">">3"</span>));          <span class="ex-cmt">// [4,5,6]</span>
+<span class="ex-fn">imprima</span>(nums.filtrar(<span class="ex-str">"mod 2"</span>));     <span class="ex-cmt">// [1,3,5]  ← ímpares</span>
+<span class="ex-fn">imprima</span>(nums.filtrar((x) => x mod <span class="ex-num">2</span> == <span class="ex-num">0</span>)); <span class="ex-cmt">// [2,4,6]</span>
+
+<span class="ex-cmt">// reduzir</span>
+<span class="ex-fn">imprima</span>(nums.reduzir(<span class="ex-str">"+"</span>));          <span class="ex-cmt">// 21</span>
+<span class="ex-fn">imprima</span>(nums.reduzir(<span class="ex-str">"max"</span>));       <span class="ex-cmt">// 6</span>
+<span class="ex-fn">imprima</span>(nums.reduzir(<span class="ex-str">"*"</span>, <span class="ex-num">1</span>));     <span class="ex-cmt">// 720 = 6!</span>
+<span class="ex-fn">imprima</span>(nums.reduzir((acc, x) => acc + x * x, <span class="ex-num">0</span>)); <span class="ex-cmt">// 91</span>
+
+<span class="ex-cmt">// percorrer</span>
+nums.percorrer((x, i) => <span class="ex-fn">imprima</span>(f<span class="ex-str">"[{i}] = {x}"</span>));</pre>
 
                     <h4>Número — <code>m.numero(valor)</code></h4>
                     <p class="tab-intro">Converte e inspeciona valores numéricos. Aceita inteiros, reais e strings

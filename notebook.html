@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Notebook — Pseudo Notebook</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link
+    href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,400;0,500;0,600;1,400&family=Outfit:wght@400;500;600;700&display=swap"
+    rel="stylesheet">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    /* overrides for notebook page */
+    html, body {
+      overflow: auto !important;
+      height: auto !important;
+    }
+  </style>
+</head>
+
+<body class="nb-body">
+
+  <!-- ===== HEADER ===== -->
+  <header class="nb-header">
+    <div class="nb-header-left">
+      <a href="index.html" class="nb-back" title="Voltar para a IDE">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+          stroke-linecap="round" style="vertical-align:-2px;margin-right:4px">
+          <polyline points="15 18 9 12 15 6" />
+        </svg>IDE
+      </a>
+      <span class="nb-app-name">Pseudo Notebook</span>
+      <input id="nb-title" class="nb-title-input" value="sem título" title="Clique para renomear" />
+    </div>
+    <div class="nb-header-right">
+      <button id="nb-run-all-btn" class="nb-btn-run-all" onclick="nbRunAll()" title="Executar todas as células (Ctrl+Shift+Enter)">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:-2px;margin-right:4px">
+          <polygon points="5 3 19 12 5 21 5 3" />
+          <polygon points="15 3 19 12 15 21 15 3" />
+        </svg>Executar Tudo
+      </button>
+      <button onclick="nbAddCell('codigo')" title="Adicionar célula de código no fim">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" style="vertical-align:-2px;margin-right:4px">
+          <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+        </svg>Código
+      </button>
+      <button onclick="nbAddCell('markdown')" title="Adicionar célula de texto no fim">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" style="vertical-align:-2px;margin-right:4px">
+          <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+        </svg>Texto
+      </button>
+      <button onclick="nbSave()" title="Salvar como .pseudonb">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" style="vertical-align:-2px;margin-right:4px">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+          <polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" />
+        </svg>Salvar
+      </button>
+      <button onclick="nbLoad()" title="Abrir arquivo .pseudonb">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" style="vertical-align:-2px;margin-right:4px">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+          <polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" />
+        </svg>Abrir
+      </button>
+      <button onclick="nbExportHTML()" title="Exportar como HTML estático">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" style="vertical-align:-2px;margin-right:4px">
+          <polyline points="16 18 22 12 16 6" /><polyline points="8 6 2 12 8 18" />
+        </svg>Exportar HTML
+      </button>
+    </div>
+  </header>
+
+  <!-- ===== MAIN CONTENT ===== -->
+  <main class="nb-main">
+    <!-- Cells container — notebook.js populates this -->
+    <div id="nb-cells" class="nb-cells"></div>
+
+    <!-- Bottom add bar -->
+    <div class="nb-add-bar nb-add-bar-bottom" style="margin-top:8px">
+      <button onclick="nbAddCell('codigo')">+ Código</button>
+      <button onclick="nbAddCell('markdown')">+ Texto</button>
+    </div>
+  </main>
+
+  <!-- Fallback output target for plotterapi.js functions that hardcode #console-saida -->
+  <div id="console-saida" style="display:none" aria-hidden="true"></div>
+
+  <!-- ===== STATUS BAR ===== -->
+  <div class="nb-status-bar">
+    <span id="nb-cell-count" style="color:var(--text-dim)">0 células</span>
+    <span style="color:var(--border-light)">|</span>
+    <span>Pseudo Notebook v1.0</span>
+    <span style="margin-left:auto" id="nb-status-text"></span>
+  </div>
+
+  <!-- ===== SCRIPTS =====
+    Ordem: plotterapi runtime → compiler → notebook UI
+    (runtime.js da IDE NÃO é carregado — contém UI exclusiva do editor)
+  -->
+  <script src="js/plotterApi.js"
+    onerror="console.info('[Pseudo Notebook] PlotterAPI não encontrada — bib graficos indisponível.')"></script>
+  <script src="plotterapi.js"></script>
+  <script src="editor.js"></script>
+  <script src="js/notebook.js"></script>
+
+</body>
+
+</html>
