@@ -358,6 +358,19 @@ function traduzirCodigo(fonte, isDebug = false) {
     c = c.replace(/\bcapturar\b/g, "catch");
   }
   c = c.replace(/\bleia\b/g, "await leiaAsync");
+  // Auto-await async arquivos functions (lerCSV, lerJSON, lerTXT)
+  {
+    const _arqM = c.match(/var\s+(\w+)\s*=\s*Bibliotecas\['arquivos'\]/);
+    if (_arqM) {
+      const _a = _arqM[1];
+      ["lerCSV", "lerJSON", "lerTXT"].forEach((fn) => {
+        c = c.replace(
+          new RegExp(`(?<!await )\\b${_a}\\.${fn}\\b`, "g"),
+          `await ${_a}.${fn}`
+        );
+      });
+    }
+  }
   c = c.replace(new RegExp(S + "(\\d+)" + S, "g"), (_, i) => tks[parseInt(i)]);
 
   const watchdogCode = `if (Date.now() - window.__inicioExecucao > 3000) throw new Error("Tempo limite de execução excedido (Loop Infinito?). O algoritmo foi abortado para proteger o navegador.");`;

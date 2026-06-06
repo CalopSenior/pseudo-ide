@@ -2625,6 +2625,137 @@ const Bibliotecas = {
       },
     };
   })(),
+
+  /* ---- arquivos ---- */
+  arquivos: (() => {
+    function _lerArquivo(accept) {
+      return new Promise((resolve, reject) => {
+        const input = document.createElement("input");
+        input.type = "file";
+        input.accept = accept;
+        let settled = false;
+        input.onchange = (e) => {
+          settled = true;
+          const file = e.target.files[0];
+          if (!file) return reject(new Error("Nenhum arquivo selecionado."));
+          const reader = new FileReader();
+          reader.onload = (ev) =>
+            resolve({ nome: file.name, conteudo: ev.target.result });
+          reader.onerror = () =>
+            reject(new Error("Erro ao ler o arquivo."));
+          reader.readAsText(file, "UTF-8");
+        };
+        // Detect cancel via window focus after dialog closes
+        window.addEventListener(
+          "focus",
+          () => { setTimeout(() => { if (!settled) reject(new Error("Importação cancelada.")); }, 500); },
+          { once: true }
+        );
+        input.click();
+      });
+    }
+
+    function _parseCSV(text, sep, cabecalho) {
+      const lines = text.split(/\r?\n/).filter((l) => l.trim() !== "");
+      if (!lines.length) return { cabecalhos: [], dados: [] };
+      function parseLine(l) {
+        const cells = [];
+        let cur = "", inQ = false;
+        for (let i = 0; i < l.length; i++) {
+          const c = l[i];
+          if (c === '"') {
+            if (inQ && l[i + 1] === '"') { cur += '"'; i++; }
+            else inQ = !inQ;
+          } else if (c === sep && !inQ) { cells.push(cur); cur = ""; }
+          else cur += c;
+        }
+        cells.push(cur);
+        return cells;
+      }
+      const hdrs = cabecalho
+        ? parseLine(lines[0])
+        : parseLine(lines[0]).map((_, i) => `col${i + 1}`);
+      const dados = lines.slice(cabecalho ? 1 : 0).map(parseLine);
+      return { cabecalhos: hdrs, dados };
+    }
+
+    function _autoType(v) {
+      if (v === "") return "";
+      const n = Number(v);
+      return isNaN(n) ? v : n;
+    }
+
+    return {
+      lerCSV: async function (opcoes) {
+        const opts = opcoes || {};
+        const sep      = opts.separador || ",";
+        const cabecalho = opts.cabecalho !== false;
+        const tipo     = opts.tipo || "lista-mapas";
+        const { conteudo } = await _lerArquivo(".csv,.tsv,.txt");
+        const { cabecalhos, dados } = _parseCSV(conteudo, sep, cabecalho);
+        const useAuto = opts.converterNumeros !== false;
+        function cell(row, ci) {
+          const v = row[ci] ?? "";
+          return useAuto ? _autoType(v) : v;
+        }
+        if (tipo === "lista") {
+          const ci = 0;
+          return dados.map((r) => cell(r, ci));
+        }
+        if (tipo === "lista-listas") {
+          return dados.map((r) => cabecalhos.map((_, ci) => cell(r, ci)));
+        }
+        if (tipo === "lista-mapas") {
+          return dados.map((r) => {
+            const m = {};
+            cabecalhos.forEach((h, ci) => (m[h] = cell(r, ci)));
+            return m;
+          });
+        }
+        if (tipo === "mapa-listas") {
+          const mapa = {};
+          cabecalhos.forEach((h, ci) => {
+            mapa[h] = dados.map((r) => cell(r, ci));
+          });
+          return mapa;
+        }
+        if (tipo === "matriz") {
+          return dados.map((r) =>
+            cabecalhos.map((_, ci) => parseFloat(r[ci]) || 0)
+          );
+        }
+        return dados;
+      },
+
+      lerJSON: async function (opcoes) {
+        const opts = opcoes || {};
+        const { conteudo } = await _lerArquivo(".json");
+        let obj;
+        try { obj = JSON.parse(conteudo); }
+        catch (e) { throw new Error("JSON inválido: " + e.message); }
+        if (opts.caminho) {
+          for (const p of opts.caminho.split(".")) {
+            if (obj == null) break;
+            obj = obj[p];
+          }
+        }
+        return obj;
+      },
+
+      lerTXT: async function (opcoes) {
+        const opts = opcoes || {};
+        const tipo = opts.tipo || "lista";
+        const { conteudo } = await _lerArquivo(".txt,.csv,.tsv");
+        if (tipo === "texto") return conteudo;
+        const sep = opts.separador || "\n";
+        return conteudo.split(sep).filter((l) => l.trim() !== "");
+      },
+
+      abrirImportador: function () {
+        window.open("importador.html", "_blank");
+      },
+    };
+  })(),
 };
 
 /* ============================================================
