@@ -2432,22 +2432,20 @@ const Bibliotecas = {
 
   /* ---- latex ---- */
   latex: (() => {
-    let _ready = false;
+    // Shared promise — all concurrent callers await the same load
+    let _loadPromise = null;
 
-    async function _load() {
-      if (_ready || (typeof window !== "undefined" && window.katex)) {
-        _ready = true;
-        return;
-      }
-      if (!document.querySelector('link[href*="katex"]')) {
-        const lnk = document.createElement("link");
-        lnk.rel = "stylesheet";
-        lnk.href =
-          "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css";
-        document.head.appendChild(lnk);
-      }
-      if (!document.querySelector('script[src*="katex"]')) {
-        await new Promise((res, rej) => {
+    function _load() {
+      if (window.katex) return Promise.resolve();
+      if (!_loadPromise) {
+        _loadPromise = new Promise((res, rej) => {
+          if (!document.querySelector('link[href*="katex"]')) {
+            const lnk = document.createElement("link");
+            lnk.rel = "stylesheet";
+            lnk.href =
+              "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css";
+            document.head.appendChild(lnk);
+          }
           const s = document.createElement("script");
           s.src =
             "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js";
@@ -2456,7 +2454,19 @@ const Bibliotecas = {
           document.head.appendChild(s);
         });
       }
-      _ready = true;
+      return _loadPromise;
+    }
+
+    // Restore JS-eaten escape sequences so LaTeX backslashes survive
+    // e.g. "\frac" → JS parses \f as form feed → _fixTex restores to \frac
+    function _fixTex(s) {
+      return s
+        .replace(/\f/g, "\\f")   // \frac, \forall, \flat …
+        .replace(/\n/g, "\\n")   // \nabla, \newline, \neq …
+        .replace(/\t/g, "\\t")   // \text, \textbf, \times, \theta …
+        .replace(/\b/g, "\\b")   // \beta, \bigcup, \boldsymbol …
+        .replace(/\r/g, "\\r")   // \rho, \rightarrow, \rangle …
+        .replace(/\v/g, "\\v");  // \vec, \vee, \varphi …
     }
 
     function _emit(html, display) {
@@ -2586,18 +2596,18 @@ const Bibliotecas = {
     return {
       linha: async function (tex) {
         await _load();
-        _emit(_render(String(tex), false), false);
+        _emit(_render(_fixTex(String(tex)), false), false);
       },
 
       bloco: async function (...exprs) {
         await _load();
         let tex;
         if (exprs.length === 1) {
-          tex = String(exprs[0]);
+          tex = _fixTex(String(exprs[0]));
         } else {
           tex =
             "\\begin{aligned}\n" +
-            exprs.map((e) => `& ${e}`).join(" \\\\\\\\\n") +
+            exprs.map((e) => `& ${_fixTex(String(e))}`).join(" \\\\\\\\\n") +
             "\n\\end{aligned}";
         }
         _emit(_render(tex, true), true);
