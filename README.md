@@ -332,6 +332,27 @@ importar mat como m;
 | `m.somatorio(fn, min, max)` | Σ fn(i) de min até max |
 | `m.produtorio(fn, min, max)` | Π fn(i) de min até max |
 | `m.sinal(x)` | -1, 0 ou 1 |
+| `m.transformar(lista, fn)` | Map — aplica `fn` a cada elemento; aceita função ou expressão |
+| `m.filtrar(lista, pred)` | Filter — mantém só os elementos que satisfazem `pred` |
+| `m.reduzir(lista, fn, ini?)` | Reduce — acumula um único valor; `ini` é o acumulador inicial |
+| `m.percorrer(lista, fn)` | ForEach — executa `fn(item, i)` para cada elemento (sem retorno) |
+
+**Expressões curtas aceitas por `transformar` e `filtrar`:**
+
+| String | Significado |
+|---|---|
+| `"*2"` | multiplicar por 2 |
+| `"/3.14"` | dividir por 3.14 |
+| `"+1"` | somar 1 |
+| `"-5"` | subtrair 5 |
+| `"**2"` | elevar ao quadrado |
+| `"mod 2"` | resto por 2 (sempre positivo) |
+| `">0"` | maior que 0 |
+| `"<=10"` | menor ou igual a 10 |
+| `"==5"` | igual a 5 |
+| `"!=0"` | diferente de 0 |
+
+**Operadores string aceitos por `reduzir`:** `"+"`, `"-"`, `"*"`, `"max"`, `"min"`
 
 ---
 

@@ -1063,17 +1063,78 @@ saudar(<span class="ex-str">"Bruno"</span>, <span class="ex-str">"Oi"</span>);  
                     <pre
                         class="code-example"><span class="ex-kw">importar</span> mat <span class="ex-kw">como</span> m;
 
-<span class="ex-cmt">// Número aleatório entre 1 e 6 (dado)</span>
-inteiro dado = m.aleatorio(<span class="ex-num">1</span>, <span class="ex-num">6</span>);
-<span class="ex-fn">imprima</span>(f<span class="ex-str">"Tirou: {dado}"</span>);
-
-<span class="ex-cmt">// Somatório: Σ i² de 1 a 5 = 1+4+9+16+25 = 55</span>
+<span class="ex-cmt">// Somatório: Σ i² de 1 a 5 = 55</span>
 <span class="ex-kw">funcao</span> quadrado(i) { <span class="ex-kw">retorno</span> i * i; }
 <span class="ex-fn">imprima</span>(m.somatorio(quadrado, <span class="ex-num">1</span>, <span class="ex-num">5</span>)); <span class="ex-cmt">// 55</span>
 
 <span class="ex-cmt">// Fatorial via produtório: Π i de 1 a 5 = 120</span>
 <span class="ex-kw">funcao</span> id(i) { <span class="ex-kw">retorno</span> i; }
 <span class="ex-fn">imprima</span>(m.produtorio(id, <span class="ex-num">1</span>, <span class="ex-num">5</span>)); <span class="ex-cmt">// 120</span></pre>
+
+                    <!-- Métodos de lista -->
+                    <h4 style="margin-top:1.6rem;">Métodos de lista</h4>
+                    <p class="tab-intro">Operações funcionais sobre <code>Lista</code>: <code>transformar</code>, <code>filtrar</code>,
+                        <code>reduzir</code> e <code>percorrer</code> aceitam funções completas <strong>ou expressões curtas em string</strong>.</p>
+
+                    <table class="doc-table">
+                        <thead>
+                            <tr><th colspan="3">Expressões curtas (string) — <code>transformar</code> e <code>filtrar</code></th></tr>
+                            <tr><th>String</th><th>Significa</th><th>Exemplo de uso</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td><code>"*2"</code></td><td>× 2</td><td><code>m.transformar(lista, "*2")</code></td></tr>
+                            <tr><td><code>"/3.14"</code></td><td>÷ 3.14</td><td>—</td></tr>
+                            <tr><td><code>"+1"</code> / <code>"-5"</code></td><td>± constante</td><td>—</td></tr>
+                            <tr><td><code>"**2"</code></td><td>x²</td><td>—</td></tr>
+                            <tr><td><code>"mod 2"</code></td><td>resto (sempre ≥ 0)</td><td><code>m.filtrar(lista, "mod 2")</code> → ímpares</td></tr>
+                            <tr><td><code>">0"</code> / <code>"&lt;=10"</code></td><td>comparação</td><td><code>m.filtrar(lista, ">0")</code></td></tr>
+                            <tr><td><code>"==5"</code> / <code>"!=0"</code></td><td>igualdade</td><td>—</td></tr>
+                        </tbody>
+                    </table>
+                    <table class="doc-table" style="margin-top:6px">
+                        <thead>
+                            <tr><th colspan="2">Operadores string — <code>reduzir</code></th></tr>
+                            <tr><th>String</th><th>Função</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td><code>"+"</code></td><td>soma acumulada</td></tr>
+                            <tr><td><code>"*"</code></td><td>produto acumulado</td></tr>
+                            <tr><td><code>"max"</code> / <code>"min"</code></td><td>máximo / mínimo</td></tr>
+                        </tbody>
+                    </table>
+
+                    <pre class="code-example"><span class="ex-kw">importar</span> mat <span class="ex-kw">como</span> m;
+<span class="ex-kw">importar</span> metodos <span class="ex-kw">como</span> mt;
+
+<span class="ex-kw">super</span> nums = mt.lista(<span class="ex-num">1</span>, <span class="ex-num">2</span>, <span class="ex-num">3</span>, <span class="ex-num">4</span>, <span class="ex-num">5</span>, <span class="ex-num">6</span>);
+
+<span class="ex-cmt">// transformar: expressão curta</span>
+<span class="ex-fn">imprima</span>(m.transformar(nums, <span class="ex-str">"*2"</span>));   <span class="ex-cmt">// [2,4,6,8,10,12]</span>
+<span class="ex-fn">imprima</span>(m.transformar(nums, <span class="ex-str">"**2"</span>));  <span class="ex-cmt">// [1,4,9,16,25,36]</span>
+
+<span class="ex-cmt">// transformar: função de biblioteca diretamente</span>
+<span class="ex-fn">imprima</span>(m.transformar(nums, m.ln));   <span class="ex-cmt">// [ln(1), ln(2), ...]</span>
+
+<span class="ex-cmt">// transformar: função própria</span>
+<span class="ex-fn">imprima</span>(m.transformar(nums, (x) => x * x - <span class="ex-num">1</span>));
+
+<span class="ex-cmt">// filtrar: expressão comparativa</span>
+<span class="ex-fn">imprima</span>(m.filtrar(nums, <span class="ex-str">">3"</span>));       <span class="ex-cmt">// [4,5,6]</span>
+<span class="ex-fn">imprima</span>(m.filtrar(nums, <span class="ex-str">"mod 2"</span>));   <span class="ex-cmt">// [1,3,5]  ← ímpares (mod ≠ 0)</span>
+
+<span class="ex-cmt">// filtrar: função predicado</span>
+<span class="ex-fn">imprima</span>(m.filtrar(nums, (x) => x mod <span class="ex-num">2</span> == <span class="ex-num">0</span>)); <span class="ex-cmt">// [2,4,6]</span>
+
+<span class="ex-cmt">// reduzir: operador string</span>
+<span class="ex-fn">imprima</span>(m.reduzir(nums, <span class="ex-str">"+"</span>));        <span class="ex-cmt">// 21  (soma)</span>
+<span class="ex-fn">imprima</span>(m.reduzir(nums, <span class="ex-str">"max"</span>));     <span class="ex-cmt">// 6</span>
+<span class="ex-fn">imprima</span>(m.reduzir(nums, <span class="ex-str">"*"</span>, <span class="ex-num">1</span>));   <span class="ex-cmt">// 720 (fatorial 6)</span>
+
+<span class="ex-cmt">// reduzir: função acumuladora</span>
+<span class="ex-fn">imprima</span>(m.reduzir(nums, (acc, x) => acc + x * x, <span class="ex-num">0</span>)); <span class="ex-cmt">// Σ x² = 91</span>
+
+<span class="ex-cmt">// percorrer: sem retorno, só efeito colateral</span>
+m.percorrer(nums, (x, i) => <span class="ex-fn">imprima</span>(f<span class="ex-str">"[{i}] = {x}"</span>));</pre>
                 </div><!-- /tab-mat -->
 
 
@@ -2579,6 +2640,7 @@ function doGet(e) {
     <script src="js/plotterApi.js"
         onerror="console.info('[Pseudo-IDE] PlotterAPI não encontrada — bib graficos indisponível.')"></script>
     <script src="plotterapi.js"></script>
+    <script src="js/color-picker.js"></script>
     <script src="editor.js"></script>
     <script src="runtime.js"></script>
 </body>

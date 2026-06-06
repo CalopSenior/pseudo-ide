@@ -704,6 +704,70 @@ function _validarListaNumerica(lista, metodo) {
   });
 }
 
+
+/* ── Helpers para métodos de lista ──────────────────────────
+   _listaArr   → normaliza Lista / Vetor / array JS
+   _parseFnDisc → converte string de expressão unária em função
+                  ex: "*2" → x=>x*2  |  ">0" → x=>x>0  |  fn → fn
+   _parseFnBin → converte string de operador binário em função
+                  ex: "+" → (a,x)=>a+x  |  "max" → Math.max  |  fn → fn
+   ─────────────────────────────────────────────────────────── */
+function _listaArr(v, metodo) {
+  if (v instanceof PseudoLista) return v._v;
+  if (v instanceof PseudoVetor) return v._v;
+  if (Array.isArray(v)) return v;
+  throw new Error(`${metodo}: primeiro argumento deve ser uma Lista.`);
+}
+
+function _parseFnDisc(expr, metodo) {
+  if (typeof expr === "function") return expr;
+  if (typeof expr !== "string")
+    throw new Error(
+      `${metodo}: esperava uma função ou expressão como "*2", "/3", "+1", ">0".`,
+    );
+  const s = expr.trim();
+  const m = s.match(/^(\*\*|[+\-*/]|mod|>=|<=|==|!=|>|<)\s*(-?[\d.]+)$/i);
+  if (m) {
+    const n = Number(m[2]);
+    switch (m[1]) {
+      case "+":    return (x) => x + n;
+      case "-":    return (x) => x - n;
+      case "*":    return (x) => x * n;
+      case "**":   return (x) => x ** n;
+      case "/":    return (x) => x / n;
+      case "mod":  return (x) => ((x % n) + n) % n;
+      case ">":    return (x) => x > n;
+      case "<":    return (x) => x < n;
+      case ">=":   return (x) => x >= n;
+      case "<=":   return (x) => x <= n;
+      case "==":   return (x) => x === n;
+      case "!=":   return (x) => x !== n;
+    }
+  }
+  throw new Error(
+    `${metodo}: expressão "${s}" não reconhecida. ` +
+    `Exemplos: "*2", "/3.14", "+1", "**2", "mod 2", ">0", "<=10", "!=0".`,
+  );
+}
+
+function _parseFnBin(expr, metodo) {
+  if (typeof expr === "function") return expr;
+  if (typeof expr !== "string")
+    throw new Error(
+      `${metodo}: esperava uma função (acumulador, x) => ... ou operador como "+", "*", "max".`,
+    );
+  switch (expr.trim()) {
+    case "+":   return (a, x) => a + x;
+    case "-":   return (a, x) => a - x;
+    case "*":   return (a, x) => a * x;
+    case "max": return (a, x) => (x > a ? x : a);
+    case "min": return (a, x) => (x < a ? x : a);
+  }
+  throw new Error(
+    `${metodo}: operador "${expr.trim()}" não reconhecido. Use "+", "-", "*", "max" ou "min".`,
+  );
+}
+
 /* ============================================================
    6. CATÁLOGO DE BIBLIOTECAS (Motor Polimórfico)
    ============================================================ */
@@ -880,6 +944,63 @@ const Bibliotecas = {
       let p = 1;
       for (let i = mn; i <= mx; i++) p *= fn(i);
       return p;
+    },
+
+    // ── MÉTODOS DE LISTA ─────────────────────────────────────
+
+    // transformar(lista, fn | expr)
+    // Aplica fn a cada elemento e devolve uma nova Lista.
+    // fn pode ser uma função, ou uma expressão curta: "*2", "/3", "**2", "+1", "mod 2".
+    // Também aceita funções de biblioteca diretamente: mat.ln, mat.abs, etc.
+    transformar: (lista, fn) => {
+      const arr = _listaArr(lista, "mat.transformar");
+      const f = _parseFnDisc(fn, "mat.transformar");
+      if (f.constructor.name === "AsyncFunction")
+        return (async () => new PseudoLista(await Promise.all(arr.map(f))))();
+      return new PseudoLista(arr.map(f));
+    },
+
+    // filtrar(lista, predicado | expr)
+    // Devolve nova Lista apenas com os elementos que satisfazem o predicado.
+    // predicado pode ser função, ou expressão comparativa: ">0", "<=10", "==5", "!=0".
+    filtrar: (lista, predicado) => {
+      const arr = _listaArr(lista, "mat.filtrar");
+      const f = _parseFnDisc(predicado, "mat.filtrar");
+      if (f.constructor.name === "AsyncFunction")
+        return (async () => {
+          const flags = await Promise.all(arr.map(f));
+          return new PseudoLista(arr.filter((_, i) => flags[i]));
+        })();
+      return new PseudoLista(arr.filter(f));
+    },
+
+    // reduzir(lista, fn | operador, inicial?)
+    // Reduz a lista a um único valor acumulando da esquerda.
+    // Operadores string: "+" (soma), "-", "*" (produto), "max", "min".
+    // Sem `inicial`, usa o primeiro elemento como semente.
+    reduzir: (lista, fn, inicial) => {
+      const arr = _listaArr(lista, "mat.reduzir");
+      if (arr.length === 0 && inicial === undefined)
+        throw new Error("mat.reduzir: lista vazia sem valor inicial.");
+      const f = _parseFnBin(fn, "mat.reduzir");
+      if (f.constructor.name === "AsyncFunction")
+        return (async () => {
+          let acc = inicial !== undefined ? inicial : arr[0];
+          for (let i = inicial !== undefined ? 0 : 1; i < arr.length; i++)
+            acc = await f(acc, arr[i]);
+          return acc;
+        })();
+      return inicial !== undefined ? arr.reduce(f, inicial) : arr.reduce(f);
+    },
+
+    // percorrer(lista, fn)
+    // Executa fn(elemento, indice) para cada item da lista (sem retorno).
+    percorrer: (lista, fn) => {
+      const arr = _listaArr(lista, "mat.percorrer");
+      __vp(fn, ["funcao"], "mat.percorrer", "fn");
+      if (fn.constructor.name === "AsyncFunction")
+        return (async () => { for (let i = 0; i < arr.length; i++) await fn(arr[i], i); })();
+      arr.forEach(fn);
     },
   },
 

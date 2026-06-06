@@ -321,6 +321,8 @@ function kwClass(word) {
 }
 
 function aplicarHighlight(texto) {
+  const cpStr = typeof window.cpInjetarSwatches === "function"
+    ? window.cpInjetarSwatches : esc;
   let html = "",
     i = 0,
     len = texto.length;
@@ -378,7 +380,7 @@ function aplicarHighlight(texto) {
       }
       s += texto[i] || "";
       i++;
-      html += `<span class="t-str">${esc(s)}</span>`;
+      html += `<span class="t-str">${cpStr(s)}</span>`;
       continue;
     }
     if (ch === '"' || ch === "'") {
@@ -392,7 +394,7 @@ function aplicarHighlight(texto) {
       }
       s += texto[i] || "";
       i++;
-      html += `<span class="t-str">${esc(s)}</span>`;
+      html += `<span class="t-str">${cpStr(s)}</span>`;
       continue;
     }
     if (ch === "`") {
@@ -406,7 +408,7 @@ function aplicarHighlight(texto) {
       }
       s += texto[i] || "";
       i++;
-      html += `<span class="t-str">${esc(s)}</span>`;
+      html += `<span class="t-str">${cpStr(s)}</span>`;
       continue;
     }
     if (/[A-Za-zÀ-ÖØ-öø-ÿ_]/.test(ch)) {
@@ -1639,6 +1641,13 @@ codeEditor.addEventListener("input", () => {
   _scheduleSnap();
 });
 codeEditor.addEventListener("click", verificarBalaoAssinatura);
+codeEditor.addEventListener("click", (e) => {
+  if (typeof window.cpFindColorAt !== "function") return;
+  setTimeout(() => {
+    const match = window.cpFindColorAt(codeEditor.value, codeEditor.selectionStart);
+    if (match) window.cpShow(e.clientX, e.clientY, match, codeEditor);
+  }, 0);
+});
 codeEditor.addEventListener("keyup", (e) => {
   if (e.key.startsWith("Arrow")) verificarBalaoAssinatura();
 });
