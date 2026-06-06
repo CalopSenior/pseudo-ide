@@ -183,6 +183,10 @@ function traduzirCodigo(fonte, isDebug = false) {
   );
   if (wm) c = wm[1];
 
+  // Raw strings: #"..." or #'...' — backslashes are literal, never escape sequences
+  c = c.replace(/#"([^"\n]*)"/g,  (_, body) => '"' + body.replace(/\\/g, "\\\\") + '"');
+  c = c.replace(/#'([^'\n]*)'/g,  (_, body) => "'" + body.replace(/\\/g, "\\\\") + "'");
+
   c = c.replace(/f(["'])((?:[^\\\n]|\\.)*?)\1/g, (_, q, body) => {
     const tpl = body.replace(/\{([^}]+)\}/g, "${$1}");
     return "`" + tpl + "`";

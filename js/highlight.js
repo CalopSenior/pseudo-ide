@@ -107,6 +107,16 @@
         html += `<span class="t-cmt">${esc(cmt)}</span>`;
         continue;
       }
+      // Raw strings: #"..." or #'...'
+      if (ch === "#" && i + 1 < len && (texto[i + 1] === '"' || texto[i + 1] === "'")) {
+        const q = texto[i + 1];
+        let s = "#" + q;
+        i += 2;
+        while (i < len && texto[i] !== q && texto[i] !== "\n") s += texto[i++];
+        if (i < len && texto[i] !== "\n") { s += texto[i++]; }
+        html += `<span class="t-str">${esc(s)}</span>`;
+        continue;
+      }
       if (
         ch === "f" &&
         i + 1 < len &&

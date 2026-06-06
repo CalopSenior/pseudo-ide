@@ -114,6 +114,22 @@ real x = 3.14;
 imprima(f"O valor de pi é {x}");
 ```
 
+### Strings brutas (raw strings)
+
+Use o prefixo `#` quando a string contém `\` que **não devem ser interpretados** como escape do JavaScript — especialmente útil para comandos LaTeX:
+
+```
+importar latex como lt;
+
+lt.linha(#"\frac{1}{2} + \frac{1}{3} = \frac{5}{6}")
+lt.bloco(#"\sum_{k=1}^{n} k = \frac{n(n+1)}{2}")
+lt.linha(#"e^{i\pi} + 1 = 0")
+```
+
+Sem o `#`, sequências como `\f`, `\n`, `\t`, `\b`, `\r`, `\v` seriam interpretadas pelo JavaScript como caracteres de controle (form feed, newline, tab, etc.), corrompendo os comandos LaTeX. Com `#`, cada `\` chega ao destino como está.
+
+> **Regra de ouro:** use `#"..."` sempre que a string contiver `\` — seja para LaTeX ou qualquer outro contexto onde barras precisem ser literais. Strings `f"..."` e `#"..."` são independentes e não podem ser combinadas.
+
 ---
 
 ## Entrada e Saída <a name="io"></a>
