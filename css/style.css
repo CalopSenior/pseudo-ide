@@ -1645,21 +1645,5 @@ section {
   overflow: hidden;
 }
 
-/* Console-input styles reused inside cell outputs */
-.nb-cell-output .console-input-line {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-top: 4px;
-}
-.nb-cell-output .console-input-field {
-  background: transparent;
-  border: none;
-  border-bottom: 1px solid var(--border-light);
-  color: var(--text);
-  font-family: var(--font-code);
-  font-size: 13px;
-  outline: none;
-  min-width: 160px;
-  padding: 1px 4px;
-}
+/* Global .console-input-line / .console-input-field styles (defined earlier)
+   already apply inside .nb-cell-output — no overrides needed here. */

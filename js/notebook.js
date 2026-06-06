@@ -395,6 +395,7 @@
     try {
       translated = traduzirCodigo(combined, false);
     } catch (e) {
+      console.error("[Pseudo Notebook] Erro de compilação:", e);
       _appendError(outputs[0] || null, e);
       if (outputs[0]) _setOutputVisible(outputs[0], true);
       _setStatus("erro de compilação", true);
@@ -402,13 +403,19 @@
       return;
     }
 
+    console.groupCollapsed("[Pseudo Notebook] JS gerado — executar tudo");
+    console.log(translated);
+    console.groupEnd();
+
     // errors inside code are caught by __NB__ and routed via _imprimaErro → _c()
+    window.__inicioExecucao = Date.now();
     const ctx = `(async function __NB__(){\ntry{\n${translated}\n}catch(__e){\n_imprimaErro(__e);\n}})();`;
     let execOk = true;
     try {
       await eval(ctx);
     } catch (e) {
       // only reached if the eval wrapper itself explodes (rare)
+      console.error("[Pseudo Notebook] Erro de execução (wrapper):", e);
       execOk = false;
       _setStatus("erro de execução", true);
     } finally {
@@ -443,17 +450,24 @@
     try {
       translated = traduzirCodigo(src, false);
     } catch (e) {
+      console.error("[Pseudo Notebook] Erro de compilação:", e);
       _appendError(outputEl, e);
       _setOutputVisible(outputEl, true);
       if (runBtn) runBtn.classList.remove("nb-running");
       return;
     }
 
+    console.groupCollapsed("[Pseudo Notebook] JS gerado — célula");
+    console.log(translated);
+    console.groupEnd();
+
+    window.__inicioExecucao = Date.now();
     const ctx = `(async function __NBC__(){\ntry{\nwindow._nbSwitch(0);\n${translated}\n}catch(__e){\n_imprimaErro(__e);\n}})();`;
     try {
       await eval(ctx);
     } catch (_e) {
       // errors are handled inside __NBC__ by _imprimaErro
+      console.error("[Pseudo Notebook] Erro de execução (wrapper):", _e);
     } finally {
       if (outputEl.hasChildNodes()) _setOutputVisible(outputEl, true);
       if (runBtn) runBtn.classList.remove("nb-running");
@@ -558,9 +572,8 @@
   }
 
   // ---------- export HTML ----------
-  async function _exportHTML() {
+  function _exportHTML() {
     _setStatus("exportando…");
-    await _runAll();
 
     const title =
       (_titleEl() ? _titleEl().value.trim() : "") || "Notebook";

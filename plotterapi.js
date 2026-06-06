@@ -713,6 +713,8 @@ function _sc() {
   const c = _c();
   c.scrollTop = c.scrollHeight;
   if (window._nbCurrentCell) {
+    // Make output visible as soon as any content is appended
+    c.classList.add("nb-has-output");
     const last = c.lastElementChild;
     if (last) last.scrollIntoView({ behavior: "smooth", block: "nearest" });
   }
@@ -2484,8 +2486,11 @@ function leiaAsync(mensagem) {
     container.appendChild(prompt);
     container.appendChild(field);
     _c().appendChild(container);
-    field.focus();
+    // In notebook mode the output div may still be hidden at this point;
+    // ensure it is shown before attempting focus (hidden elements are not focusable).
+    if (window._nbCurrentCell) _c().classList.add("nb-has-output");
     _sc();
+    field.focus();
     field.addEventListener("keydown", (e) => {
       if (e.key !== "Enter") return;
       const raw = field.value;
