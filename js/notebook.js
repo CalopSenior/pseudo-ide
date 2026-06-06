@@ -40,15 +40,11 @@
 
   // ---------- minimal markdown renderer ----------
   function _renderMd(raw) {
-    // We process line by line to handle block-level elements correctly,
-    // then inline markup within paragraphs.
     const lines = raw.split("\n");
     const out = [];
-    let inCode = false;
-    let codeBuf = [];
-    let codeLang = "";
-    let inList = false;
-    let listOl = false;
+    let inCode = false, codeBuf = [], codeLang = "";
+    let inList = false, listOl = false;
+    let inMath = false, mathBuf = [];
 
     function flushList() {
       if (!inList) return;
@@ -56,100 +52,109 @@
       inList = false;
     }
 
+    function _katexBlock(tex) {
+      if (window.katex) {
+        try {
+          return '<div class="latex-block">' +
+            window.katex.renderToString(tex, { displayMode: true, throwOnError: false }) +
+            '</div>';
+        } catch (_) {}
+      }
+      return `<div class="latex-block"><code>$$${tex.replace(/</g, "&lt;")}$$</code></div>`;
+    }
+
     function inline(s) {
-      return s
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        // bold
+      // Extract $...$ spans BEFORE HTML-escaping so LaTeX < > survive
+      const mathSpans = [];
+      let t = s.replace(/\$([^$\n]+)\$/g, (_, tex) => {
+        mathSpans.push(tex);
+        return `\x00M${mathSpans.length - 1}\x00`;
+      });
+      t = t
+        .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
         .replace(/\*\*([^*\n]+)\*\*/g, "<strong>$1</strong>")
-        // italic
         .replace(/\*([^*\n]+)\*/g, "<em>$1</em>")
-        // inline code
         .replace(/`([^`\n]+)`/g, "<code>$1</code>")
-        // links
-        .replace(
-          /\[([^\]]+)\]\(([^)]+)\)/g,
-          '<a href="$2" target="_blank" rel="noopener">$1</a>'
-        );
+        .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+      return t.replace(/\x00M(\d+)\x00/g, (_, i) => {
+        const tex = mathSpans[+i];
+        if (window.katex) {
+          try { return window.katex.renderToString(tex, { displayMode: false, throwOnError: false }); }
+          catch (_) {}
+        }
+        return `<code>$${tex.replace(/</g, "&lt;")}$</code>`;
+      });
     }
 
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
 
-      // fenced code block
+      // fenced code block (highest priority — trumps math)
       if (/^```/.test(line)) {
         if (!inCode) {
           flushList();
-          inCode = true;
-          codeLang = line.slice(3).trim();
-          codeBuf = [];
+          inCode = true; codeLang = line.slice(3).trim(); codeBuf = [];
         } else {
-          const esc = codeBuf
-            .join("\n")
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;");
+          const esc = codeBuf.join("\n").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
           out.push(`<pre><code class="lang-${codeLang}">${esc}</code></pre>`);
-          inCode = false;
-          codeBuf = [];
-          codeLang = "";
+          inCode = false; codeBuf = []; codeLang = "";
         }
         continue;
       }
       if (inCode) { codeBuf.push(line); continue; }
 
+      // block math $$
+      if (/^\$\$/.test(line)) {
+        if (!inMath) {
+          const single = line.match(/^\$\$(.+)\$\$\s*$/);
+          if (single) { flushList(); out.push(_katexBlock(single[1])); }
+          else {
+            flushList();
+            inMath = true; mathBuf = [];
+            const rest = line.slice(2).trim();
+            if (rest) mathBuf.push(rest);
+          }
+        } else {
+          out.push(_katexBlock(mathBuf.join("\n")));
+          inMath = false; mathBuf = [];
+        }
+        continue;
+      }
+      if (inMath) { mathBuf.push(line); continue; }
+
       // heading
       const hm = line.match(/^(#{1,3})\s+(.+)$/);
-      if (hm) {
-        flushList();
-        const lvl = hm[1].length;
-        out.push(`<h${lvl}>${inline(hm[2])}</h${lvl}>`);
-        continue;
-      }
+      if (hm) { flushList(); out.push(`<h${hm[1].length}>${inline(hm[2])}</h${hm[1].length}>`); continue; }
 
       // hr
-      if (/^---+$/.test(line.trim())) {
-        flushList();
-        out.push("<hr>");
-        continue;
-      }
+      if (/^---+$/.test(line.trim())) { flushList(); out.push("<hr>"); continue; }
 
       // blockquote
-      if (/^> /.test(line)) {
-        flushList();
-        out.push(`<blockquote>${inline(line.slice(2))}</blockquote>`);
-        continue;
-      }
+      if (/^> /.test(line)) { flushList(); out.push(`<blockquote>${inline(line.slice(2))}</blockquote>`); continue; }
 
       // ordered list
       const olm = line.match(/^(\d+)\. (.+)$/);
       if (olm) {
         if (!inList || !listOl) { flushList(); out.push("<ol>"); inList = true; listOl = true; }
-        out.push(`<li>${inline(olm[2])}</li>`);
-        continue;
+        out.push(`<li>${inline(olm[2])}</li>`); continue;
       }
 
       // unordered list
       const ulm = line.match(/^[*\-] (.+)$/);
       if (ulm) {
         if (!inList || listOl) { flushList(); out.push("<ul>"); inList = true; listOl = false; }
-        out.push(`<li>${inline(ulm[1])}</li>`);
-        continue;
+        out.push(`<li>${inline(ulm[1])}</li>`); continue;
       }
 
       // empty line
-      if (line.trim() === "") {
-        flushList();
-        out.push("<p></p>");
-        continue;
-      }
+      if (line.trim() === "") { flushList(); out.push("<p></p>"); continue; }
 
-      // paragraph line
+      // paragraph
       flushList();
       out.push(`<p>${inline(line)}</p>`);
     }
     flushList();
+    if (inMath && mathBuf.length) out.push(_katexBlock(mathBuf.join("\n")));
     if (inCode && codeBuf.length) {
       const esc = codeBuf.join("\n").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
       out.push(`<pre><code>${esc}</code></pre>`);
@@ -622,6 +627,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1.0">
   <title>${safeTitle}</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
   <style>
     *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
     :root{
@@ -675,6 +681,10 @@
     leia-input{display:block;margin-top:4px}
     leia-input input{background:#0a0c14;border:1px solid var(--border);color:var(--text);font-family:var(--fc);font-size:13px;padding:3px 8px;border-radius:4px;outline:none;width:260px}
     leia-input input:focus{border-color:var(--accent)}
+    .latex-block{margin:6px 0;text-align:center;overflow-x:auto;line-height:2}
+    .latex-inline{display:inline-block;vertical-align:middle;margin:2px 4px}
+    .katex{font-size:1.05em}
+    .katex-display{overflow-x:auto}
   </style>
 </head>
 <body>
@@ -689,6 +699,7 @@
   </div>
   <div id="console-saida" style="display:none" aria-hidden="true"></div>
 
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"><\/script>
   <script src="https://pseudo-ide.netlify.app/js/plotterApi.js"><\/script>
   <script src="https://pseudo-ide.netlify.app/plotterapi.js"><\/script>
   <script src="https://pseudo-ide.netlify.app/editor.js"><\/script>

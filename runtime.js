@@ -1178,6 +1178,37 @@ const COMPLETIONS = [
     detail: "algebra — A,B,C,D coplanares?",
     insert: "al.saoCoplanares(",
   },
+  // ── latex ─────────────────────────────────────────────────
+  {
+    label: "importar latex como lt",
+    detail: "snippet",
+    insert: "importar latex como lt;\n",
+  },
+  {
+    label: "lt.linha(tex)",
+    detail: "latex — renderiza LaTeX inline",
+    insert: 'lt.linha("',
+  },
+  {
+    label: "lt.bloco(tex)",
+    detail: "latex — renderiza LaTeX em bloco display",
+    insert: 'lt.bloco("',
+  },
+  {
+    label: "lt.bloco(tex1, tex2, …)",
+    detail: "latex — múltiplas expressões alinhadas",
+    insert: "lt.bloco(\n    \"",
+  },
+  {
+    label: "lt.converterParaLatex(fn)",
+    detail: "latex — converte função Pseudo → TeX e renderiza",
+    insert: "lt.converterParaLatex(",
+  },
+  {
+    label: "lt.texString(fn)",
+    detail: "latex — retorna string TeX sem renderizar",
+    insert: "lt.texString(",
+  },
   // ── metodos — verificadores de tipo ──────────────────────
   {
     label: "m.eNumero(v)",

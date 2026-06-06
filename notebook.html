@@ -100,9 +100,13 @@
   </div>
 
   <!-- ===== SCRIPTS =====
-    Ordem: plotterapi runtime → compiler → notebook UI
+    Ordem: KaTeX → plotterapi runtime → compiler → notebook UI
     (runtime.js da IDE NÃO é carregado — contém UI exclusiva do editor)
   -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css"
+    onerror="console.info('[Pseudo Notebook] KaTeX CSS não carregado — LaTeX em Markdown indisponível.')">
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"
+    onerror="console.info('[Pseudo Notebook] KaTeX não carregado — LaTeX em Markdown indisponível.')"></script>
   <script src="js/plotterApi.js"
     onerror="console.info('[Pseudo Notebook] PlotterAPI não encontrada — bib graficos indisponível.')"></script>
   <script src="plotterapi.js"></script>

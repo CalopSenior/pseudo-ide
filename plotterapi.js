@@ -2429,6 +2429,192 @@ const Bibliotecas = {
 
     return _al;
   })(),
+
+  /* ---- latex ---- */
+  latex: (() => {
+    let _ready = false;
+
+    async function _load() {
+      if (_ready || (typeof window !== "undefined" && window.katex)) {
+        _ready = true;
+        return;
+      }
+      if (!document.querySelector('link[href*="katex"]')) {
+        const lnk = document.createElement("link");
+        lnk.rel = "stylesheet";
+        lnk.href =
+          "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css";
+        document.head.appendChild(lnk);
+      }
+      if (!document.querySelector('script[src*="katex"]')) {
+        await new Promise((res, rej) => {
+          const s = document.createElement("script");
+          s.src =
+            "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js";
+          s.onload = res;
+          s.onerror = () => rej(new Error("Falha ao carregar KaTeX"));
+          document.head.appendChild(s);
+        });
+      }
+      _ready = true;
+    }
+
+    function _emit(html, display) {
+      const wrap = document.createElement("div");
+      wrap.className = display ? "latex-block" : "latex-inline";
+      wrap.style.cssText = display
+        ? "margin:6px 0;text-align:center;overflow-x:auto;line-height:2"
+        : "display:inline-block;vertical-align:middle";
+      wrap.innerHTML = html;
+      _c().appendChild(wrap);
+      _sc();
+    }
+
+    function _render(tex, display) {
+      try {
+        return window.katex.renderToString(tex, {
+          displayMode: display,
+          throwOnError: false,
+          output: "html",
+        });
+      } catch (e) {
+        const d = document.createElement("span");
+        d.style.color = "var(--red,#f87171)";
+        d.textContent = `[LaTeX inválido: ${e.message}]`;
+        return d.outerHTML;
+      }
+    }
+
+    // ── converter JS → TeX ──────────────────────────────────────
+    const _MAPS = [
+      [/\bmat\.arcsen\b/g, "\\arcsin"],
+      [/\bmat\.arccos\b/g, "\\arccos"],
+      [/\bmat\.arctan\b/g, "\\arctan"],
+      [/\bmat\.sen\b/g, "\\sin"],
+      [/\bmat\.cos\b/g, "\\cos"],
+      [/\bmat\.tan\b/g, "\\tan"],
+      [/\bmat\.ln\b/g, "\\ln"],
+      [/\bmat\.log10\b/g, "\\log_{10}"],
+      [/\bmat\.log\b/g, "\\log"],
+      [/\bmat\.exp\b/g, "\\exp"],
+      [/\bmat\.PI\b/g, "\\pi"],
+      [/\bmat\.E\b/g, "e"],
+      [/\bMath\.PI\b/g, "\\pi"],
+      [/\bMath\.E\b/g, "e"],
+    ];
+
+    function _balancedArg(src, start) {
+      // Returns [content, endIndex] for balanced parens/braces starting after '('
+      let depth = 1, i = start;
+      while (i < src.length && depth > 0) {
+        if (src[i] === "(") depth++;
+        else if (src[i] === ")") depth--;
+        i++;
+      }
+      return [src.slice(start, i - 1), i];
+    }
+
+    function _toTex(src) {
+      // Strip arrow or named function wrapper
+      src = src
+        .replace(/^\s*(?:async\s+)?(?:function\s*\w*\s*)?\([^)]*\)\s*(?:=>\s*|\{[\s\S]*?\bretorno\b\s*|\{[\s\S]*?\breturn\b\s*)/,"")
+        .replace(/^\s*\w+\s*=>\s*/, "")
+        .replace(/[;\s}]+$/, "")
+        .trim();
+
+      // Apply symbol maps
+      for (const [pat, rep] of _MAPS) src = src.replace(pat, rep);
+
+      // mat.sqrt(expr) → \sqrt{expr}, mat.cbrt(expr) → \sqrt[3]{expr}
+      src = src.replace(/\bmat\.sqrt\s*\(/g, "__SQRT__(");
+      src = src.replace(/\bmat\.cbrt\s*\(/g, "__CBRT__(");
+      src = src.replace(/\bmat\.abs\s*\(/g, "__ABS__(");
+
+      let out = "";
+      let i = 0;
+      while (i < src.length) {
+        const sqIdx = src.indexOf("__SQRT__(", i);
+        const cbIdx = src.indexOf("__CBRT__(", i);
+        const abIdx = src.indexOf("__ABS__(", i);
+        const candidates = [sqIdx, cbIdx, abIdx].filter((x) => x >= 0);
+        if (candidates.length === 0) { out += src.slice(i); break; }
+        const next = Math.min(...candidates);
+        out += src.slice(i, next);
+        if (src.startsWith("__SQRT__(", next)) {
+          const [arg, end] = _balancedArg(src, next + 9);
+          out += `\\sqrt{${_toTex(arg)}}`;
+          i = end;
+        } else if (src.startsWith("__CBRT__(", next)) {
+          const [arg, end] = _balancedArg(src, next + 9);
+          out += `\\sqrt[3]{${_toTex(arg)}}`;
+          i = end;
+        } else {
+          const [arg, end] = _balancedArg(src, next + 8);
+          out += `\\left|${_toTex(arg)}\\right|`;
+          i = end;
+        }
+      }
+      src = out;
+
+      // Known LaTeX functions: wrap args with \left( \right)
+      out = "";
+      i = 0;
+      const fnRe = /\\(sin|cos|tan|arcsin|arccos|arctan|ln|log(?:_\{[^}]+\})?|exp)\s*\(/g;
+      let m;
+      fnRe.lastIndex = 0;
+      let last = 0;
+      while ((m = fnRe.exec(src)) !== null) {
+        out += src.slice(last, m.index) + "\\" + m[1] + "\\!\\left(";
+        const [arg, end] = _balancedArg(src, m.index + m[0].length);
+        out += _toTex(arg) + "\\right)";
+        last = end;
+        fnRe.lastIndex = end;
+      }
+      src = out + src.slice(last);
+
+      // a ** b  →  a^{b} (handle parens around base)
+      src = src.replace(/\(([^)]+)\)\s*\*\*\s*(\w+)/g, (_, base, exp) => `\\left(${base}\\right)^{${exp}}`);
+      src = src.replace(/(\w+)\s*\*\*\s*(\w+)/g, "$1^{$2}");
+
+      // a * b  →  a \cdot b
+      src = src.replace(/\s*\*\s*/g, " \\cdot ");
+
+      return src.trim();
+    }
+
+    // ── public API ───────────────────────────────────────────────
+    return {
+      linha: async function (tex) {
+        await _load();
+        _emit(_render(String(tex), false), false);
+      },
+
+      bloco: async function (...exprs) {
+        await _load();
+        let tex;
+        if (exprs.length === 1) {
+          tex = String(exprs[0]);
+        } else {
+          tex =
+            "\\begin{aligned}\n" +
+            exprs.map((e) => `& ${e}`).join(" \\\\\\\\\n") +
+            "\n\\end{aligned}";
+        }
+        _emit(_render(tex, true), true);
+      },
+
+      converterParaLatex: async function (fn) {
+        await _load();
+        const tex = _toTex(typeof fn === "function" ? fn.toString() : String(fn));
+        _emit(_render(tex, true), true);
+        return tex;
+      },
+
+      texString: function (fn) {
+        return _toTex(typeof fn === "function" ? fn.toString() : String(fn));
+      },
+    };
+  })(),
 };
 
 /* ============================================================

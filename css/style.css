@@ -608,6 +608,21 @@ section {
   cursor: default;
 }
 
+/* ---- LaTeX output ---- */
+.latex-block {
+  margin: 6px 0;
+  text-align: center;
+  overflow-x: auto;
+  line-height: 2;
+}
+.latex-inline {
+  display: inline-block;
+  vertical-align: middle;
+  margin: 2px 4px;
+}
+.katex { font-size: 1.05em; }
+.katex-display { overflow-x: auto; }
+
 /* ---- Syntax tokens ---- */
 .t-type {
   color: var(--syn-type);
