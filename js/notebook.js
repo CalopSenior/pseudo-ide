@@ -23,8 +23,19 @@
 
   // ---------- auto-resize textarea ----------
   function _autoResize(ta) {
-    ta.style.height = "auto";
+    // height:0 forces scrollHeight to reflect full content regardless of overflow
+    ta.style.height = "0px";
     ta.style.height = Math.max(56, ta.scrollHeight) + "px";
+  }
+
+  // ---------- update syntax-highlight layer ----------
+  function _updateHL(ta, hlLayer) {
+    if (!hlLayer || typeof window.aplicarHighlight !== "function") return;
+    const txt = ta.value;
+    // trailing newline needs a trailing space so the last line renders
+    hlLayer.innerHTML = window.aplicarHighlight(
+      txt.endsWith("\n") ? txt + " " : txt
+    );
   }
 
   // ---------- minimal markdown renderer ----------
@@ -163,19 +174,30 @@
           <button class="nb-btn-icon nb-btn-del" data-action="del" title="Remover c&eacute;lula">&#215;</button>
         </div>
       </div>
-      <textarea class="nb-cell-editor" spellcheck="false" autocorrect="off" autocapitalize="off" placeholder="// escreva seu algoritmo aqui"></textarea>
+      <div class="nb-editor-wrap">
+        <div class="nb-hl-layer" aria-hidden="true"></div>
+        <textarea class="nb-cell-editor" spellcheck="false" autocorrect="off"
+          autocapitalize="off" placeholder="// escreva seu algoritmo aqui"></textarea>
+      </div>
       <div class="nb-cell-output"></div>
     `;
     const ta = el.querySelector(".nb-cell-editor");
+    const hlLayer = el.querySelector(".nb-hl-layer");
+
+    function _refresh() {
+      _autoResize(ta);
+      _updateHL(ta, hlLayer);
+    }
+
     ta.value = content || "";
-    ta.addEventListener("input", () => _autoResize(ta));
+    ta.addEventListener("input", _refresh);
     ta.addEventListener("keydown", (e) => {
       if (e.key === "Tab") {
         e.preventDefault();
         const s = ta.selectionStart, end = ta.selectionEnd;
         ta.value = ta.value.slice(0, s) + "  " + ta.value.slice(end);
         ta.selectionStart = ta.selectionEnd = s + 2;
-        _autoResize(ta);
+        _refresh();
       }
       if (e.key === "Enter" && e.ctrlKey) {
         e.preventDefault();
@@ -186,7 +208,7 @@
       const btn = e.target.closest("[data-action]");
       if (btn) _cellAction(id, btn.dataset.action);
     });
-    setTimeout(() => _autoResize(ta), 0);
+    setTimeout(_refresh, 0);
     return el;
   }
 
@@ -380,15 +402,18 @@
       return;
     }
 
-    // After execution, mark outputs that have content
+    // errors inside code are caught by __NB__ and routed via _imprimaErro → _c()
     const ctx = `(async function __NB__(){\ntry{\n${translated}\n}catch(__e){\n_imprimaErro(__e);\n}})();`;
+    let execOk = true;
     try {
       await eval(ctx);
-      outputs.forEach((o) => { if (o.hasChildNodes()) _setOutputVisible(o, true); });
-      _setStatus("executado com sucesso ✓");
     } catch (e) {
+      // only reached if the eval wrapper itself explodes (rare)
+      execOk = false;
       _setStatus("erro de execução", true);
     } finally {
+      outputs.forEach((o) => { if (o.hasChildNodes()) _setOutputVisible(o, true); });
+      if (execOk) _setStatus("executado com sucesso ✓");
       if (runBtn) runBtn.disabled = false;
     }
   }
@@ -405,7 +430,6 @@
     const outputEl = cell.el.querySelector(".nb-cell-output");
     outputEl.innerHTML = "";
     _setOutputVisible(outputEl, false);
-
     window._nbCurrentCell = outputEl;
     window._nbOutputs = [outputEl];
 
@@ -428,10 +452,10 @@
     const ctx = `(async function __NBC__(){\ntry{\nwindow._nbSwitch(0);\n${translated}\n}catch(__e){\n_imprimaErro(__e);\n}})();`;
     try {
       await eval(ctx);
-      if (outputEl.hasChildNodes()) _setOutputVisible(outputEl, true);
     } catch (_e) {
-      // handled inside __NBC__
+      // errors are handled inside __NBC__ by _imprimaErro
     } finally {
+      if (outputEl.hasChildNodes()) _setOutputVisible(outputEl, true);
       if (runBtn) runBtn.classList.remove("nb-running");
     }
   }

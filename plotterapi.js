@@ -712,6 +712,10 @@ function _c() {
 function _sc() {
   const c = _c();
   c.scrollTop = c.scrollHeight;
+  if (window._nbCurrentCell) {
+    const last = c.lastElementChild;
+    if (last) last.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }
 }
 function _e(s) {
   return String(s)
