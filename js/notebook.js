@@ -571,35 +571,41 @@
     input.click();
   }
 
-  // ---------- export HTML ----------
+  // ---------- export HTML (executable) ----------
   function _exportHTML() {
     _setStatus("exportando…");
 
-    const title =
-      (_titleEl() ? _titleEl().value.trim() : "") || "Notebook";
+    const title = (_titleEl() ? _titleEl().value.trim() : "") || "Notebook";
+    const safeTitle = title.replace(/</g, "&lt;");
 
+    // Collect sources and build cell HTML
+    const sources = [];   // raw pseudo source strings (one per code cell)
     let cellsHtml = "";
+    let codeIdx = 0;
+
     for (const cell of _cells) {
       if (cell.type === "codigo") {
         const ta = cell.el.querySelector(".nb-cell-editor");
-        const src = (ta ? ta.value : "")
-          .replace(/&/g, "&amp;")
-          .replace(/</g, "&lt;")
-          .replace(/>/g, "&gt;");
-        const outputEl = cell.el.querySelector(".nb-cell-output");
-        const outHtml = outputEl ? outputEl.innerHTML : "";
+        const src = ta ? ta.value : "";
+        const ci = codeIdx++;
+        sources.push(src);
+
+        const srcEscaped = src
+          .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
         cellsHtml += `
 <div class="exp-cell exp-code">
-  <div class="exp-badge">pseudo</div>
-  <pre class="exp-src"><code>${src}</code></pre>
-  ${outHtml ? `<div class="exp-out">${outHtml}</div>` : ""}
+  <div class="exp-cell-header">
+    <span class="exp-badge">pseudo</span>
+    <button class="exp-run-btn" onclick="expRunCell(this)" data-ci="${ci}" title="Executar célula (Ctrl+Enter)">&#9654;</button>
+  </div>
+  <pre class="exp-src"><code>${srcEscaped}</code></pre>
+  <div class="nb-cell-output exp-out" data-ci="${ci}"></div>
 </div>`;
       } else {
         const preview = cell.el.querySelector(".nb-md-preview");
         const ta = cell.el.querySelector(".nb-md-editor");
-        const mdHtml = preview
-          ? preview.innerHTML
-          : _renderMd(ta ? ta.value : "");
+        const mdHtml = preview ? preview.innerHTML : _renderMd(ta ? ta.value : "");
         cellsHtml += `
 <div class="exp-cell exp-md">
   <div class="exp-md-body">${mdHtml}</div>
@@ -607,7 +613,9 @@
       }
     }
 
-    const safeTitle = title.replace(/</g, "&lt;");
+    // Escape </script> inside JSON string to avoid breaking the script tag
+    const sourcesJson = JSON.stringify(sources).replace(/<\/script>/gi, "<\\/script>");
+
     const html = `<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -623,15 +631,24 @@
       --fc:"JetBrains Mono","Fira Code","Courier New",monospace;
       --fu:"Outfit","Segoe UI",sans-serif;
     }
-    html,body{background:var(--bg);color:var(--text);font-family:var(--fu);padding:32px 20px 80px}
+    html,body{background:var(--bg);color:var(--text);font-family:var(--fu);padding:0 0 80px}
     ::-webkit-scrollbar{width:6px;height:6px}
     ::-webkit-scrollbar-thumb{background:#2e3250;border-radius:4px}
-    h1.nb-title{font-size:22px;margin-bottom:28px;font-family:var(--fu)}
-    .nb-wrap{max-width:860px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+    .exp-header{display:flex;align-items:center;justify-content:space-between;padding:10px 20px;background:var(--bg2);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:10}
+    .exp-header h1{font-size:16px;font-weight:600;font-family:var(--fu)}
+    .exp-run-all-btn{display:flex;align-items:center;gap:6px;padding:5px 14px;background:rgba(124,131,255,.15);border:1px solid rgba(124,131,255,.35);color:var(--accent);border-radius:5px;font-size:12px;cursor:pointer;font-family:var(--fu)}
+    .exp-run-all-btn:hover{background:rgba(124,131,255,.25)}
+    .exp-run-all-btn:disabled{opacity:.5;cursor:default}
+    .nb-wrap{max-width:860px;margin:0 auto;display:flex;flex-direction:column;gap:14px;padding:24px 20px}
     .exp-cell{border:1px solid var(--border);border-radius:6px;overflow:hidden}
-    .exp-badge{font-family:var(--fc);font-size:10px;color:var(--accent);background:rgba(124,131,255,.1);padding:3px 12px;border-bottom:1px solid var(--border)}
+    .exp-cell-header{display:flex;align-items:center;justify-content:space-between;background:rgba(124,131,255,.06);border-bottom:1px solid var(--border);padding:3px 10px 3px 12px}
+    .exp-badge{font-family:var(--fc);font-size:10px;color:var(--accent)}
+    .exp-run-btn{background:rgba(124,131,255,.12);border:1px solid rgba(124,131,255,.3);color:var(--accent);border-radius:4px;padding:2px 8px;font-size:11px;cursor:pointer;line-height:1.6}
+    .exp-run-btn:hover{background:rgba(124,131,255,.25)}
+    .exp-run-btn.running{opacity:.6;cursor:default}
     .exp-src{background:var(--bg2);padding:12px 16px;font-family:var(--fc);font-size:13px;line-height:1.65;overflow-x:auto;white-space:pre-wrap;word-break:break-word}
-    .exp-out{background:#0d0f16;border-top:1px solid var(--border);padding:10px 16px;font-family:var(--fc);font-size:13px;line-height:1.6}
+    .nb-cell-output{display:none;background:#0d0f16;border-top:1px solid var(--border);padding:10px 16px;font-family:var(--fc);font-size:13px;line-height:1.6}
+    .nb-cell-output.nb-has-output{display:block}
     .exp-md{background:var(--bg3)}
     .exp-md-body{padding:16px 20px;font-size:14px;line-height:1.8}
     .exp-md-body h1{font-size:22px;margin:10px 0 6px}
@@ -652,12 +669,143 @@
     .console-line-arrow{color:var(--muted)}
     .console-error{color:var(--red);padding:3px 0}
     .console-end-marker{color:var(--green);font-size:11px;margin-top:4px}
+    .exp-status{font-size:11px;color:var(--dim);padding:4px 20px;text-align:center;min-height:22px}
+    .exp-status.ok{color:var(--green)}
+    .exp-status.err{color:var(--red)}
+    leia-input{display:block;margin-top:4px}
+    leia-input input{background:#0a0c14;border:1px solid var(--border);color:var(--text);font-family:var(--fc);font-size:13px;padding:3px 8px;border-radius:4px;outline:none;width:260px}
+    leia-input input:focus{border-color:var(--accent)}
   </style>
 </head>
 <body>
-  <h1 class="nb-title">${safeTitle}</h1>
+  <div class="exp-header">
+    <h1>${safeTitle}</h1>
+    <button class="exp-run-all-btn" id="exp-run-all-btn" onclick="expRunAll()">
+      &#9654;&#9654; Executar Tudo
+    </button>
+  </div>
+  <div id="exp-status" class="exp-status"></div>
   <div class="nb-wrap">${cellsHtml}
   </div>
+  <div id="console-saida" style="display:none" aria-hidden="true"></div>
+
+  <script src="https://pseudo-ide.netlify.app/plotterapi.js"><\/script>
+  <script src="https://pseudo-ide.netlify.app/editor.js"><\/script>
+  <script>
+    var _nbSources = ${sourcesJson};
+
+    // Map output divs by code-cell index
+    var _expOutputs = Array.from(document.querySelectorAll('.nb-cell-output'));
+
+    // Setup routing globals expected by plotterapi.js
+    window._nbOutputs = _expOutputs;
+    window._nbCurrentCell = null;
+    window._nbSwitch = function(i) {
+      window._nbCurrentCell = _expOutputs[i] || null;
+    };
+
+    function _expSetStatus(msg, cls) {
+      var el = document.getElementById('exp-status');
+      if (!el) return;
+      el.textContent = msg;
+      el.className = 'exp-status' + (cls ? ' ' + cls : '');
+    }
+
+    function _expAppendError(outputEl, e) {
+      if (!outputEl) return;
+      var div = document.createElement('div');
+      div.className = 'console-error';
+      var msg = e && e.message ? e.message : String(e);
+      div.innerHTML = '<strong>Erro:</strong> ' + msg.replace(/</g, '&lt;');
+      outputEl.appendChild(div);
+      outputEl.classList.add('nb-has-output');
+    }
+
+    async function expRunAll() {
+      var btn = document.getElementById('exp-run-all-btn');
+      if (btn) btn.disabled = true;
+      _expSetStatus('executando…');
+
+      // Reset all outputs
+      _expOutputs.forEach(function(o) {
+        o.innerHTML = '';
+        o.classList.remove('nb-has-output');
+      });
+      document.querySelectorAll('.exp-run-btn').forEach(function(b) {
+        b.classList.remove('running');
+      });
+
+      // Build combined source with _nbSwitch calls
+      var combined = '';
+      _nbSources.forEach(function(src, i) {
+        combined += 'window._nbSwitch(' + i + ');\\n' + src + '\\n';
+      });
+
+      if (!combined.trim()) {
+        _expSetStatus('nada para executar');
+        if (btn) btn.disabled = false;
+        return;
+      }
+
+      var translated;
+      try {
+        translated = traduzirCodigo(combined, false);
+      } catch (e) {
+        _expAppendError(_expOutputs[0] || null, e);
+        _expSetStatus('erro de compilação', 'err');
+        if (btn) btn.disabled = false;
+        return;
+      }
+
+      window.__inicioExecucao = Date.now();
+      var ctx = '(async function __NB__(){\\ntry{\\n' + translated + '\\n}catch(__e){\\n_imprimaErro(__e);\\n}})();';
+      try {
+        await eval(ctx);
+        _expSetStatus('executado com sucesso ✓', 'ok');
+      } catch (e) {
+        _expSetStatus('erro de execução', 'err');
+      } finally {
+        _expOutputs.forEach(function(o) { if (o.hasChildNodes()) o.classList.add('nb-has-output'); });
+        if (btn) btn.disabled = false;
+      }
+    }
+
+    async function expRunCell(btn) {
+      var ci = parseInt(btn.getAttribute('data-ci'), 10);
+      var outputEl = _expOutputs[ci];
+      if (!outputEl) return;
+
+      btn.classList.add('running');
+      outputEl.innerHTML = '';
+      outputEl.classList.remove('nb-has-output');
+      window._nbCurrentCell = outputEl;
+      window._nbOutputs = _expOutputs;
+
+      var src = _nbSources[ci] || '';
+      if (!src.trim()) { btn.classList.remove('running'); return; }
+
+      var translated;
+      try {
+        translated = traduzirCodigo(src, false);
+      } catch (e) {
+        _expAppendError(outputEl, e);
+        btn.classList.remove('running');
+        return;
+      }
+
+      window.__inicioExecucao = Date.now();
+      window._nbSwitch(ci);
+      var ctx = '(async function __NBC__(){\\ntry{\\nwindow._nbSwitch(' + ci + ');\\n' + translated + '\\n}catch(__e){\\n_imprimaErro(__e);\\n}})();';
+      try {
+        await eval(ctx);
+      } catch (e) {
+        // handled inside wrapper
+      } finally {
+        if (outputEl.hasChildNodes()) outputEl.classList.add('nb-has-output');
+        btn.classList.remove('running');
+      }
+    }
+  <\/script>
 </body>
 </html>`;
 
