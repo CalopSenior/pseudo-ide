@@ -689,6 +689,7 @@
   </div>
   <div id="console-saida" style="display:none" aria-hidden="true"></div>
 
+  <script src="https://pseudo-ide.netlify.app/js/plotterApi.js"><\/script>
   <script src="https://pseudo-ide.netlify.app/plotterapi.js"><\/script>
   <script src="https://pseudo-ide.netlify.app/editor.js"><\/script>
   <script>
