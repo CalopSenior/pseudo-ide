@@ -564,5 +564,313 @@
 
     _refreshVarsList();
     _updateSelInfo();
+    _refreshEdColList();
   });
+
+  // ── Mode switcher ────────────────────────────────────────────
+  window.setImpMode = function (mode) {
+    const isEditor = mode === "editor";
+    document.getElementById("imp-import-section").style.display = isEditor ? "none" : "";
+    document.getElementById("imp-editor-section").style.display = isEditor ? "" : "none";
+    document.getElementById("mode-import-btn").classList.toggle("imp-mode-active", !isEditor);
+    document.getElementById("mode-editor-btn").classList.toggle("imp-mode-active",  isEditor);
+    document.getElementById("imp-app-name").textContent = isEditor ? "Editor .pdados" : "Importador de Dados";
+    document.getElementById("imp-header-hint").textContent = isEditor
+      ? "Defina colunas manualmente ou por expressões de biblioteca — gere e salve arquivos .pdados."
+      : "Importe CSV, JSON, TXT ou .pdados — clique nos cabeçalhos para selecionar colunas.";
+    document.getElementById("imp-file-badge").style.display = "none";
+  };
+
+  // ════════════════════════════════════════════════════════════
+  //  .pdados EDITOR
+  // ════════════════════════════════════════════════════════════
+  let _edCols   = [];    // [{id, nome, mode:'expr'|'manual', expr:'', manual:'', data:[], error:null}]
+  let _edNextId = 1;
+  let _edDebounce = null;
+
+  function _edScheduleEval() {
+    clearTimeout(_edDebounce);
+    _edDebounce = setTimeout(edEval, 380);
+  }
+
+  // ── Library context for expression eval ─────────────────────
+  function _edLibCtx() {
+    const ctx = { Math, JSON, Array, Object, Number, String, Boolean, parseFloat, parseInt, isNaN, isFinite };
+    try {
+      if (typeof Bibliotecas !== "undefined") {
+        if (Bibliotecas.mat)     ctx.mat     = Bibliotecas.mat;
+        if (Bibliotecas.metodos) ctx.metodos = Bibliotecas.metodos;
+        if (Bibliotecas.algebra) ctx.algebra = Bibliotecas.algebra;
+      }
+    } catch (_) {}
+    return ctx;
+  }
+
+  // ── Evaluation ──────────────────────────────────────────────
+  window.edEval = function () {
+    const baseCtx = _edLibCtx();
+    const ctx = { ...baseCtx };
+
+    for (const col of _edCols) {
+      col.data  = [];
+      col.error = null;
+
+      if (col.mode === "expr") {
+        if (!col.expr.trim()) continue;
+        try {
+          const fn = new Function(...Object.keys(ctx), `"use strict"; return (${col.expr.trim()});`);
+          let res = fn(...Object.values(ctx));
+          if (res !== null && res !== undefined) {
+            if (typeof res[Symbol.iterator] === "function" && !Array.isArray(res)) res = Array.from(res);
+            col.data = Array.isArray(res) ? res : [res];
+          }
+        } catch (e) {
+          col.error = e.message.split("\n")[0].replace(/^.*:\s*/, "");
+        }
+      } else {
+        // Manual
+        if (!col.manual.trim()) continue;
+        const parts = col.manual.trim().split(/\r?\n|,(?=(?:[^"]*"[^"]*")*[^"]*$)/)
+          .map(v => v.trim().replace(/^["'](.*)["']$/, "$1"))
+          .filter(Boolean);
+        col.data = parts.map(v => { const n = Number(v); return isNaN(n) ? v : n; });
+      }
+
+      if (col.nome && !col.error && col.data.length > 0) ctx[col.nome] = col.data;
+    }
+
+    _renderEdColPreviews();
+    _renderEdPreview();
+    _refreshEdCode();
+  };
+
+  // ── Column preview snippets ──────────────────────────────────
+  function _renderEdColPreviews() {
+    _edCols.forEach(col => {
+      const el = document.getElementById(`ed-prev-${col.id}`);
+      if (!el) return;
+      if (col.error) {
+        el.textContent = "⚠ " + col.error;
+        el.className = "ed-col-preview ed-col-error";
+      } else if (col.data.length === 0) {
+        el.textContent = "";
+        el.className = "ed-col-preview";
+      } else {
+        const max3 = col.data.slice(0, 3).map(v =>
+          typeof v === "string" ? `"${v}"` : String(v)
+        );
+        const more = col.data.length > 3 ? ` … (+${col.data.length - 3})` : "";
+        el.textContent = `→ [${max3.join(", ")}${more}]  (${col.data.length})`;
+        el.className = "ed-col-preview ed-col-ok";
+      }
+    });
+  }
+
+  // ── Live table preview ───────────────────────────────────────
+  function _renderEdPreview() {
+    const el = document.getElementById("ed-preview");
+    if (!el) return;
+    const active = _edCols.filter(c => c.nome && c.data.length > 0);
+    if (!active.length) {
+      el.innerHTML = '<p class="imp-empty">A tabela aparecerá aqui conforme você definir colunas.</p>';
+      return;
+    }
+    const maxLen = Math.max(...active.map(c => c.data.length));
+    const SHOW = Math.min(maxLen, 200);
+    let html = '<div class="imp-table-wrap"><table class="imp-table"><thead><tr>';
+    html += '<th class="imp-rn">#</th>';
+    active.forEach(c => html += `<th>${esc(c.nome)}</th>`);
+    html += "</tr></thead><tbody>";
+    for (let i = 0; i < SHOW; i++) {
+      html += `<tr><td class="imp-rn">${i + 1}</td>`;
+      active.forEach(c => {
+        const v = c.data[i] !== undefined ? c.data[i] : "";
+        html += `<td>${esc(typeof v === "object" ? JSON.stringify(v) : String(v))}</td>`;
+      });
+      html += "</tr>";
+    }
+    if (maxLen > SHOW)
+      html += `<tr><td colspan="${active.length + 1}" class="imp-table-more">+ ${maxLen - SHOW} linhas não exibidas</td></tr>`;
+    html += "</tbody></table></div>";
+    html += `<div class="imp-meta">${maxLen} linha${maxLen !== 1 ? "s" : ""} · ${active.length} coluna${active.length !== 1 ? "s" : ""}</div>`;
+    el.innerHTML = html;
+  }
+
+  // ── Code generation (expression-preserving) ─────────────────
+  function _edGenCode() {
+    const exprCols = _edCols.filter(c => c.mode === "expr" && c.expr.trim() && c.nome);
+    const needsMat = exprCols.some(c => /\bmat\./.test(c.expr));
+    const needsMet = exprCols.some(c => /\bmetodos\./.test(c.expr));
+    const needsAlg = exprCols.some(c => /\balgebra\./.test(c.expr));
+
+    const imports = [];
+    if (needsMat) imports.push("importar mat como mat;");
+    if (needsMet) imports.push("importar metodos como metodos;");
+    if (needsAlg) imports.push("importar algebra como algebra;");
+
+    const lines = _edCols.filter(c => c.nome).map(c => {
+      if (c.mode === "expr" && c.expr.trim()) {
+        return `super ${c.nome} = ${c.expr.trim()};`;
+      } else {
+        // Embed manual values
+        if (!c.data.length) return `super ${c.nome} = [];`;
+        const vals = c.data.map(v => pyStr(v)).join(", ");
+        if (c.data.length <= 8) return `super ${c.nome} = [${vals}];`;
+        const wrapped = c.data.map(v => `  ${pyStr(v)}`).join(",\n");
+        return `super ${c.nome} = [\n${wrapped}\n];`;
+      }
+    });
+
+    return [...imports, ...(imports.length ? [""] : []), ...lines].join("\n");
+  }
+
+  function _refreshEdCode() {
+    const ta = document.getElementById("ed-code-out");
+    if (ta) ta.value = _edCols.some(c => c.nome) ? _edGenCode() : "";
+  }
+
+  // ── Column card HTML ─────────────────────────────────────────
+  function _buildEdColCard(col) {
+    const modeOpts = ['expr', 'manual'].map(m =>
+      `<option value="${m}"${m === col.mode ? " selected" : ""}>${m === "expr" ? "expressão" : "manual"}</option>`
+    ).join("");
+
+    const exprDisplay  = col.mode === "expr"   ? "" : ' style="display:none"';
+    const manualDisplay = col.mode === "manual" ? "" : ' style="display:none"';
+
+    return `<div class="ed-col-card" id="edcol-${col.id}">
+  <div class="ed-col-head">
+    <input type="text" class="imp-text-inp ed-col-name" id="ednm-${col.id}"
+      value="${esc(col.nome)}" placeholder="nome da coluna" spellcheck="false">
+    <select class="imp-select ed-col-mode" id="edmd-${col.id}">${modeOpts}</select>
+    <button class="imp-rm-btn" onclick="edRemoveCol(${col.id})" title="Remover coluna">✕</button>
+  </div>
+  <div class="ed-col-expr-wrap"${exprDisplay}>
+    <input type="text" class="imp-text-inp ed-col-expr-inp" id="edex-${col.id}"
+      value="${esc(col.expr)}" placeholder="ex: mat.linspace(0, 10, 50)" spellcheck="false"
+      autocomplete="off">
+    <span class="ed-col-preview" id="ed-prev-${col.id}"></span>
+  </div>
+  <div class="ed-col-manual-wrap"${manualDisplay}>
+    <textarea class="ed-col-manual-ta" id="edma-${col.id}"
+      placeholder="Um valor por linha ou separados por vírgula&#10;Aceita: 1, 2, 3  ou  "a"&#10;"b"&#10;"c""
+      rows="4" spellcheck="false">${esc(col.manual)}</textarea>
+    <span class="ed-col-preview" id="ed-prev-${col.id}"></span>
+  </div>
+</div>`;
+  }
+
+  function _refreshEdColList() {
+    const list = document.getElementById("ed-cols-list");
+    if (!list) return;
+    if (!_edCols.length) {
+      list.innerHTML = '<p class="imp-empty ed-empty-hint">Clique em <strong>+ Nova coluna</strong> para começar, ou <strong>Abrir .pdados</strong> para editar um arquivo existente.</p>';
+      return;
+    }
+    list.innerHTML = _edCols.map(_buildEdColCard).join("");
+
+    // Attach listeners
+    _edCols.forEach(col => {
+      function onInput() { _edScheduleEval(); }
+
+      const nmEl = document.getElementById(`ednm-${col.id}`);
+      const mdEl = document.getElementById(`edmd-${col.id}`);
+      const exEl = document.getElementById(`edex-${col.id}`);
+      const maEl = document.getElementById(`edma-${col.id}`);
+
+      if (nmEl) nmEl.addEventListener("input", e => { col.nome = e.target.value; onInput(); });
+      if (mdEl) mdEl.addEventListener("change", e => {
+        col.mode = e.target.value;
+        const card = document.getElementById(`edcol-${col.id}`);
+        if (card) {
+          card.querySelector(".ed-col-expr-wrap").style.display  = col.mode === "expr"   ? "" : "none";
+          card.querySelector(".ed-col-manual-wrap").style.display = col.mode === "manual" ? "" : "none";
+        }
+        onInput();
+      });
+      if (exEl) exEl.addEventListener("input", e => { col.expr   = e.target.value; onInput(); });
+      if (maEl) maEl.addEventListener("input", e => { col.manual = e.target.value; onInput(); });
+    });
+  }
+
+  // ── Public editor actions ────────────────────────────────────
+  window.edAddCol = function () {
+    const col = { id: _edNextId++, nome: `col${_edCols.length + 1}`, mode: "expr", expr: "", manual: "", data: [], error: null };
+    _edCols.push(col);
+    _refreshEdColList();
+    // Focus the new column's expression input
+    setTimeout(() => {
+      const inp = document.getElementById(`edex-${col.id}`);
+      if (inp) inp.focus();
+    }, 50);
+  };
+
+  window.edRemoveCol = function (id) {
+    _edCols = _edCols.filter(c => c.id !== id);
+    _refreshEdColList();
+    edEval();
+  };
+
+  window.edLoadPDADOS = function () {
+    const inp = document.createElement("input");
+    inp.type = "file"; inp.accept = ".pdados";
+    inp.onchange = e => {
+      const f = e.target.files[0]; if (!f) return;
+      const r = new FileReader();
+      r.onload = ev => {
+        const result = parsePDADOS(ev.target.result);
+        if (!result) { alert("Arquivo .pdados inválido."); return; }
+        const { cabecalhos, dados } = result;
+        _edCols = cabecalhos.map((h, ci) => ({
+          id: _edNextId++,
+          nome: h,
+          mode: "manual",
+          expr: "",
+          manual: dados.map(row => String(row[ci] ?? "")).join("\n"),
+          data: [], error: null,
+        }));
+        _refreshEdColList();
+        edEval();
+      };
+      r.readAsText(f, "UTF-8");
+    };
+    inp.click();
+  };
+
+  window.edExport = function () {
+    const active = _edCols.filter(c => c.nome && c.data.length > 0);
+    if (!active.length) { alert("Defina ao menos uma coluna com dados para exportar."); return; }
+    const cabecalhos = active.map(c => c.nome);
+    const maxLen = Math.max(...active.map(c => c.data.length));
+    const dados = Array.from({ length: maxLen }, (_, i) =>
+      active.map(c => c.data[i] !== undefined ? c.data[i] : "")
+    );
+    const content = [
+      "§PSEUDO-DADOS:1.0",
+      "tipo=csv",
+      `colunas=${JSON.stringify(cabecalhos)}`,
+      `linhas=${maxLen}`,
+      "§DADOS",
+      ...dados.map(row => JSON.stringify(row)),
+    ].join("\n");
+    const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "dados.pdados";
+    a.click();
+    URL.revokeObjectURL(a.href);
+  };
+
+  window.edCopyCode = function () {
+    const ta = document.getElementById("ed-code-out");
+    if (!ta || !ta.value.trim()) return;
+    navigator.clipboard.writeText(ta.value).then(() => {
+      const btn = document.getElementById("ed-copy-btn");
+      if (btn) {
+        const orig = btn.innerHTML; btn.innerHTML = "✓ Copiado!"; btn.disabled = true;
+        setTimeout(() => { btn.innerHTML = orig; btn.disabled = false; }, 1800);
+      }
+    });
+  };
 })();
+

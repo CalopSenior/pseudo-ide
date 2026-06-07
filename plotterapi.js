@@ -2793,6 +2793,28 @@ const Bibliotecas = {
 /* ============================================================
    7. I/O GLOBAL
    ============================================================ */
+/* ============================================================
+   8. BUILT-IN GLOBAL UTILITIES
+   ============================================================ */
+
+/* intervalo(fim)                  → [0, 1, 2, ..., fim-1]
+   intervalo(inicio, fim)          → [inicio, ..., fim-1]  (passo auto-detectado)
+   intervalo(inicio, fim, passo)   → início to fim exclusive, by passo
+   Suporta passo fracionário e negativo.  Análogo ao range/arange do Python. */
+function intervalo(a, b, passo) {
+  let start, stop, step;
+  if      (b     === undefined) { start = 0; stop = a; step = a >= 0 ? 1 : -1; }
+  else if (passo === undefined) { start = a; stop = b; step = a <= b ? 1 : -1; }
+  else                          { start = a; stop = b; step = passo; }
+  if (step === 0) throw new Error("intervalo(): o passo não pode ser zero.");
+  const n = Math.max(0, Math.ceil((stop - start) / step));
+  const result = [];
+  for (let i = 0; i < n; i++) {
+    result.push(parseFloat((start + i * step).toPrecision(10)));
+  }
+  return result;
+}
+
 function imprima(...args) {
   const div = document.createElement("div");
   div.className = "console-line";

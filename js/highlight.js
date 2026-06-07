@@ -34,7 +34,7 @@
     "moda", "variancia", "desvioPadrao", "agora", "milisegundos",
     "medirExecucao", "testeStress", "plotar", "funcao", "dispersao",
     "superficie3D", "sortearComPesos", "uniforme", "rolarDados",
-    "monteCarlo",
+    "monteCarlo", "intervalo",
     "eNumero", "eInteiro", "eReal", "eTexto", "eBooleano", "eLista",
     "eMapa", "eConjunto", "eVetor", "eMatriz", "eVazio", "eIndefinido",
     "vetorial", "angulo", "anguloDeg", "projecao", "saoParalelos",

@@ -1731,7 +1731,7 @@ section {
 
 /* ---- Drop zone ---- */
 .imp-drop-wrap {
-  padding: 24px 24px 0;
+  padding: 16px 24px 0;
   flex-shrink: 0;
 }
 .imp-drop {
@@ -2157,4 +2157,154 @@ section {
   .imp-split { flex-direction: column; }
   .imp-right-col { width: auto; }
   .imp-header-hint { display: none; }
+}
+
+/* ============================================================
+   MODE SWITCHER
+   ============================================================ */
+.imp-mode-bar {
+  display: flex;
+  gap: 0;
+  padding: 10px 24px 0;
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-panel);
+}
+.imp-mode-btn {
+  display: inline-flex;
+  align-items: center;
+  font-size: 12px;
+  font-family: var(--font-ui);
+  font-weight: 500;
+  padding: 7px 16px;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: color 150ms, border-color 150ms;
+  margin-bottom: -1px;
+}
+.imp-mode-btn:hover { color: var(--text-dim); }
+.imp-mode-btn.imp-mode-active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+/* ============================================================
+   .pdados EDITOR
+   ============================================================ */
+.ed-cols-pane {
+  flex: 1;
+  min-width: 320px;
+  max-width: 520px;
+}
+.ed-header-actions {
+  display: flex;
+  gap: 6px;
+  margin-left: auto;
+}
+.ed-load-btn { font-size: 11px; padding: 3px 10px; }
+.ed-save-btn { font-size: 12px; }
+
+.ed-cols-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.ed-empty-hint { color: var(--text-muted); font-size: 12px; margin: 0; line-height: 1.6; }
+
+.ed-libs-hint {
+  padding: 6px 14px;
+  border-top: 1px solid var(--border);
+  font-size: 11px;
+  color: var(--text-muted);
+  background: var(--bg-line-numbers);
+  flex-shrink: 0;
+}
+.ed-libs-hint code {
+  background: var(--bg-editor);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 1px 5px;
+  font-size: 10px;
+  color: var(--accent);
+  margin-right: 4px;
+}
+
+/* ---- Column card ---- */
+.ed-col-card {
+  background: var(--bg-editor);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.ed-col-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.ed-col-name {
+  flex: 1;
+  min-width: 0;
+  font-weight: 600;
+  color: var(--accent);
+}
+.ed-col-mode {
+  width: auto;
+  flex-shrink: 0;
+  font-size: 11px;
+  padding: 3px 6px;
+}
+.ed-col-expr-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.ed-col-expr-inp {
+  font-family: var(--font-code);
+  font-size: 12px;
+}
+.ed-col-manual-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.ed-col-manual-ta {
+  font-family: var(--font-code);
+  font-size: 12px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text);
+  padding: 5px 8px;
+  resize: vertical;
+  min-height: 72px;
+  outline: none;
+  line-height: 1.5;
+}
+.ed-col-manual-ta:focus { border-color: var(--accent-dim); }
+
+/* Column preview line */
+.ed-col-preview {
+  font-size: 11px;
+  font-family: var(--font-code);
+  min-height: 16px;
+  line-height: 1.4;
+}
+.ed-col-ok    { color: var(--text-muted); }
+.ed-col-error { color: #f87171; }
+
+/* Editor preview body (taller than import preview) */
+.ed-preview-body {
+  flex: 1;
+  overflow: auto;
+  padding: 10px 12px;
+  min-height: 200px;
 }

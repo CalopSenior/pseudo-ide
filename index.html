@@ -587,6 +587,30 @@ real pequeno = <span class="ex-num">1.5e-3</span>; <span class="ex-cmt">// 0.001
 <span class="ex-fn">imprima</span>(dias[<span class="ex-num">0</span>]);  <span class="ex-cmt">// Seg  (primeiro)</span>
 <span class="ex-fn">imprima</span>(dias[<span class="ex-num">4</span>]);  <span class="ex-cmt">// Sex  (quinto)</span>
 <span class="ex-fn">imprima</span>(dias.length); <span class="ex-cmt">// 5 (total de elementos)</span></pre>
+
+                    <h3>Listas dinâmicas com <code>intervalo()</code></h3>
+                    <p class="tab-intro">
+                        Cria uma lista de números de forma automática — similar ao <code>range()</code> do Python.
+                        Aceita 1, 2 ou 3 argumentos.
+                    </p>
+                    <table class="doc-table">
+                        <tr><th>Forma</th><th>Resultado</th></tr>
+                        <tr><td><code>intervalo(fim)</code></td><td>De 0 até <code>fim-1</code>, passo 1 (ou −1 se fim &lt; 0)</td></tr>
+                        <tr><td><code>intervalo(inicio, fim)</code></td><td>De <code>inicio</code> até <code>fim-1</code></td></tr>
+                        <tr><td><code>intervalo(inicio, fim, passo)</code></td><td>Passo personalizado (pode ser decimal)</td></tr>
+                    </table>
+                    <pre class="code-example"><span class="ex-fn">imprima</span>(<span class="ex-fn">intervalo</span>(<span class="ex-num">5</span>));           <span class="ex-cmt">// [0, 1, 2, 3, 4]</span>
+<span class="ex-fn">imprima</span>(<span class="ex-fn">intervalo</span>(<span class="ex-num">2</span>, <span class="ex-num">8</span>));        <span class="ex-cmt">// [2, 3, 4, 5, 6, 7]</span>
+<span class="ex-fn">imprima</span>(<span class="ex-fn">intervalo</span>(<span class="ex-num">0</span>, <span class="ex-num">1</span>, <span class="ex-num">0.2</span>));  <span class="ex-cmt">// [0, 0.2, 0.4, 0.6, 0.8]</span>
+<span class="ex-fn">imprima</span>(<span class="ex-fn">intervalo</span>(<span class="ex-num">5</span>, <span class="ex-num">0</span>, <span class="ex-num">-1</span>));  <span class="ex-cmt">// [5, 4, 3, 2, 1]</span>
+
+<span class="ex-cmt">// Útil em laços e como eixo x de gráficos:</span>
+<span class="ex-kw">para</span> i <span class="ex-kw">em</span> <span class="ex-fn">intervalo</span>(<span class="ex-num">10</span>) <span class="ex-kw">faça</span>
+    <span class="ex-fn">imprima</span>(i * i);
+<span class="ex-kw">fim</span>
+
+super x = <span class="ex-fn">intervalo</span>(<span class="ex-num">0</span>, <span class="ex-num">360</span>, <span class="ex-num">5</span>);</pre>
+
                 </div><!-- /tab-tipos -->
 
 
@@ -2562,13 +2586,32 @@ colunas=["nome","nota","aprovado"]
 ["João",7.2,true]
 ["Carlos",4.8,false]</span></pre>
 
+                    <h4>Editor .pdados</h4>
+                    <p class="tab-intro">No <a href="importador.html" target="_blank">Importador de Dados</a>, use a aba <strong>Editor .pdados</strong> para criar arquivos do zero. Cada coluna pode ser definida por:</p>
+                    <ul style="margin:6px 0 10px 20px;font-size:13px;line-height:1.8">
+                      <li><strong>expressão</strong> — qualquer expressão de biblioteca: <code>mat.linspace(0, 2*mat.PI, 100)</code>, <code>x.map(v => mat.sen(v))</code>, etc.</li>
+                      <li><strong>manual</strong> — valores digitados linha a linha ou separados por vírgula.</li>
+                    </ul>
+                    <p class="tab-intro">Colunas definidas anteriormente ficam disponíveis como variáveis nas expressões das colunas seguintes (ex: defina <code>x</code> e use <code>x.map(…)</code> em <code>y</code>). Ao salvar, os dados calculados são gravados no <code>.pdados</code>; o código gerado usa as expressões originais para facilitar reedição.</p>
+                    <pre class="code-example"><span class="ex-cmt">// Coluna x: mat.linspace(0, 2*mat.PI, 60)</span>
+<span class="ex-cmt">// Coluna y: x.map(v => mat.sen(v))</span>
+<span class="ex-cmt">// Coluna z: x.map(v => mat.cos(v))</span>
+
+<span class="ex-cmt">// Código gerado (preserva as expressões):</span>
+<span class="ex-kw">importar</span> mat <span class="ex-kw">como</span> mat;
+
+<span class="ex-kw">super</span> x = mat.linspace(<span class="ex-num">0</span>, <span class="ex-num">2</span>*mat.PI, <span class="ex-num">60</span>);
+<span class="ex-kw">super</span> y = x.map(v => mat.sen(v));
+<span class="ex-kw">super</span> z = x.map(v => mat.cos(v));</pre>
+
                     <h4>Fluxo recomendado</h4>
                     <table class="ref-table">
                         <thead><tr><th>Situação</th><th>Recomendação</th></tr></thead>
                         <tbody>
-                            <tr><td>Exploração interativa de CSV/JSON/TXT</td><td>Use o <strong>Importador de Dados</strong> — clique nas colunas, gere o código e cole no editor</td></tr>
+                            <tr><td>Explorar/segmentar CSV, JSON ou TXT existente</td><td>Aba <strong>Importar arquivo</strong> — clique nas colunas para selecionar</td></tr>
+                            <tr><td>Criar dados do zero com bibliotecas</td><td>Aba <strong>Editor .pdados</strong> — expressões de <code>mat</code>, <code>metodos</code>, etc.</td></tr>
                             <tr><td>Leitura em código (dinâmica)</td><td><code>arq.lerCSV()</code> / <code>arq.lerJSON()</code> / <code>arq.lerTXT()</code></td></tr>
-                            <tr><td>Reutilizar o mesmo arquivo sem reimportar</td><td>Exporte como <code>.pdados</code> e use <code>arq.lerPDADOS()</code></td></tr>
+                            <tr><td>Reutilizar dados sem reimportar</td><td>Exporte como <code>.pdados</code> e use <code>arq.lerPDADOS()</code></td></tr>
                         </tbody>
                     </table>
 
