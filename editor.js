@@ -187,6 +187,20 @@ function traduzirCodigo(fonte, isDebug = false) {
   c = c.replace(/#"([^"\n]*)"/g,  (_, body) => '"' + body.replace(/\\/g, "\\\\") + '"');
   c = c.replace(/#'([^'\n]*)'/g,  (_, body) => "'" + body.replace(/\\/g, "\\\\") + "'");
 
+  // Raw interpolated f-strings: #f"..." or #f'...' — backslashes literal, {expr} interpolated
+  // Must run before f"..." so the f" inside #f"..." is not consumed by the f-string regex
+  const _rawFTpl = (body) => {
+    let tpl = "", li = 0, mt;
+    const re = /\{([^}]+)\}/g;
+    while ((mt = re.exec(body)) !== null) {
+      tpl += body.slice(li, mt.index).replace(/\\/g, "\\\\") + "${" + mt[1] + "}";
+      li = mt.index + mt[0].length;
+    }
+    return "`" + tpl + body.slice(li).replace(/\\/g, "\\\\") + "`";
+  };
+  c = c.replace(/#f"([^"\n]*)"/g, (_, body) => _rawFTpl(body));
+  c = c.replace(/#f'([^'\n]*)'/g, (_, body) => _rawFTpl(body));
+
   c = c.replace(/f(["'])((?:[^\\\n]|\\.)*?)\1/g, (_, q, body) => {
     const tpl = body.replace(/\{([^}]+)\}/g, "${$1}");
     return "`" + tpl + "`";
