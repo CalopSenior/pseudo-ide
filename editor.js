@@ -287,6 +287,9 @@ function traduzirCodigo(fonte, isDebug = false) {
     "$2.repeat($1)",
   );
 
+  // Range literals: a...b (inclusive both ends) → _pseudoRange(a, b)
+  c = c.replace(/\b(\w+)\s*\.\.\.\s*(\w+)\b/g, "_pseudoRange($1, $2)");
+
   c = c.replace(
     /\bimportar\s+([A-Za-z_]\w*)(?:\.([A-Za-z_]\w*))?(?:\s+como\s+([A-Za-z_]\w*))?\s*;?/g,
     (_, bib, sub, alias) => {

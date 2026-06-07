@@ -874,6 +874,11 @@ const COMPLETIONS = [
     insert: "m.produtorio(",
   },
   {
+    label: "m.linspace(inicio, fim, n)",
+    detail: "mat — n valores igualmente espaçados de inicio a fim",
+    insert: "m.linspace(",
+  },
+  {
     label: "c.limite(fn, ponto)",
     detail: "calculo — lim x→p",
     insert: "c.limite(",
@@ -955,15 +960,15 @@ const COMPLETIONS = [
     insert: "t.tabelaVerdade(",
   },
   {
-    label: "m.lista(...)",
-    detail: "metodos — lista dinâmica",
+    label: "m.lista(a...b)",
+    detail: "metodos — lista; aceita range a...b ou array",
     insert: "m.lista(",
   },
-  { label: "m.mapa()", detail: "metodos — dicionário", insert: "m.mapa()" },
+  { label: "m.mapa(a...b)", detail: "metodos — mapa; aceita array/range", insert: "m.mapa(" },
   {
-    label: "m.conjunto()",
-    detail: "metodos — conjunto único",
-    insert: "m.conjunto()",
+    label: "m.conjunto(a...b)",
+    detail: "metodos — conjunto; aceita array/range",
+    insert: "m.conjunto(",
   },
   {
     label: "m.numero(v)",
@@ -1181,6 +1186,11 @@ const COMPLETIONS = [
     label: "al.saoCoplanares(A, B, C, D)",
     detail: "algebra — A,B,C,D coplanares?",
     insert: "al.saoCoplanares(",
+  },
+  {
+    label: "al.linspace(inicio, fim, n)",
+    detail: "algebra — vetor com n valores de inicio a fim (inclusivo)",
+    insert: "al.linspace(",
   },
   // ── latex ─────────────────────────────────────────────────
   {

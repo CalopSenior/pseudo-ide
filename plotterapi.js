@@ -322,6 +322,10 @@ class PseudoCaracter {
 class PseudoLista {
   constructor(itens) {
     this._v = [...itens];
+    return new Proxy(this, {
+      get(t, p)    { return typeof p === "string" && /^\d+$/.test(p) ? t._v[+p] : t[p]; },
+      set(t, p, v) { if (typeof p === "string" && /^\d+$/.test(p)) { t._v[+p] = v; return true; } t[p] = v; return true; },
+    });
   }
   adicionar(item) {
     this._v.push(item);
@@ -577,6 +581,9 @@ class PseudoVetor {
         "metodos.vetor(): todos os componentes devem ser números.",
       );
     this._v = [...arr];
+    return new Proxy(this, {
+      get(t, p) { return typeof p === "string" && /^\d+$/.test(p) ? t._v[+p] : t[p]; },
+    });
   }
   dimensao() {
     return this._v.length;
@@ -985,6 +992,13 @@ const Bibliotecas = {
       for (let i = mn; i <= mx; i++) p *= fn(i);
       return p;
     },
+    linspace: (inicio, fim, n) => {
+      __vp(inicio, ["numero"], "mat.linspace", "inicio");
+      __vp(fim, ["numero"], "mat.linspace", "fim");
+      __vp(n, ["inteiro"], "mat.linspace", "n");
+      if (n < 2) throw new Error("mat.linspace(): n deve ser ≥ 2.");
+      return new PseudoLista(Array.from({length: n}, (_, i) => inicio + i * (fim - inicio) / (n - 1)));
+    },
 
   },
 
@@ -1179,9 +1193,34 @@ const Bibliotecas = {
         throw new Error(`metodos.real(): "${v}" não pode ser convertido.`);
       return n;
     },
-    lista: (...is) => new PseudoLista(is),
-    mapa: () => new PseudoMapa(),
-    conjunto: () => new PseudoConjunto(),
+    lista: function (...is) {
+      if (is.length === 1) {
+        const x = is[0];
+        if (Array.isArray(x))            return new PseudoLista(x);
+        if (x instanceof PseudoLista)    return new PseudoLista([...x._v]);
+        if (x instanceof PseudoConjunto) return new PseudoLista([...x._v]);
+      }
+      return new PseudoLista(is);
+    },
+    mapa: function (...is) {
+      const m = new PseudoMapa();
+      if (is.length === 1) {
+        const x = is[0];
+        const arr = Array.isArray(x) ? x : x instanceof PseudoLista ? x._v : null;
+        if (arr) { arr.forEach((v, i) => m._v.set(i, v)); return m; }
+      }
+      return m;
+    },
+    conjunto: function (...is) {
+      const c = new PseudoConjunto();
+      if (is.length === 1) {
+        const x = is[0];
+        const src = Array.isArray(x) ? x : x instanceof PseudoLista ? x._v : x instanceof PseudoConjunto ? [...x._v] : null;
+        if (src) { src.forEach(v => c._v.add(v)); return c; }
+      }
+      is.forEach(v => c._v.add(v));
+      return c;
+    },
     numero: (v) => new PseudoNumero(v),
 
     // ── Funções de validação de tipo ──────────────────────────
@@ -2427,6 +2466,14 @@ const Bibliotecas = {
       return Math.abs(normal.ponto(D.subtrair(A))) < 1e-8;
     };
 
+    _al.linspace = (inicio, fim, n) => {
+      __vp(inicio, ["numero"], "algebra.linspace", "inicio");
+      __vp(fim, ["numero"], "algebra.linspace", "fim");
+      __vp(n, ["inteiro"], "algebra.linspace", "n");
+      if (n < 2) throw new Error("algebra.linspace(): n deve ser ≥ 2.");
+      return new PseudoVetor(Array.from({length: n}, (_, i) => inicio + i * (fim - inicio) / (n - 1)));
+    };
+
     return _al;
   })(),
 
@@ -2685,6 +2732,35 @@ const Bibliotecas = {
       return isNaN(n) ? v : n;
     }
 
+    // Recursively convert plain JS value → Pseudo native type
+    function _jsToNativo(v) {
+      if (Array.isArray(v)) return new PseudoLista(v.map(_jsToNativo));
+      if (v !== null && typeof v === "object" && !(v instanceof PseudoLista) && !(v instanceof PseudoMapa)) {
+        const m = new PseudoMapa();
+        Object.entries(v).forEach(([k, val]) => m._v.set(k, _jsToNativo(val)));
+        return m;
+      }
+      return v;
+    }
+
+    // Build a Pseudo result based on tipo option (shared by lerCSV / lerPDADOS)
+    function _construirResultado(tipo, cabecalhos, dados, cell) {
+      if (tipo === "lista")        return new PseudoLista(dados.map((r) => cell(r, 0)));
+      if (tipo === "lista-listas") return new PseudoLista(dados.map((r) => new PseudoLista(cabecalhos.map((_, ci) => cell(r, ci)))));
+      if (tipo === "lista-mapas")  return new PseudoLista(dados.map((r) => {
+        const m = new PseudoMapa();
+        cabecalhos.forEach((h, ci) => m._v.set(h, cell(r, ci)));
+        return m;
+      }));
+      if (tipo === "mapa-listas") {
+        const mapa = new PseudoMapa();
+        cabecalhos.forEach((h, ci) => mapa._v.set(h, new PseudoLista(dados.map((r) => cell(r, ci)))));
+        return mapa;
+      }
+      if (tipo === "matriz")       return new PseudoMatriz(dados.map((r) => cabecalhos.map((_, ci) => parseFloat(r[ci]) || 0)));
+      return new PseudoLista(dados.map((r) => new PseudoLista(cabecalhos.map((_, ci) => cell(r, ci)))));
+    }
+
     return {
       lerCSV: async function (opcoes) {
         const opts = opcoes || {};
@@ -2698,33 +2774,7 @@ const Bibliotecas = {
           const v = row[ci] ?? "";
           return useAuto ? _autoType(v) : v;
         }
-        if (tipo === "lista") {
-          const ci = 0;
-          return dados.map((r) => cell(r, ci));
-        }
-        if (tipo === "lista-listas") {
-          return dados.map((r) => cabecalhos.map((_, ci) => cell(r, ci)));
-        }
-        if (tipo === "lista-mapas") {
-          return dados.map((r) => {
-            const m = {};
-            cabecalhos.forEach((h, ci) => (m[h] = cell(r, ci)));
-            return m;
-          });
-        }
-        if (tipo === "mapa-listas") {
-          const mapa = {};
-          cabecalhos.forEach((h, ci) => {
-            mapa[h] = dados.map((r) => cell(r, ci));
-          });
-          return mapa;
-        }
-        if (tipo === "matriz") {
-          return dados.map((r) =>
-            cabecalhos.map((_, ci) => parseFloat(r[ci]) || 0)
-          );
-        }
-        return dados;
+        return _construirResultado(tipo, cabecalhos, dados, cell);
       },
 
       lerJSON: async function (opcoes) {
@@ -2739,7 +2789,7 @@ const Bibliotecas = {
             obj = obj[p];
           }
         }
-        return obj;
+        return _jsToNativo(obj);
       },
 
       lerTXT: async function (opcoes) {
@@ -2748,7 +2798,7 @@ const Bibliotecas = {
         const { conteudo } = await _lerArquivo(".txt,.csv,.tsv");
         if (tipo === "texto") return conteudo;
         const sep = opts.separador || "\n";
-        return conteudo.split(sep).filter((l) => l.trim() !== "");
+        return new PseudoLista(conteudo.split(sep).filter((l) => l.trim() !== ""));
       },
 
       lerPDADOS: async function (opcoes) {
@@ -2769,18 +2819,7 @@ const Bibliotecas = {
           const v = row[ci] ?? "";
           return useAuto ? _autoType(v) : v;
         }
-        if (tipo === "lista")       return dados.map((r) => cell(r, 0));
-        if (tipo === "lista-listas") return dados.map((r) => cabecalhos.map((_, ci) => cell(r, ci)));
-        if (tipo === "lista-mapas") return dados.map((r) => {
-          const m = {}; cabecalhos.forEach((h, ci) => (m[h] = cell(r, ci))); return m;
-        });
-        if (tipo === "mapa-listas") {
-          const mapa = {};
-          cabecalhos.forEach((h, ci) => (mapa[h] = dados.map((r) => cell(r, ci))));
-          return mapa;
-        }
-        if (tipo === "matriz") return dados.map((r) => cabecalhos.map((_, ci) => parseFloat(r[ci]) || 0));
-        return dados;
+        return _construirResultado(tipo, cabecalhos, dados, cell);
       },
 
       abrirImportador: function () {
@@ -2797,6 +2836,16 @@ const Bibliotecas = {
    8. BUILT-IN GLOBAL UTILITIES
    ============================================================ */
 
+/* a...b range operator helper — inclusive on both ends, integer step */
+function _pseudoRange(a, b) {
+  if (typeof a !== "number" || typeof b !== "number")
+    throw new Error("Operador de intervalo (...): ambos os lados devem ser números.");
+  const step = a <= b ? 1 : -1;
+  const result = [];
+  for (let i = a; step > 0 ? i <= b : i >= b; i += step) result.push(i);
+  return result;
+}
+
 /* intervalo(fim)                  → [0, 1, 2, ..., fim-1]
    intervalo(inicio, fim)          → [inicio, ..., fim-1]  (passo auto-detectado)
    intervalo(inicio, fim, passo)   → início to fim exclusive, by passo
@@ -2812,7 +2861,7 @@ function intervalo(a, b, passo) {
   for (let i = 0; i < n; i++) {
     result.push(parseFloat((start + i * step).toPrecision(10)));
   }
-  return result;
+  return new PseudoLista(result);
 }
 
 function imprima(...args) {

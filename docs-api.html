@@ -1,0 +1,925 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pseudo-IDE — Referência da API</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #141620;
+      --panel:    #1b1e2e;
+      --border:   #2a2d40;
+      --text:     #d2d6e8;
+      --muted:    #6b7094;
+      --accent:   #7c83f7;
+      --accent2:  #a5b4fc;
+      --green:    #4ade80;
+      --yellow:   #fbbf24;
+      --red:      #f87171;
+      --pink:     #f9a8d4;
+      --fn:       #7c83f7;
+      --type:     #4ade80;
+      --kw:       #a5b4fc;
+    }
+
+    html { font-size: 14px; scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      line-height: 1.6;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    /* ── Header ── */
+    .site-header {
+      background: var(--panel);
+      border-bottom: 1px solid var(--border);
+      padding: 10px 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .site-header a { color: var(--accent); text-decoration: none; font-weight: 600; font-size: .95rem; }
+    .site-header a:hover { color: var(--accent2); }
+    .site-header h1 { font-size: 1rem; font-weight: 700; color: var(--text); flex: 1; }
+    .site-header .badge {
+      background: var(--border);
+      color: var(--muted);
+      font-size: .75rem;
+      padding: 2px 8px;
+      border-radius: 99px;
+    }
+
+    /* ── Layout ── */
+    .layout {
+      display: flex;
+      flex: 1;
+      min-height: 0;
+    }
+
+    /* ── Sidebar ── */
+    .sidebar {
+      width: 220px;
+      flex-shrink: 0;
+      background: var(--panel);
+      border-right: 1px solid var(--border);
+      padding: 20px 0;
+      position: sticky;
+      top: 41px;
+      height: calc(100vh - 41px);
+      overflow-y: auto;
+    }
+    .sidebar-section { margin-bottom: 4px; }
+    .sidebar-title {
+      font-size: .7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--muted);
+      padding: 10px 18px 4px;
+    }
+    .sidebar a {
+      display: block;
+      padding: 5px 18px;
+      color: var(--text);
+      text-decoration: none;
+      font-size: .85rem;
+      border-left: 2px solid transparent;
+      transition: background .1s;
+    }
+    .sidebar a:hover { background: #ffffff08; color: var(--accent2); }
+    .sidebar a.active { border-left-color: var(--accent); color: var(--accent); background: #7c83f710; }
+    .sidebar a code { font-size: .8rem; background: #ffffff08; padding: 1px 4px; border-radius: 3px; }
+
+    /* ── Main content ── */
+    .main {
+      flex: 1;
+      padding: 36px 48px 80px;
+      max-width: 900px;
+    }
+
+    /* ── Sections ── */
+    .lib-section { margin-bottom: 64px; }
+
+    h2 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--accent2);
+      margin-bottom: 6px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+    }
+    h3 {
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: var(--text);
+      margin: 28px 0 8px;
+    }
+    h4 {
+      font-size: .9rem;
+      font-weight: 600;
+      color: var(--yellow);
+      margin: 20px 0 6px;
+      font-family: 'Cascadia Code', 'Fira Code', monospace;
+    }
+
+    .import-box {
+      background: #ffffff06;
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--accent);
+      padding: 8px 14px;
+      border-radius: 4px;
+      font-size: .85rem;
+      margin: 10px 0 14px;
+      color: var(--accent2);
+      font-family: 'Cascadia Code', 'Fira Code', monospace;
+    }
+
+    .dep-box {
+      background: #fbbf2410;
+      border: 1px solid #fbbf2430;
+      border-radius: 4px;
+      padding: 7px 12px;
+      font-size: .82rem;
+      margin-bottom: 14px;
+      color: var(--yellow);
+    }
+    .dep-box strong { color: var(--yellow); }
+
+    .desc { color: #b0b6d4; font-size: .88rem; margin-bottom: 16px; line-height: 1.65; }
+
+    /* ── Function entry ── */
+    .fn-entry {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      margin-bottom: 16px;
+      overflow: hidden;
+    }
+    .fn-sig {
+      padding: 10px 16px;
+      background: #ffffff05;
+      border-bottom: 1px solid var(--border);
+      font-family: 'Cascadia Code', 'Fira Code', monospace;
+      font-size: .87rem;
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .fn-name  { color: var(--fn); font-weight: 600; }
+    .fn-param { color: var(--text); }
+    .fn-pname { color: #c4b5fd; }
+    .fn-ptype { color: var(--green); font-size: .8rem; }
+    .fn-ret   { color: var(--yellow); font-size: .82rem; margin-left: auto; white-space: nowrap; }
+    .fn-body  { padding: 10px 16px; }
+    .fn-desc  { font-size: .85rem; color: #b0b6d4; margin-bottom: 8px; }
+    .fn-throws { font-size: .8rem; color: var(--red); margin-bottom: 6px; }
+
+    /* ── Parameter table ── */
+    .param-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: .82rem;
+      margin: 6px 0 8px;
+    }
+    .param-table th {
+      text-align: left;
+      color: var(--muted);
+      font-weight: 600;
+      padding: 3px 8px;
+      border-bottom: 1px solid var(--border);
+    }
+    .param-table td { padding: 3px 8px; border-bottom: 1px solid #ffffff08; vertical-align: top; }
+    .param-table td:first-child { font-family: 'Cascadia Code', 'Fira Code', monospace; color: #c4b5fd; white-space: nowrap; }
+    .param-table td:nth-child(2) { color: var(--green); white-space: nowrap; }
+    .param-table td:nth-child(3) { color: #b0b6d4; }
+    .param-table tr:last-child td { border-bottom: none; }
+    .opt { color: var(--muted) !important; font-size: .75rem; }
+
+    /* ── Code example ── */
+    .code-ex {
+      background: #0d0f18;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 8px 12px;
+      font-family: 'Cascadia Code', 'Fira Code', monospace;
+      font-size: .8rem;
+      color: #c8cce8;
+      white-space: pre;
+      overflow-x: auto;
+      margin: 6px 0 0;
+    }
+    .code-ex .c  { color: #5a6080; }
+    .code-ex .kw { color: var(--kw); }
+    .code-ex .fn { color: var(--fn); }
+    .code-ex .n  { color: #f9a8d4; }
+    .code-ex .s  { color: #86efac; }
+    .code-ex .t  { color: var(--green); }
+
+    /* ── Inline code ── */
+    code {
+      font-family: 'Cascadia Code', 'Fira Code', monospace;
+      font-size: .83em;
+      background: #ffffff0d;
+      padding: 1px 5px;
+      border-radius: 3px;
+      color: var(--accent2);
+    }
+
+    /* ── Type ref table ── */
+    .type-table { width: 100%; border-collapse: collapse; font-size: .85rem; margin: 8px 0 16px; }
+    .type-table th { text-align: left; color: var(--muted); font-weight: 600; padding: 5px 10px; border-bottom: 1px solid var(--border); }
+    .type-table td { padding: 5px 10px; border-bottom: 1px solid #ffffff06; vertical-align: top; }
+    .type-table td:first-child { font-family: 'Cascadia Code', 'Fira Code', monospace; color: var(--green); white-space: nowrap; }
+    .type-table td:nth-child(2) { color: #b0b6d4; }
+    .type-table td:nth-child(3) { color: var(--muted); font-size: .8rem; }
+
+    /* ── Responsive ── */
+    @media (max-width: 700px) {
+      .sidebar { display: none; }
+      .main { padding: 20px 16px 60px; }
+    }
+  </style>
+</head>
+<body>
+
+<header class="site-header">
+  <a href="index.html">← IDE</a>
+  <h1>Pseudo-IDE &mdash; Referência da API</h1>
+  <span class="badge">v1.0</span>
+</header>
+
+<div class="layout">
+
+  <!-- ── SIDEBAR ── -->
+  <nav class="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-title">Fundamentos</div>
+      <a href="#tipos">Tipos nativos</a>
+      <a href="#globais">Funções globais</a>
+      <a href="#classes">Métodos de classe</a>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-title">Bibliotecas</div>
+      <a href="#mat"><code>mat</code></a>
+      <a href="#metodos"><code>metodos</code></a>
+      <a href="#calculo"><code>calculo</code></a>
+      <a href="#estatistica"><code>estatistica</code></a>
+      <a href="#tabular"><code>tabular</code></a>
+      <a href="#tempo"><code>tempo</code></a>
+      <a href="#graficos"><code>graficos</code></a>
+      <a href="#probabilidade"><code>probabilidade</code></a>
+      <a href="#algebra"><code>algebra</code></a>
+      <a href="#latex"><code>latex</code></a>
+      <a href="#arquivos"><code>arquivos</code></a>
+    </div>
+  </nav>
+
+  <!-- ── MAIN ── -->
+  <main class="main">
+
+    <!-- ═══════════════════════════════════════ TIPOS ═══ -->
+    <section class="lib-section" id="tipos">
+      <h2>Tipos nativos</h2>
+      <p class="desc">A Pseudo-IDE tem sete tipos de dados primitivos e sete tipos de objetos. Funções de biblioteca que retornam coleções usam <strong>sempre</strong> os tipos objeto nativos — nunca arrays ou objetos JS puros.</p>
+
+      <h3>Tipos primitivos</h3>
+      <table class="type-table">
+        <tr><th>Tipo</th><th>Descrição</th><th>Exemplo</th></tr>
+        <tr><td>inteiro</td><td>Número inteiro de 64 bits</td><td><code>inteiro x = 42</code></td></tr>
+        <tr><td>real</td><td>Ponto flutuante IEEE 754</td><td><code>real pi = 3.14</code></td></tr>
+        <tr><td>numero</td><td>Qualquer número (inteiro ou real)</td><td>usado em parâmetros</td></tr>
+        <tr><td>booleano</td><td><code>verdadeiro</code> ou <code>falso</code></td><td><code>booleano ok = verdadeiro</code></td></tr>
+        <tr><td>caracter</td><td>Cadeia de texto</td><td><code>caracter s = "olá"</code></td></tr>
+        <tr><td>vazio</td><td>Ausência de valor (<code>null</code>)</td><td><code>retorno vazio</code></td></tr>
+        <tr><td>indefinido</td><td>Variável não atribuída</td><td><code>m.eIndefinido(x)</code></td></tr>
+      </table>
+
+      <h3>Tipos objeto</h3>
+      <table class="type-table">
+        <tr><th>Tipo</th><th>Acesso</th><th>Criação</th><th>Descrição</th></tr>
+        <tr><td>Lista</td><td><code>x[i]</code> ou <code>x.obter(i)</code></td><td><code>m.lista(...)</code></td><td>Lista ordenada e mutável. Índice começa em 0.</td></tr>
+        <tr><td>Mapa</td><td><code>x.obter(chave)</code></td><td><code>m.mapa()</code></td><td>Dicionário chave→valor.</td></tr>
+        <tr><td>Conjunto</td><td><code>x.tem(v)</code></td><td><code>m.conjunto()</code></td><td>Coleção de valores únicos.</td></tr>
+        <tr><td>Vetor</td><td><code>x[i]</code> ou <code>x.obter(i)</code></td><td><code>m.vetor([...])</code></td><td>Vetor N-dimensional de números.</td></tr>
+        <tr><td>Matriz</td><td><code>x.obter(i,j)</code></td><td><code>m.matriz([[...]])</code></td><td>Matriz M×N de números.</td></tr>
+        <tr><td>Caracter</td><td>via métodos</td><td><code>m.caracter(v)</code></td><td>Objeto string com métodos de texto.</td></tr>
+        <tr><td>Numero</td><td>via métodos</td><td><code>m.numero(v)</code></td><td>Wrapper numérico com fatoração e arredondamento.</td></tr>
+      </table>
+
+      <h3>Operador de range <code>a...b</code></h3>
+      <p class="desc">Cria um array de inteiros de <code>a</code> até <code>b</code> <strong>inclusive</strong>. Passo automático (+1 ou −1). Ideal para construir listas/conjuntos/vetores dinamicamente.</p>
+      <div class="code-ex"><span class="fn">lista</span>(1...5)    <span class="c">// Lista [1, 2, 3, 4, 5]</span>
+<span class="fn">conjunto</span>(1...3)  <span class="c">// Conjunto {1, 2, 3}</span>
+<span class="fn">vetor</span>(0...3)     <span class="c">// Vetor [0, 1, 2, 3]</span>
+5...1            <span class="c">// [5, 4, 3, 2, 1] — descende automaticamente</span></div>
+
+      <h3>Spread nativo</h3>
+      <p class="desc"><code>...arr</code> funciona como spread JS nativo dentro de arrays literais e chamadas de função.</p>
+      <div class="code-ex"><span class="kw">super</span> a = [1, 2, 3];
+<span class="kw">super</span> b = [...a, 4, 5];  <span class="c">// [1, 2, 3, 4, 5]</span></div>
+    </section>
+
+    <!-- ═══════════════════════════════════════ GLOBAIS ═══ -->
+    <section class="lib-section" id="globais">
+      <h2>Funções globais</h2>
+      <p class="desc">Disponíveis sem importação em qualquer programa Pseudo.</p>
+
+      <div class="fn-entry">
+        <div class="fn-sig">
+          <span class="fn-name">imprima</span><span class="fn-param">(<span class="fn-pname">...args</span>: <span class="fn-ptype">qualquer</span>)</span>
+          <span class="fn-ret">→ vazio</span>
+        </div>
+        <div class="fn-body">
+          <div class="fn-desc">Escreve um ou mais valores no console de saída, separados por espaço.</div>
+          <div class="code-ex"><span class="fn">imprima</span>(<span class="s">"olá"</span>, 42, verdadeiro);  <span class="c">// olá 42 true</span></div>
+        </div>
+      </div>
+
+      <div class="fn-entry">
+        <div class="fn-sig">
+          <span class="fn-name">leia</span><span class="fn-param">(<span class="fn-pname">mensagem</span>?: <span class="fn-ptype">caracter</span>)</span>
+          <span class="fn-ret">→ Promise&lt;caracter&gt;</span>
+        </div>
+        <div class="fn-body">
+          <div class="fn-desc">Exibe um prompt de entrada e retorna o texto digitado pelo usuário. É async — use <code>aguardar</code> ou em contexto assíncrono (injetado automaticamente pelo compilador).</div>
+          <div class="code-ex"><span class="t">caracter</span> nome = <span class="kw">leia</span>(<span class="s">"Seu nome:"</span>);
+<span class="fn">imprima</span>(<span class="s">f"Olá, {nome}!"</span>);</div>
+        </div>
+      </div>
+
+      <div class="fn-entry">
+        <div class="fn-sig">
+          <span class="fn-name">intervalo</span><span class="fn-param">(<span class="fn-pname">fim</span>: <span class="fn-ptype">numero</span>)</span>
+          <span class="fn-ret">→ Lista</span>
+        </div>
+        <div class="fn-body">
+          <div class="fn-desc">Retorna uma <strong>Lista</strong> de números de <code>0</code> até <code>fim-1</code> (exclusivo). Análogo ao <code>range()</code> do Python.</div>
+          <table class="param-table">
+            <tr><th>Parâmetro</th><th>Tipo</th><th>Descrição</th></tr>
+            <tr><td>fim</td><td class="t">numero</td><td>Limite superior (exclusivo). Passo = 1 se positivo, −1 se negativo.</td></tr>
+            <tr><td>inicio <span class="opt">opc</span></td><td class="t">numero</td><td>Valor inicial. Quando fornecido muda a assinatura para <code>intervalo(inicio, fim)</code>.</td></tr>
+            <tr><td>passo <span class="opt">opc</span></td><td class="t">numero</td><td>Incremento (pode ser decimal ou negativo). Não pode ser zero.</td></tr>
+          </table>
+          <div class="fn-throws">Lança erro se <code>passo = 0</code>.</div>
+          <div class="code-ex"><span class="fn">imprima</span>(<span class="fn">intervalo</span>(5));           <span class="c">// Lista [0,1,2,3,4]</span>
+<span class="fn">imprima</span>(<span class="fn">intervalo</span>(2, 8));        <span class="c">// Lista [2,3,4,5,6,7]</span>
+<span class="fn">imprima</span>(<span class="fn">intervalo</span>(0, 1, 0.25)); <span class="c">// Lista [0, 0.25, 0.5, 0.75]</span>
+<span class="kw">para</span> i <span class="kw">em</span> <span class="fn">intervalo</span>(10) <span class="kw">faça</span>
+    <span class="fn">imprima</span>(i * i);
+<span class="kw">fim</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════ CLASSES ═══ -->
+    <section class="lib-section" id="classes">
+      <h2>Métodos de classe</h2>
+      <p class="desc">Cada tipo objeto tem métodos acessados via ponto. Os construtores estão em <code>metodos</code>.</p>
+
+      <h3>Lista</h3>
+      <p class="desc">Acesso por índice: <code>lista[i]</code> (atalho) ou <code>lista.obter(i)</code>. Índice começa em 0.</p>
+      <table class="param-table">
+        <tr><th>Método</th><th>Retorno</th><th>Descrição</th></tr>
+        <tr><td>adicionar(item)</td><td class="t">Lista</td><td>Insere no final. Retorna <code>this</code> para encadeamento.</td></tr>
+        <tr><td>remover(item)</td><td class="t">Lista</td><td>Remove primeira ocorrência de <code>item</code>.</td></tr>
+        <tr><td>obter(i: inteiro)</td><td class="t">qualquer</td><td>Elemento no índice <code>i</code>. Lança erro se fora do intervalo.</td></tr>
+        <tr><td>tamanho()</td><td class="t">inteiro</td><td>Número de elementos.</td></tr>
+        <tr><td>ordenar()</td><td class="t">Lista</td><td>Ordena in-place em ordem crescente.</td></tr>
+        <tr><td>inverter()</td><td class="t">Lista</td><td>Inverte a ordem in-place.</td></tr>
+        <tr><td>contem(item)</td><td class="t">booleano</td><td>Verifica se <code>item</code> está na lista.</td></tr>
+        <tr><td>transformar(fn)</td><td class="t">Lista</td><td>Aplica <code>fn(v)</code> a cada elemento. Suporta funções async.</td></tr>
+        <tr><td>filtrar(predicado)</td><td class="t">Lista</td><td>Mantém elementos onde <code>predicado(v)</code> é verdadeiro.</td></tr>
+        <tr><td>reduzir(fn, inicial?)</td><td class="t">qualquer</td><td>Acumula resultado chamando <code>fn(acum, v)</code>. <code>inicial</code> é opcional.</td></tr>
+        <tr><td>percorrer(fn)</td><td class="t">vazio</td><td>Chama <code>fn(v, i)</code> para cada elemento (para efeitos colaterais).</td></tr>
+      </table>
+
+      <h3>Mapa</h3>
+      <table class="param-table">
+        <tr><th>Método</th><th>Retorno</th><th>Descrição</th></tr>
+        <tr><td>definir(chave, valor)</td><td class="t">Mapa</td><td>Insere ou atualiza entrada. Chave pode ser qualquer tipo.</td></tr>
+        <tr><td>obter(chave)</td><td class="t">qualquer</td><td>Valor associado à chave, ou <code>indefinido</code> se ausente.</td></tr>
+        <tr><td>remover(chave)</td><td class="t">Mapa</td><td>Remove a entrada com aquela chave.</td></tr>
+        <tr><td>tem(chave)</td><td class="t">booleano</td><td>Verifica existência da chave.</td></tr>
+      </table>
+
+      <h3>Conjunto</h3>
+      <table class="param-table">
+        <tr><th>Método</th><th>Retorno</th><th>Descrição</th></tr>
+        <tr><td>adicionar(v)</td><td class="t">Conjunto</td><td>Insere valor (ignorado se já existir).</td></tr>
+        <tr><td>remover(v)</td><td class="t">Conjunto</td><td>Remove o valor.</td></tr>
+        <tr><td>tem(v)</td><td class="t">booleano</td><td>Verifica pertinência.</td></tr>
+        <tr><td>tamanho()</td><td class="t">inteiro</td><td>Número de elementos únicos.</td></tr>
+        <tr><td>uniao(outro: Conjunto)</td><td class="t">Conjunto</td><td>Retorna A ∪ B como novo Conjunto.</td></tr>
+        <tr><td>intersecao(outro: Conjunto)</td><td class="t">Conjunto</td><td>Retorna A ∩ B como novo Conjunto.</td></tr>
+        <tr><td>diferenca(outro: Conjunto)</td><td class="t">Conjunto</td><td>Retorna A − B como novo Conjunto.</td></tr>
+      </table>
+
+      <h3>Vetor</h3>
+      <p class="desc">Acesso por índice: <code>v[i]</code> (atalho) ou <code>v.obter(i)</code>.</p>
+      <table class="param-table">
+        <tr><th>Método</th><th>Retorno</th><th>Descrição</th></tr>
+        <tr><td>dimensao()</td><td class="t">inteiro</td><td>Número de componentes.</td></tr>
+        <tr><td>obter(i: inteiro)</td><td class="t">real</td><td>Componente na posição i.</td></tr>
+        <tr><td>soma(outro: Vetor)</td><td class="t">Vetor</td><td>Soma componente a componente.</td></tr>
+        <tr><td>subtrair(outro: Vetor)</td><td class="t">Vetor</td><td>Subtração componente a componente.</td></tr>
+        <tr><td>escalar(k: numero)</td><td class="t">Vetor</td><td>Multiplica todas as componentes por k.</td></tr>
+        <tr><td>ponto(outro: Vetor)</td><td class="t">real</td><td>Produto interno (dot product).</td></tr>
+        <tr><td>norma()</td><td class="t">real</td><td>Norma euclidiana (comprimento).</td></tr>
+        <tr><td>normalizar()</td><td class="t">Vetor</td><td>Retorna vetor unitário. Lança erro se norma = 0.</td></tr>
+      </table>
+
+      <h3>Matriz</h3>
+      <table class="param-table">
+        <tr><th>Método / Prop</th><th>Retorno</th><th>Descrição</th></tr>
+        <tr><td>obter(i, j)</td><td class="t">real</td><td>Elemento na linha i, coluna j (base 0).</td></tr>
+        <tr><td>soma(outra: Matriz)</td><td class="t">Matriz</td><td>Soma elemento a elemento.</td></tr>
+        <tr><td>mult(outro)</td><td class="t">Matriz | Vetor</td><td>Multiplicação: Matriz×Matriz, Matriz×Vetor ou Matriz×escalar.</td></tr>
+        <tr><td>transposta()</td><td class="t">Matriz</td><td>Matriz transposta.</td></tr>
+        <tr><td>.linhas</td><td class="t">inteiro</td><td>Número de linhas.</td></tr>
+        <tr><td>.colunas</td><td class="t">inteiro</td><td>Número de colunas.</td></tr>
+      </table>
+
+      <h3>Caracter</h3>
+      <table class="param-table">
+        <tr><th>Método</th><th>Retorno</th><th>Descrição</th></tr>
+        <tr><td>maiusculo()</td><td class="t">Caracter</td><td>Converte para maiúsculas.</td></tr>
+        <tr><td>minusculo()</td><td class="t">Caracter</td><td>Converte para minúsculas.</td></tr>
+        <tr><td>capitalizar()</td><td class="t">Caracter</td><td>Primeira letra maiúscula, resto minúscula.</td></tr>
+        <tr><td>contem(s)</td><td class="t">booleano</td><td>Verifica se o texto contém <code>s</code>.</td></tr>
+        <tr><td>tamanho()</td><td class="t">inteiro</td><td>Número de caracteres.</td></tr>
+        <tr><td>inverter()</td><td class="t">Caracter</td><td>Texto invertido.</td></tr>
+        <tr><td>aparar()</td><td class="t">Caracter</td><td>Remove espaços no início e no fim.</td></tr>
+        <tr><td>mesclar(s)</td><td class="t">Caracter</td><td>Concatena com <code>s</code>.</td></tr>
+      </table>
+
+      <h3>Numero</h3>
+      <table class="param-table">
+        <tr><th>Método</th><th>Retorno</th><th>Descrição</th></tr>
+        <tr><td>sinal()</td><td class="t">inteiro</td><td>−1 (negativo), 0 (zero) ou 1 (positivo).</td></tr>
+        <tr><td>int()</td><td class="t">inteiro</td><td>Trunca para inteiro (remove parte decimal).</td></tr>
+        <tr><td>re()</td><td class="t">real</td><td>Retorna o valor numérico primitivo.</td></tr>
+        <tr><td>decimal(n: inteiro)</td><td class="t">real</td><td>Arredonda para <code>n</code> casas decimais.</td></tr>
+        <tr><td>fatorar()</td><td class="t">Lista</td><td>Lista de fatores primos. Ex: <code>12 → [2,2,3]</code>.</td></tr>
+      </table>
+    </section>
+
+    <!-- ═══════════════════════════════════════ MAT ═══ -->
+    <section class="lib-section" id="mat">
+      <h2><code>mat</code> — Matemática</h2>
+      <div class="import-box">importar mat como m;</div>
+      <p class="desc">Funções matemáticas puras. Todas as entradas e saídas são primitivos (<code>numero</code>), exceto <code>m.linspace()</code> que retorna <code>Lista</code>. Não depende de nenhuma outra biblioteca.</p>
+
+      <h3>Constantes</h3>
+      <table class="param-table">
+        <tr><th>Constante</th><th>Valor</th><th>Descrição</th></tr>
+        <tr><td>m.PI / m.pi</td><td class="t">3.14159…</td><td>π</td></tr>
+        <tr><td>m.e / m.E</td><td class="t">2.71828…</td><td>Número de Euler</td></tr>
+        <tr><td>m.Infinito</td><td class="t">+∞</td><td>Infinito positivo</td></tr>
+        <tr><td>m.NegInfinito</td><td class="t">−∞</td><td>Infinito negativo</td></tr>
+      </table>
+
+      <h3>Arredondamento e conversão</h3>
+      <div class="fn-entry"><div class="fn-sig"><span class="fn-name">m.abs</span>(<span class="fn-pname">x</span>: <span class="fn-ptype">numero</span>) <span class="fn-ret">→ numero</span></div><div class="fn-body"><div class="fn-desc">Valor absoluto |x|.</div></div></div>
+      <div class="fn-entry"><div class="fn-sig"><span class="fn-name">m.arred</span>(<span class="fn-pname">x</span>: <span class="fn-ptype">numero</span>) <span class="fn-ret">→ inteiro</span></div><div class="fn-body"><div class="fn-desc">Arredondamento para o inteiro mais próximo.</div></div></div>
+      <div class="fn-entry"><div class="fn-sig"><span class="fn-name">m.piso</span>(<span class="fn-pname">x</span>: <span class="fn-ptype">numero</span>) <span class="fn-ret">→ inteiro</span></div><div class="fn-body"><div class="fn-desc">Piso ⌊x⌋ — maior inteiro ≤ x.</div></div></div>
+      <div class="fn-entry"><div class="fn-sig"><span class="fn-name">m.teto</span>(<span class="fn-pname">x</span>: <span class="fn-ptype">numero</span>) <span class="fn-ret">→ inteiro</span></div><div class="fn-body"><div class="fn-desc">Teto ⌈x⌉ — menor inteiro ≥ x.</div></div></div>
+      <div class="fn-entry"><div class="fn-sig"><span class="fn-name">m.truncar</span>(<span class="fn-pname">x</span>: <span class="fn-ptype">numero</span>) <span class="fn-ret">→ inteiro</span></div><div class="fn-body"><div class="fn-desc">Remove a parte decimal (arredonda em direção a zero).</div></div></div>
+      <div class="fn-entry"><div class="fn-sig"><span class="fn-name">m.max</span>(<span class="fn-pname">a</span>: <span class="fn-ptype">numero</span>, <span class="fn-pname">b</span>: <span class="fn-ptype">numero</span>) <span class="fn-ret">→ numero</span></div><div class="fn-body"><div class="fn-desc">Retorna o maior entre <code>a</code> e <code>b</code>.</div></div></div>
+      <div class="fn-entry"><div class="fn-sig"><span class="fn-name">m.min</span>(<span class="fn-pname">a</span>: <span class="fn-ptype">numero</span>, <span class="fn-pname">b</span>: <span class="fn-ptype">numero</span>) <span class="fn-ret">→ numero</span></div><div class="fn-body"><div class="fn-desc">Retorna o menor entre <code>a</code> e <code>b</code>.</div></div></div>
+      <div class="fn-entry"><div class="fn-sig"><span class="fn-name">m.hipot</span>(<span class="fn-pname">...ns</span>: <span class="fn-ptype">numero</span>) <span class="fn-ret">→ real</span></div><div class="fn-body"><div class="fn-desc">√(n₁² + n₂² + …) — norma euclidiana de qualquer número de valores.</div></div></div>
+      <div class="fn-entry"><div class="fn-sig"><span class="fn-name">m.grauParaRad</span>(<span class="fn-pname">g</span>: <span class="fn-ptype">numero</span>) <span class="fn-ret">→ real</span></div><div class="fn-body"><div class="fn-desc">Converte graus → radianos (g × π/180).</div></div></div>
+      <div class="fn-entry"><div class="fn-sig"><span class="fn-name">m.radParaGrau</span>(<span class="fn-pname">r</span>: <span class="fn-ptype">numero</span>) <span class="fn-ret">→ real</span></div><div class="fn-body"><div class="fn-desc">Converte radianos → graus (r × 180/π).</div></div></div>
+
+      <h3>Trigonometria (entrada em radianos)</h3>
+      <div class="fn-entry"><div class="fn-sig"><span class="fn-name">m.sen</span> / <span class="fn-name">m.cos</span> / <span class="fn-name">m.tan</span>(<span class="fn-pname">x</span>: <span class="fn-ptype">numero</span>) <span class="fn-ret">→ real</span></div><div class="fn-body"><div class="fn-desc">Seno, cosseno, tangente.</div></div></div>
+      <div class="fn-entry"><div class="fn-sig"><span class="fn-name">m.arcsen</span>(<span class="fn-pname">x</span>: <span class="fn-ptype">numero</span>) <span class="fn-ret">→ real</span></div><div class="fn-body"><div class="fn-desc">Arcosseno em radianos. Domínio: [−1, 1]. Lança erro fora do domínio.</div></div></div>
+      <div class="fn-entry"><div class="fn-sig"><span class="fn-name">m.arccos</span>(<span class="fn-pname">x</span>: <span class="fn-ptype">numero</span>) <span class="fn-ret">→ real</span></div><div class="fn-body"><div class="fn-desc">Arcocosseno em radianos. Domínio: [−1, 1].</div></div></div>
+      <div class="fn-entry"><div class="fn-sig"><span class="fn-name">m.arctan</span>(<span class="fn-pname">x</span>: <span class="fn-ptype">numero</span>) <span class="fn-ret">→ real</span></div><div class="fn-body"><div class="fn-desc">Arctangente em (−π/2, π/2).</div></div></div>
+      <div class="fn-entry"><div class="fn-sig"><span class="fn-name">m.arctan2</span>(<span class="fn-pname">y</span>: <span class="fn-ptype">numero</span>, <span class="fn-pname">x</span>: <span class="fn-ptype">numero</span>) <span class="fn-ret">→ real</span></div><div class="fn-body"><div class="fn-desc">Ângulo do vetor (x,y) em (−π, π]. Preserva quadrante.</div></div></div>
+      <div class="fn-entry"><div class="fn-sig"><span class="fn-name">m.senh</span> / <span class="fn-name">m.cosh</span> / <span class="fn-name">m.tanh</span>(<span class="fn-pname">x</span>) <span class="fn-ret">→ real</span></div><div class="fn-body"><div class="fn-desc">Funções hiperbólicas.</div></div></div>
+      <div class="fn-entry"><div class="fn-sig"><span class="fn-name">m.arcsenh</span> / <span class="fn-name">m.arccosh</span> / <span class="fn-name">m.arctanh</span>(<span class="fn-pname">x</span>) <span class="fn-ret">→ real</span></div><div class="fn-body"><div class="fn-desc">Inversas hiperbólicas. <code>arccosh</code>: domínio [1,∞); <code>arctanh</code>: domínio (−1,1).</div></div></div>
+
+      <h3>Logaritmos e exponencial</h3>
+      <div class="fn-entry"><div class="fn-sig"><span class="fn-name">m.ln</span>(<span class="fn-pname">x</span>: <span class="fn-ptype">numero</span>) <span class="fn-ret">→ real</span></div><div class="fn-body"><div class="fn-desc">Logaritmo natural. Domínio: x &gt; 0.</div></div></div>
+      <div class="fn-entry"><div class="fn-sig"><span class="fn-name">m.log2</span> / <span class="fn-name">m.log10</span>(<span class="fn-pname">x</span>) <span class="fn-ret">→ real</span></div><div class="fn-body"><div class="fn-desc">Logaritmo em base 2 e base 10.</div></div></div>
+      <div class="fn-entry">
+        <div class="fn-sig"><span class="fn-name">m.log</span>(<span class="fn-pname">x</span>: <span class="fn-ptype">numero</span>, <span class="fn-pname">base</span>: <span class="fn-ptype">numero</span>) <span class="fn-ret">→ real</span></div>
+        <div class="fn-body"><div class="fn-desc">Logaritmo em base arbitrária. <code>base</code> deve ser &gt; 0 e ≠ 1.</div></div>
+      </div>
+
+      <h3>Aleatoriedade e séries</h3>
+      <div class="fn-entry">
+        <div class="fn-sig"><span class="fn-name">m.aleatorio</span>(<span class="fn-pname">min</span>: <span class="fn-ptype">inteiro</span>, <span class="fn-pname">max</span>: <span class="fn-ptype">inteiro</span>) <span class="fn-ret">→ inteiro</span></div>
+        <div class="fn-body"><div class="fn-desc">Inteiro aleatório uniforme no intervalo [min, max]. Lança erro se min &gt; max.</div></div>
+      </div>
+      <div class="fn-entry">
+        <div class="fn-sig"><span class="fn-name">m.somatorio</span>(<span class="fn-pname">fn</span>: <span class="fn-ptype">funcao</span>, <span class="fn-pname">min</span>: <span class="fn-ptype">numero</span>, <span class="fn-pname">max</span>: <span class="fn-ptype">numero</span>) <span class="fn-ret">→ real</span></div>
+        <div class="fn-body"><div class="fn-desc">Calcula Σ fn(i) para i = min até max (inclusivo).</div></div>
+      </div>
+      <div class="fn-entry">
+        <div class="fn-sig"><span class="fn-name">m.produtorio</span>(<span class="fn-pname">fn</span>: <span class="fn-ptype">funcao</span>, <span class="fn-pname">min</span>: <span class="fn-ptype">numero</span>, <span class="fn-pname">max</span>: <span class="fn-ptype">numero</span>) <span class="fn-ret">→ real</span></div>
+        <div class="fn-body"><div class="fn-desc">Calcula Π fn(i) para i = min até max (inclusivo).</div></div>
+      </div>
+      <div class="fn-entry">
+        <div class="fn-sig"><span class="fn-name">m.linspace</span>(<span class="fn-pname">inicio</span>: <span class="fn-ptype">numero</span>, <span class="fn-pname">fim</span>: <span class="fn-ptype">numero</span>, <span class="fn-pname">n</span>: <span class="fn-ptype">inteiro</span>) <span class="fn-ret">→ Lista</span></div>
+        <div class="fn-body">
+          <div class="fn-desc">Retorna uma <strong>Lista</strong> com <code>n</code> valores igualmente espaçados de <code>inicio</code> a <code>fim</code> (ambos incluídos). Análogo ao <code>numpy.linspace</code>.</div>
+          <div class="fn-throws">Lança erro se n &lt; 2.</div>
+          <div class="code-ex">m.<span class="fn">linspace</span>(0, 1, 5)    <span class="c">// Lista [0, 0.25, 0.5, 0.75, 1.0]</span>
+m.<span class="fn">linspace</span>(0, 360, 7)  <span class="c">// Lista [0, 60, 120, 180, 240, 300, 360]</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════ METODOS ═══ -->
+    <section class="lib-section" id="metodos">
+      <h2><code>metodos</code> — Construtores e Tipos</h2>
+      <div class="import-box">importar metodos como m;
+<span style="color:#5a6080">// Importação parcial também funciona:</span>
+importar metodos.lista como li;
+importar metodos.vetor como vc;</div>
+      <p class="desc">Construtores de tipos objeto e verificadores de tipo. Não depende de nenhuma outra biblioteca.</p>
+
+      <h3>Construtores de coleção</h3>
+      <div class="fn-entry">
+        <div class="fn-sig"><span class="fn-name">m.lista</span>(<span class="fn-pname">...args</span> | <span class="fn-pname">array</span> | <span class="fn-pname">a...b</span>) <span class="fn-ret">→ Lista</span></div>
+        <div class="fn-body">
+          <div class="fn-desc">Cria uma Lista. Aceita: múltiplos argumentos; um único array JS / Lista / Conjunto; ou um range <code>a...b</code>.</div>
+          <div class="code-ex">m.<span class="fn">lista</span>(1, 2, 3)    <span class="c">// Lista [1,2,3] — elementos individuais</span>
+m.<span class="fn">lista</span>(1...5)    <span class="c">// Lista [1,2,3,4,5] — range</span>
+m.<span class="fn">lista</span>(outralista) <span class="c">// cópia da lista</span></div>
+        </div>
+      </div>
+      <div class="fn-entry">
+        <div class="fn-sig"><span class="fn-name">m.conjunto</span>(<span class="fn-pname">...args</span> | <span class="fn-pname">array</span> | <span class="fn-pname">a...b</span>) <span class="fn-ret">→ Conjunto</span></div>
+        <div class="fn-body">
+          <div class="fn-desc">Cria um Conjunto. Aceita mesmas formas que <code>m.lista</code>. Duplicatas são ignoradas.</div>
+          <div class="code-ex">m.<span class="fn">conjunto</span>(1...5)  <span class="c">// Conjunto {1,2,3,4,5}</span></div>
+        </div>
+      </div>
+      <div class="fn-entry">
+        <div class="fn-sig"><span class="fn-name">m.mapa</span>(<span class="fn-pname">array?</span> | <span class="fn-pname">a...b</span>) <span class="fn-ret">→ Mapa</span></div>
+        <div class="fn-body">
+          <div class="fn-desc">Cria um Mapa vazio. Se um array/range for fornecido, cria mapa de índice→valor: <code>{0: arr[0], 1: arr[1], …}</code>.</div>
+          <div class="code-ex">m.<span class="fn">mapa</span>()       <span class="c">// Mapa vazio</span>
+m.<span class="fn">mapa</span>(1...3)  <span class="c">// Mapa {0:1, 1:2, 2:3}</span></div>
+        </div>
+      </div>
+
+      <h3>Construtores numéricos e vetoriais</h3>
+      <div class="fn-entry">
+        <div class="fn-sig"><span class="fn-name">m.vetor</span>(<span class="fn-pname">componentes</span>: <span class="fn-ptype">Lista | super | ...numero</span>) <span class="fn-ret">→ Vetor</span></div>
+        <div class="fn-body">
+          <div class="fn-desc">Cria um Vetor N-dimensional. Todos os componentes devem ser números.</div>
+          <div class="code-ex">m.<span class="fn">vetor</span>([1, 2, 3])  <span class="c">// de array</span>
+m.<span class="fn">vetor</span>(1...4)    <span class="c">// de range → Vetor [1,2,3,4]</span></div>
+        </div>
+      </div>
+      <div class="fn-entry">
+        <div class="fn-sig"><span class="fn-name">m.matriz</span>(<span class="fn-pname">linhas</span>: <span class="fn-ptype">super[][] | Lista</span>) <span class="fn-ret">→ Matriz</span></div>
+        <div class="fn-body">
+          <div class="fn-desc">Cria uma Matriz a partir de um array de arrays (linhas × colunas). Todos os valores devem ser números.</div>
+          <div class="code-ex">m.<span class="fn">matriz</span>([[1,2],[3,4]])  <span class="c">// Matriz 2×2</span></div>
+        </div>
+      </div>
+      <div class="fn-entry"><div class="fn-sig"><span class="fn-name">m.numero</span>(<span class="fn-pname">v</span>: <span class="fn-ptype">numero</span>) <span class="fn-ret">→ Numero</span></div><div class="fn-body"><div class="fn-desc">Cria um Numero com métodos <code>.sinal()</code>, <code>.fatorar()</code>, etc.</div></div></div>
+      <div class="fn-entry"><div class="fn-sig"><span class="fn-name">m.caracter</span>(<span class="fn-pname">v</span>: <span class="fn-ptype">caracter</span>) <span class="fn-ret">→ Caracter</span></div><div class="fn-body"><div class="fn-desc">Cria um Caracter com métodos de texto.</div></div></div>
+      <div class="fn-entry"><div class="fn-sig"><span class="fn-name">m.inteiro</span>(<span class="fn-pname">v</span>: <span class="fn-ptype">qualquer</span>) <span class="fn-ret">→ inteiro</span></div><div class="fn-body"><div class="fn-desc">Converte para inteiro. Lança erro se conversão falhar.</div></div></div>
+      <div class="fn-entry"><div class="fn-sig"><span class="fn-name">m.real</span>(<span class="fn-pname">v</span>: <span class="fn-ptype">qualquer</span>) <span class="fn-ret">→ real</span></div><div class="fn-body"><div class="fn-desc">Converte para real. Lança erro se conversão falhar.</div></div></div>
+
+      <h3>Verificadores de tipo (todos retornam <code>booleano</code>)</h3>
+      <p class="desc">Todos os verificadores abaixo aceitam <code>qualquer</code> como entrada e retornam <code>booleano</code>.</p>
+      <table class="param-table">
+        <tr><th>Função</th><th>Verdadeiro quando…</th></tr>
+        <tr><td>m.eNumero(v)</td><td>v é número (inteiro ou real)</td></tr>
+        <tr><td>m.eInteiro(v)</td><td>v é inteiro</td></tr>
+        <tr><td>m.eReal(v)</td><td>v é real (não inteiro)</td></tr>
+        <tr><td>m.eTexto(v)</td><td>v é string ou Caracter</td></tr>
+        <tr><td>m.eBooleano(v)</td><td>v é booleano</td></tr>
+        <tr><td>m.eLista(v)</td><td>v é instância de Lista</td></tr>
+        <tr><td>m.eMapa(v)</td><td>v é instância de Mapa</td></tr>
+        <tr><td>m.eConjunto(v)</td><td>v é instância de Conjunto</td></tr>
+        <tr><td>m.eVetor(v)</td><td>v é instância de Vetor</td></tr>
+        <tr><td>m.eMatriz(v)</td><td>v é instância de Matriz</td></tr>
+        <tr><td>m.eVazio(v)</td><td>v é null (<code>vazio</code>)</td></tr>
+        <tr><td>m.eIndefinido(v)</td><td>v é undefined</td></tr>
+      </table>
+    </section>
+
+    <!-- ═══════════════════════════════════════ CALCULO ═══ -->
+    <section class="lib-section" id="calculo">
+      <h2><code>calculo</code> — Cálculo Diferencial e Integral</h2>
+      <div class="import-box">importar calculo como c;</div>
+      <p class="desc">Operações numéricas de cálculo. Funções que recebem <code>funcao</code> suportam funções async (retornam Promise). Não depende de nenhuma outra biblioteca.</p>
+
+      <div class="fn-entry">
+        <div class="fn-sig"><span class="fn-name">c.limite</span>(<span class="fn-pname">fn</span>: <span class="fn-ptype">funcao</span>, <span class="fn-pname">ponto</span>: <span class="fn-ptype">numero</span>) <span class="fn-ret">→ real</span></div>
+        <div class="fn-body"><div class="fn-desc">Limite numérico de <code>fn</code> quando x → <code>ponto</code> (aproximação bilateral com h=10⁻⁷).</div></div>
+      </div>
+      <div class="fn-entry">
+        <div class="fn-sig"><span class="fn-name">c.derivada</span>(<span class="fn-pname">fn</span>: <span class="fn-ptype">funcao</span>, <span class="fn-pname">ponto</span>: <span class="fn-ptype">numero</span>, <span class="fn-pname">ordem</span>?: <span class="fn-ptype">inteiro [1–4]</span>) <span class="fn-ret">→ real</span></div>
+        <div class="fn-body"><div class="fn-desc">Derivada numérica de ordem <code>ordem</code> (padrão: 1). Usa diferenças finitas centradas.</div></div>
+      </div>
+      <div class="fn-entry">
+        <div class="fn-sig"><span class="fn-name">c.integral</span>(<span class="fn-pname">fn</span>: <span class="fn-ptype">funcao</span>, <span class="fn-pname">a</span>: <span class="fn-ptype">numero</span>, <span class="fn-pname">b</span>: <span class="fn-ptype">numero</span>) <span class="fn-ret">→ real</span></div>
+        <div class="fn-body"><div class="fn-desc">Integral definida ∫ₐᵇ fn(x) dx pela regra de Simpson.</div></div>
+      </div>
+      <div class="fn-entry">
+        <div class="fn-sig"><span class="fn-name">c.taylor</span>(<span class="fn-pname">fn</span>: <span class="fn-ptype">funcao</span>, <span class="fn-pname">a</span>: <span class="fn-ptype">numero</span>, <span class="fn-pname">x</span>: <span class="fn-ptype">numero</span>, <span class="fn-pname">n</span>: <span class="fn-ptype">inteiro [0–4]</span>) <span class="fn-ret">→ real</span></div>
+        <div class="fn-body"><div class="fn-desc">Aproximação por série de Taylor de grau <code>n</code> em torno de <code>a</code>, avaliada em <code>x</code>.</div></div>
+      </div>
+      <div class="fn-entry"><div class="fn-sig"><span class="fn-name">c.gamma</span>(<span class="fn-pname">x</span>: <span class="fn-ptype">numero</span>) <span class="fn-ret">→ real</span></div><div class="fn-body"><div class="fn-desc">Função Gamma Γ(x). Generalização do fatorial: Γ(n) = (n−1)!</div></div></div>
+      <div class="fn-entry"><div class="fn-sig"><span class="fn-name">c.digamma</span>(<span class="fn-pname">x</span>: <span class="fn-ptype">numero</span>) <span class="fn-ret">→ real</span></div><div class="fn-body"><div class="fn-desc">Função Digamma ψ(x) = Γ'(x)/Γ(x).</div></div></div>
+      <div class="fn-entry"><div class="fn-sig"><span class="fn-name">c.zeta</span>(<span class="fn-pname">s</span>: <span class="fn-ptype">numero</span>) <span class="fn-ret">→ real</span></div><div class="fn-body"><div class="fn-desc">Função Zeta de Riemann. Requer s &gt; 1.</div></div></div>
+      <div class="fn-entry"><div class="fn-sig"><span class="fn-name">c.phi</span>(<span class="fn-pname">n</span>: <span class="fn-ptype">inteiro</span>) <span class="fn-ret">→ inteiro</span></div><div class="fn-body"><div class="fn-desc">Função totiente de Euler φ(n) — quantos inteiros em [1,n] são coprimos com n.</div></div></div>
+      <div class="fn-entry"><div class="fn-sig"><span class="fn-name">c.lambertW</span>(<span class="fn-pname">x</span>: <span class="fn-ptype">numero</span>) <span class="fn-ret">→ real</span></div><div class="fn-body"><div class="fn-desc">Função W de Lambert: solução de w·eʷ = x. Domínio: x ≥ −1/e.</div></div></div>
+    </section>
+
+    <!-- ═══════════════════════════════════════ ESTATISTICA ═══ -->
+    <section class="lib-section" id="estatistica">
+      <h2><code>estatistica</code> — Combinatória e Estatística</h2>
+      <div class="import-box">importar estatistica como e;</div>
+      <p class="desc">Todas as funções estatísticas recebem <strong>Lista de números</strong> e retornam primitivos (exceto <code>moda</code>). Não depende de nenhuma outra biblioteca.</p>
+
+      <div class="fn-entry"><div class="fn-sig"><span class="fn-name">e.fatorial</span>(<span class="fn-pname">n</span>: <span class="fn-ptype">inteiro [0–170]</span>) <span class="fn-ret">→ inteiro</span></div><div class="fn-body"><div class="fn-desc">n! Lança erro para n negativo ou n &gt; 170.</div></div></div>
+      <div class="fn-entry"><div class="fn-sig"><span class="fn-name">e.combinacao</span>(<span class="fn-pname">n</span>: <span class="fn-ptype">inteiro</span>, <span class="fn-pname">k</span>: <span class="fn-ptype">inteiro</span>) <span class="fn-ret">→ inteiro</span></div><div class="fn-body"><div class="fn-desc">Combinação C(n,k) = n! / (k!(n−k)!).</div></div></div>
+      <div class="fn-entry"><div class="fn-sig"><span class="fn-name">e.arranjo</span>(<span class="fn-pname">n</span>: <span class="fn-ptype">inteiro</span>, <span class="fn-pname">k</span>: <span class="fn-ptype">inteiro</span>) <span class="fn-ret">→ inteiro</span></div><div class="fn-body"><div class="fn-desc">Arranjo P(n,k) = n! / (n−k)!.</div></div></div>
+      <div class="fn-entry"><div class="fn-sig"><span class="fn-name">e.media</span>(<span class="fn-pname">l</span>: <span class="fn-ptype">Lista</span>) <span class="fn-ret">→ real</span></div><div class="fn-body"><div class="fn-desc">Média aritmética. Lista deve ser não-vazia e conter apenas números.</div></div></div>
+      <div class="fn-entry"><div class="fn-sig"><span class="fn-name">e.mediana</span>(<span class="fn-pname">l</span>: <span class="fn-ptype">Lista</span>) <span class="fn-ret">→ real</span></div><div class="fn-body"><div class="fn-desc">Mediana (medida central sem influência de outliers).</div></div></div>
+      <div class="fn-entry"><div class="fn-sig"><span class="fn-name">e.moda</span>(<span class="fn-pname">l</span>: <span class="fn-ptype">Lista</span>) <span class="fn-ret">→ Lista</span></div><div class="fn-body"><div class="fn-desc">Retorna uma <strong>Lista</strong> com todos os valores de maior frequência (pode ter múltiplas modas).</div></div></div>
+      <div class="fn-entry"><div class="fn-sig"><span class="fn-name">e.variancia</span>(<span class="fn-pname">l</span>: <span class="fn-ptype">Lista</span>) <span class="fn-ret">→ real</span></div><div class="fn-body"><div class="fn-desc">Variância populacional σ².</div></div></div>
+      <div class="fn-entry"><div class="fn-sig"><span class="fn-name">e.desvioPadrao</span>(<span class="fn-pname">l</span>: <span class="fn-ptype">Lista</span>) <span class="fn-ret">→ real</span></div><div class="fn-body"><div class="fn-desc">Desvio padrão populacional σ = √(variância).</div></div></div>
+    </section>
+
+    <!-- ═══════════════════════════════════════ TABULAR ═══ -->
+    <section class="lib-section" id="tabular">
+      <h2><code>tabular</code> — Exibição e Tabelas</h2>
+      <div class="import-box">importar tabular como t;</div>
+      <p class="desc">Exibe tabelas e visualizações no console. Aceita tanto <code>Lista</code> quanto arrays JS como parâmetros de coleção. Não depende de nenhuma outra biblioteca.</p>
+
+      <div class="fn-entry"><div class="fn-sig"><span class="fn-name">t.separador</span>() <span class="fn-ret">→ vazio</span></div><div class="fn-body"><div class="fn-desc">Insere uma linha horizontal tracejada no console de saída.</div></div></div>
+      <div class="fn-entry">
+        <div class="fn-sig"><span class="fn-name">t.tabela</span>(<span class="fn-pname">cabecalhos</span>: <span class="fn-ptype">Lista | super</span>, <span class="fn-pname">linhas</span>: <span class="fn-ptype">Lista | super</span>) <span class="fn-ret">→ vazio</span></div>
+        <div class="fn-body"><div class="fn-desc">Renderiza uma tabela HTML. <code>cabecalhos</code> é uma lista de textos. <code>linhas</code> é uma lista de listas (cada sublista = uma linha da tabela).</div></div>
+      </div>
+      <div class="fn-entry">
+        <div class="fn-sig"><span class="fn-name">t.progresso</span>(<span class="fn-pname">valor</span>: <span class="fn-ptype">numero</span>, <span class="fn-pname">max</span>: <span class="fn-ptype">numero</span>) <span class="fn-ret">→ vazio</span></div>
+        <div class="fn-body"><div class="fn-desc">Exibe barra de progresso proporcional a <code>valor/max</code>.</div></div>
+      </div>
+      <div class="fn-entry">
+        <div class="fn-sig"><span class="fn-name">t.tabelaVerdade</span>(<span class="fn-pname">expressoes</span>: <span class="fn-ptype">Lista | super | caracter</span>, <span class="fn-pname">variaveis</span>: <span class="fn-ptype">Lista | super</span>, <span class="fn-pname">mostrarInter</span>?: <span class="fn-ptype">booleano</span>) <span class="fn-ret">→ vazio</span></div>
+        <div class="fn-body"><div class="fn-desc">Gera tabela verdade para as expressões lógicas. Máximo 8 variáveis. <code>mostrarInter</code> exibe colunas intermediárias.</div></div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════ TEMPO ═══ -->
+    <section class="lib-section" id="tempo">
+      <h2><code>tempo</code> — Temporização e Performance</h2>
+      <div class="import-box">importar tempo como tp;</div>
+      <p class="desc">Medição de tempo de execução. Não depende de nenhuma outra biblioteca.</p>
+
+      <div class="fn-entry"><div class="fn-sig"><span class="fn-name">tp.agora</span>() <span class="fn-ret">→ real</span></div><div class="fn-body"><div class="fn-desc">Timestamp atual em milissegundos (desde epoch Unix). Alias: <code>tp.milisegundos()</code>.</div></div></div>
+      <div class="fn-entry">
+        <div class="fn-sig"><span class="fn-name">tp.medirExecucao</span>(<span class="fn-pname">fn</span>: <span class="fn-ptype">funcao</span>, <span class="fn-pname">...args</span>) <span class="fn-ret">→ qualquer</span></div>
+        <div class="fn-body"><div class="fn-desc">Executa <code>fn(...args)</code>, exibe o tempo gasto no console e retorna o resultado da função. Suporta funções async.</div></div>
+      </div>
+      <div class="fn-entry">
+        <div class="fn-sig"><span class="fn-name">tp.testeStress</span>(<span class="fn-pname">fn</span>: <span class="fn-ptype">funcao(n)</span>, <span class="fn-pname">n_max</span>: <span class="fn-ptype">inteiro</span>) <span class="fn-ret">→ vazio</span></div>
+        <div class="fn-body"><div class="fn-desc">Executa <code>fn(n)</code> para n = 10, 100, 1000, … até <code>n_max</code> e exibe tabela de tempo.</div></div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════ GRAFICOS ═══ -->
+    <section class="lib-section" id="graficos">
+      <h2><code>graficos</code> — Visualização</h2>
+      <div class="import-box">importar graficos como g;</div>
+      <p class="desc">Renderiza gráficos na saída. Todas as funções retornam <code>vazio</code>. Aceita <code>Lista</code>, arrays JS e objetos de configuração (como <code>Mapa</code> ou objeto JS). Depende do PlotterAPI (carregado automaticamente).</p>
+
+      <div class="fn-entry">
+        <div class="fn-sig"><span class="fn-name">g.plotar</span>(<span class="fn-pname">dados</span>: <span class="fn-ptype">funcao | Lista | super</span>, <span class="fn-pname">config</span>?: <span class="fn-ptype">Mapa | {tipo, titulo, intervalo, largura, altura}</span>) <span class="fn-ret">→ vazio</span></div>
+        <div class="fn-body">
+          <div class="fn-desc">Função geral de plotagem. Tipo automático baseado em <code>dados</code>. <code>config.tipo</code> pode ser <code>"linha"</code>, <code>"barra"</code>, <code>"dispersao"</code> ou <code>"3d"</code>. <code>config.intervalo</code>: <code>[xMin, xMax]</code>.</div>
+        </div>
+      </div>
+      <div class="fn-entry">
+        <div class="fn-sig"><span class="fn-name">g.grafico</span>(<span class="fn-pname">funcoes</span>: <span class="fn-ptype">funcao | Lista | super</span>, <span class="fn-pname">opcoes</span>?: <span class="fn-ptype">Mapa | {titulo, intervalo, largura, altura, eixoX, eixoY}</span>) <span class="fn-ret">→ vazio</span></div>
+        <div class="fn-body"><div class="fn-desc">Gráfico composito: aceita funções, pontos <code>[x,y]</code> ou objetos <code>{x,y,rotulo}</code> em uma única lista mista.</div></div>
+      </div>
+      <div class="fn-entry">
+        <div class="fn-sig"><span class="fn-name">g.dispersao</span>(<span class="fn-pname">pontos</span>: <span class="fn-ptype">Lista | super</span>, <span class="fn-pname">opcoes</span>?) <span class="fn-ret">→ vazio</span></div>
+        <div class="fn-body"><div class="fn-desc">Gráfico de dispersão (scatter). <code>pontos</code> é lista de pares <code>[x,y]</code>.</div></div>
+      </div>
+      <div class="fn-entry">
+        <div class="fn-sig"><span class="fn-name">g.superficie3D</span>(<span class="fn-pname">fn</span>: <span class="fn-ptype">funcao(x,y)</span>, <span class="fn-pname">opcoes</span>?) <span class="fn-ret">→ vazio</span></div>
+        <div class="fn-body"><div class="fn-desc">Superfície 3D z = fn(x,y). <code>opcoes.intervalo</code> controla o range em X e Y.</div></div>
+      </div>
+      <div class="fn-entry">
+        <div class="fn-sig"><span class="fn-name">g.conica</span>(<span class="fn-pname">A,B,C,D,E,F</span>: <span class="fn-ptype">numero</span>, <span class="fn-pname">opcoes</span>?) <span class="fn-ret">→ vazio</span></div>
+        <div class="fn-body"><div class="fn-desc">Plota a cônica implícita Ax² + Bxy + Cy² + Dx + Ey + F = 0.</div></div>
+      </div>
+      <div class="fn-entry">
+        <div class="fn-sig"><span class="fn-name">g.relacao</span>(<span class="fn-pname">rel</span>: <span class="fn-ptype">Lista[funcao] | {x,y,t}</span>, <span class="fn-pname">opcoes</span>?) <span class="fn-ret">→ vazio</span></div>
+        <div class="fn-body"><div class="fn-desc">Curva implícita multi-ramo ou paramétrica. Para paramétrica: <code>{x: fn(t), y: fn(t), t: [tMin, tMax]}</code>.</div></div>
+      </div>
+      <div class="fn-entry">
+        <div class="fn-sig"><span class="fn-name">g.anotado</span>(<span class="fn-pname">f</span>: <span class="fn-ptype">funcao</span>, <span class="fn-pname">marcadores</span>: <span class="fn-ptype">Lista | super</span>, <span class="fn-pname">opcoes</span>?) <span class="fn-ret">→ vazio</span></div>
+        <div class="fn-body"><div class="fn-desc">Plota <code>f</code> com marcadores anotados. Marcadores: <code>[x]</code> (raiz), <code>{root: x}</code>, <code>{x,y}</code> (ponto manual).</div></div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════ PROBABILIDADE ═══ -->
+    <section class="lib-section" id="probabilidade">
+      <h2><code>probabilidade</code> — Probabilidade e Aleatoriedade</h2>
+      <div class="import-box">importar probabilidade como p;</div>
+      <p class="desc">Amostragem e simulação estocástica. Não depende de nenhuma outra biblioteca.</p>
+
+      <div class="fn-entry"><div class="fn-sig"><span class="fn-name">p.uniforme</span>(<span class="fn-pname">min</span>: <span class="fn-ptype">real</span>, <span class="fn-pname">max</span>: <span class="fn-ptype">real</span>) <span class="fn-ret">→ real</span></div><div class="fn-body"><div class="fn-desc">Real aleatório uniforme em [min, max].</div></div></div>
+      <div class="fn-entry"><div class="fn-sig"><span class="fn-name">p.aleatorioInteiro</span>(<span class="fn-pname">min</span>: <span class="fn-ptype">inteiro</span>, <span class="fn-pname">max</span>: <span class="fn-ptype">inteiro</span>) <span class="fn-ret">→ inteiro</span></div><div class="fn-body"><div class="fn-desc">Inteiro aleatório uniforme em [min, max].</div></div></div>
+      <div class="fn-entry">
+        <div class="fn-sig"><span class="fn-name">p.rolarDados</span>(<span class="fn-pname">quantidade</span>: <span class="fn-ptype">inteiro</span>, <span class="fn-pname">faces</span>: <span class="fn-ptype">inteiro</span>) <span class="fn-ret">→ Lista</span></div>
+        <div class="fn-body"><div class="fn-desc">Simula <code>quantidade</code> lançamentos de dado de <code>faces</code> lados. Retorna <strong>Lista</strong> de resultados.</div></div>
+      </div>
+      <div class="fn-entry">
+        <div class="fn-sig"><span class="fn-name">p.sortearComPesos</span>(<span class="fn-pname">itens</span>: <span class="fn-ptype">Lista | super</span>, <span class="fn-pname">pesos</span>: <span class="fn-ptype">Lista | super</span>) <span class="fn-ret">→ qualquer</span></div>
+        <div class="fn-body"><div class="fn-desc">Amostragem com pesos proporcionais. Retorna um item escolhido aleatoriamente.</div></div>
+      </div>
+      <div class="fn-entry">
+        <div class="fn-sig"><span class="fn-name">p.monteCarlo</span>(<span class="fn-pname">fn</span>: <span class="fn-ptype">funcao(x)</span>, <span class="fn-pname">n</span>: <span class="fn-ptype">inteiro</span>) <span class="fn-ret">→ real</span></div>
+        <div class="fn-body">
+          <div class="fn-desc">Calcula ∫₀¹ fn(x) dx via simulação Monte Carlo com <code>n</code> amostras. <code>fn(x)</code> deve retornar <code>booleano</code> (se ponto está na região) ou <code>numero</code> (fração).</div>
+          <div class="code-ex"><span class="kw">importar</span> probabilidade <span class="kw">como</span> p;
+<span class="t">real</span> pi_est = p.<span class="fn">monteCarlo</span>(
+    (x) => {
+        <span class="t">real</span> y = p.<span class="fn">uniforme</span>(0, 1);
+        <span class="kw">retorno</span> x*x + y*y <= 1;
+    }, 100000
+) * 4;
+<span class="fn">imprima</span>(f<span class="s">"π ≈ {pi_est}"</span>);</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════ ALGEBRA ═══ -->
+    <section class="lib-section" id="algebra">
+      <h2><code>algebra</code> — Álgebra Linear e Geometria Analítica</h2>
+      <div class="import-box">importar algebra como al;</div>
+      <div class="dep-box">
+        <strong>Dependência:</strong> Para <em>criar</em> vetores e matrizes a passar para esta biblioteca, importe também <code>metodos</code> (ou use a sintaxe <code>a...b</code>).<br>
+        Os tipos <code>Vetor</code> e <code>Matriz</code> são sempre disponíveis — a dependência é de <em>construção</em>, não de execução.
+      </div>
+      <p class="desc">Todas as funções esperam e retornam <code>Vetor</code> ou <code>Matriz</code> (nunca arrays JS puros). Funções geométricas 2D aceitam vetores de dimensão ≥ 2; funções 3D exigem dimensão = 3.</p>
+
+      <h3>Geração</h3>
+      <div class="fn-entry">
+        <div class="fn-sig"><span class="fn-name">al.linspace</span>(<span class="fn-pname">inicio</span>: <span class="fn-ptype">numero</span>, <span class="fn-pname">fim</span>: <span class="fn-ptype">numero</span>, <span class="fn-pname">n</span>: <span class="fn-ptype">inteiro</span>) <span class="fn-ret">→ Vetor</span></div>
+        <div class="fn-body"><div class="fn-desc">Retorna <strong>Vetor</strong> com <code>n</code> valores igualmente espaçados de <code>inicio</code> a <code>fim</code> (ambos incluídos). Pronto para operações vetoriais.</div><div class="fn-throws">Lança erro se n &lt; 2.</div></div>
+      </div>
+      <div class="fn-entry"><div class="fn-sig"><span class="fn-name">al.identidade</span>(<span class="fn-pname">n</span>: <span class="fn-ptype">inteiro</span>) <span class="fn-ret">→ Matriz</span></div><div class="fn-body"><div class="fn-desc">Matriz identidade n×n.</div></div></div>
+      <div class="fn-entry"><div class="fn-sig"><span class="fn-name">al.zeros</span>(<span class="fn-pname">m</span>: <span class="fn-ptype">inteiro</span>, <span class="fn-pname">n</span>: <span class="fn-ptype">inteiro</span>) <span class="fn-ret">→ Matriz</span></div><div class="fn-body"><div class="fn-desc">Matriz m×n com todos os elementos iguais a zero.</div></div></div>
+
+      <h3>Operações vetoriais</h3>
+      <div class="fn-entry"><div class="fn-sig"><span class="fn-name">al.vetorial</span>(<span class="fn-pname">v</span>: <span class="fn-ptype">Vetor</span>, <span class="fn-pname">u</span>: <span class="fn-ptype">Vetor</span>) <span class="fn-ret">→ Vetor</span></div><div class="fn-body"><div class="fn-desc">Produto vetorial v × u. Exige dimensão 3.</div></div></div>
+      <div class="fn-entry"><div class="fn-sig"><span class="fn-name">al.angulo</span>(<span class="fn-pname">v</span>, <span class="fn-pname">u</span>: <span class="fn-ptype">Vetor</span>) <span class="fn-ret">→ real</span></div><div class="fn-body"><div class="fn-desc">Ângulo entre dois vetores em radianos.</div></div></div>
+      <div class="fn-entry"><div class="fn-sig"><span class="fn-name">al.anguloDeg</span>(<span class="fn-pname">v</span>, <span class="fn-pname">u</span>: <span class="fn-ptype">Vetor</span>) <span class="fn-ret">→ real</span></div><div class="fn-body"><div class="fn-desc">Ângulo entre dois vetores em graus.</div></div></div>
+      <div class="fn-entry"><div class="fn-sig"><span class="fn-name">al.projecao</span>(<span class="fn-pname">v</span>, <span class="fn-pname">u</span>: <span class="fn-ptype">Vetor</span>) <span class="fn-ret">→ Vetor</span></div><div class="fn-body"><div class="fn-desc">Projeção ortogonal de <code>v</code> sobre <code>u</code>. Lança erro se u é vetor nulo.</div></div></div>
+      <div class="fn-entry"><div class="fn-sig"><span class="fn-name">al.saoParalelos</span>(<span class="fn-pname">v</span>, <span class="fn-pname">u</span>: <span class="fn-ptype">Vetor</span>) <span class="fn-ret">→ booleano</span></div><div class="fn-body"><div class="fn-desc">Verdadeiro se v e u são paralelos (produto vetorial ≈ 0).</div></div></div>
+      <div class="fn-entry"><div class="fn-sig"><span class="fn-name">al.saoOrtogonais</span>(<span class="fn-pname">v</span>, <span class="fn-pname">u</span>: <span class="fn-ptype">Vetor</span>) <span class="fn-ret">→ booleano</span></div><div class="fn-body"><div class="fn-desc">Verdadeiro se v e u são perpendiculares (produto interno ≈ 0).</div></div></div>
+
+      <h3>Operações matriciais</h3>
+      <div class="fn-entry"><div class="fn-sig"><span class="fn-name">al.determinante</span>(<span class="fn-pname">M</span>: <span class="fn-ptype">Matriz</span>) <span class="fn-ret">→ real</span></div><div class="fn-body"><div class="fn-desc">Determinante de matriz quadrada. Usa eliminação gaussiana para n &gt; 3.</div></div></div>
+      <div class="fn-entry"><div class="fn-sig"><span class="fn-name">al.traco</span>(<span class="fn-pname">M</span>: <span class="fn-ptype">Matriz</span>) <span class="fn-ret">→ real</span></div><div class="fn-body"><div class="fn-desc">Traço (soma da diagonal principal). Exige matriz quadrada.</div></div></div>
+      <div class="fn-entry"><div class="fn-sig"><span class="fn-name">al.inversa</span>(<span class="fn-pname">M</span>: <span class="fn-ptype">Matriz</span>) <span class="fn-ret">→ Matriz</span></div><div class="fn-body"><div class="fn-desc">Matriz inversa (Gauss-Jordan). Lança erro se M é singular.</div></div></div>
+      <div class="fn-entry">
+        <div class="fn-sig"><span class="fn-name">al.resolverSistema</span>(<span class="fn-pname">A</span>: <span class="fn-ptype">Matriz</span>, <span class="fn-pname">b</span>: <span class="fn-ptype">Vetor</span>) <span class="fn-ret">→ Vetor</span></div>
+        <div class="fn-body"><div class="fn-desc">Resolve Ax = b por eliminação gaussiana. A deve ser quadrada; b deve ter tantas linhas quanto A. Retorna <strong>Vetor</strong> solução x.</div></div>
+      </div>
+
+      <h3>Geometria analítica</h3>
+      <div class="fn-entry"><div class="fn-sig"><span class="fn-name">al.distancia</span>(<span class="fn-pname">p1</span>, <span class="fn-pname">p2</span>: <span class="fn-ptype">Vetor</span>) <span class="fn-ret">→ real</span></div><div class="fn-body"><div class="fn-desc">Distância euclidiana entre dois pontos (mesma dimensão).</div></div></div>
+      <div class="fn-entry"><div class="fn-sig"><span class="fn-name">al.pontoMedio</span>(<span class="fn-pname">p1</span>, <span class="fn-pname">p2</span>: <span class="fn-ptype">Vetor</span>) <span class="fn-ret">→ Vetor</span></div><div class="fn-body"><div class="fn-desc">Ponto médio entre p1 e p2.</div></div></div>
+      <div class="fn-entry"><div class="fn-sig"><span class="fn-name">al.equacaoReta</span>(<span class="fn-pname">A</span>, <span class="fn-pname">B</span>: <span class="fn-ptype">Vetor</span>) <span class="fn-ret">→ Mapa {a,b,c}</span></div><div class="fn-body"><div class="fn-desc">Equação ax + by + c = 0 passando por A e B. Retorna <strong>Mapa</strong> com chaves <code>"a"</code>, <code>"b"</code>, <code>"c"</code>.</div></div></div>
+      <div class="fn-entry"><div class="fn-sig"><span class="fn-name">al.distPontoReta</span>(<span class="fn-pname">P</span>, <span class="fn-pname">A</span>, <span class="fn-pname">B</span>: <span class="fn-ptype">Vetor</span>) <span class="fn-ret">→ real</span></div><div class="fn-body"><div class="fn-desc">Distância do ponto P à reta definida por A e B (2D ou 3D).</div></div></div>
+      <div class="fn-entry"><div class="fn-sig"><span class="fn-name">al.intersecaoRetas</span>(<span class="fn-pname">A</span>, <span class="fn-pname">B</span>, <span class="fn-pname">C</span>, <span class="fn-pname">D</span>: <span class="fn-ptype">Vetor</span>) <span class="fn-ret">→ Vetor</span></div><div class="fn-body"><div class="fn-desc">Interseção 2D das retas AB e CD. Lança erro se paralelas/coincidentes.</div></div></div>
+      <div class="fn-entry"><div class="fn-sig"><span class="fn-name">al.areaTriangulo</span>(<span class="fn-pname">A</span>, <span class="fn-pname">B</span>, <span class="fn-pname">C</span>: <span class="fn-ptype">Vetor</span>) <span class="fn-ret">→ real</span></div><div class="fn-body"><div class="fn-desc">Área do triângulo ABC (2D: fórmula do shoelace; 3D: produto vetorial).</div></div></div>
+      <div class="fn-entry"><div class="fn-sig"><span class="fn-name">al.perimetroTriangulo</span>(<span class="fn-pname">A</span>, <span class="fn-pname">B</span>, <span class="fn-pname">C</span>: <span class="fn-ptype">Vetor</span>) <span class="fn-ret">→ real</span></div><div class="fn-body"><div class="fn-desc">Soma das três arestas do triângulo.</div></div></div>
+      <div class="fn-entry"><div class="fn-sig"><span class="fn-name">al.areaCirculo</span>(<span class="fn-pname">r</span>: <span class="fn-ptype">numero</span>) <span class="fn-ret">→ real</span></div><div class="fn-body"><div class="fn-desc">π·r².</div></div></div>
+      <div class="fn-entry"><div class="fn-sig"><span class="fn-name">al.perimetroCirculo</span>(<span class="fn-pname">r</span>: <span class="fn-ptype">numero</span>) <span class="fn-ret">→ real</span></div><div class="fn-body"><div class="fn-desc">2·π·r.</div></div></div>
+      <div class="fn-entry"><div class="fn-sig"><span class="fn-name">al.pontoCirculo</span>(<span class="fn-pname">cx</span>, <span class="fn-pname">cy</span>, <span class="fn-pname">r</span>, <span class="fn-pname">theta</span>: <span class="fn-ptype">numero</span>) <span class="fn-ret">→ Vetor</span></div><div class="fn-body"><div class="fn-desc">Ponto na circunferência centrada em (cx,cy) com raio r no ângulo theta (radianos). Retorna <strong>Vetor</strong> [x, y].</div></div></div>
+      <div class="fn-entry"><div class="fn-sig"><span class="fn-name">al.equacaoPlano</span>(<span class="fn-pname">A</span>, <span class="fn-pname">B</span>, <span class="fn-pname">C</span>: <span class="fn-ptype">Vetor</span>) <span class="fn-ret">→ Mapa {a,b,c,d}</span></div><div class="fn-body"><div class="fn-desc">Plano ax + by + cz + d = 0 passando por A, B, C (3D). Retorna <strong>Mapa</strong> com chaves <code>"a"</code>, <code>"b"</code>, <code>"c"</code>, <code>"d"</code>.</div></div></div>
+      <div class="fn-entry"><div class="fn-sig"><span class="fn-name">al.distPontoPlano</span>(<span class="fn-pname">P</span>: <span class="fn-ptype">Vetor</span>, <span class="fn-pname">plano</span>: <span class="fn-ptype">Mapa</span>) <span class="fn-ret">→ real</span></div><div class="fn-body"><div class="fn-desc">Distância de P ao plano (retorno de <code>al.equacaoPlano</code>).</div></div></div>
+      <div class="fn-entry"><div class="fn-sig"><span class="fn-name">al.saoColineares</span>(<span class="fn-pname">A</span>, <span class="fn-pname">B</span>, <span class="fn-pname">C</span>: <span class="fn-ptype">Vetor</span>) <span class="fn-ret">→ booleano</span></div><div class="fn-body"><div class="fn-desc">Verdadeiro se A, B, C são colineares (área do triângulo &lt; 10⁻¹⁰).</div></div></div>
+      <div class="fn-entry"><div class="fn-sig"><span class="fn-name">al.saoCoplanares</span>(<span class="fn-pname">A</span>, <span class="fn-pname">B</span>, <span class="fn-pname">C</span>, <span class="fn-pname">D</span>: <span class="fn-ptype">Vetor</span>) <span class="fn-ret">→ booleano</span></div><div class="fn-body"><div class="fn-desc">Verdadeiro se A, B, C, D são coplanares (3D). Exige dimensão 3.</div></div></div>
+    </section>
+
+    <!-- ═══════════════════════════════════════ LATEX ═══ -->
+    <section class="lib-section" id="latex">
+      <h2><code>latex</code> — Renderização de Fórmulas</h2>
+      <div class="import-box">importar latex como lt;</div>
+      <p class="desc">Renderiza fórmulas LaTeX usando KaTeX (carregado automaticamente na primeira chamada). Todas as funções de exibição são assíncronas. Não depende de nenhuma outra biblioteca.</p>
+
+      <div class="fn-entry">
+        <div class="fn-sig"><span class="fn-name">lt.linha</span>(<span class="fn-pname">tex</span>: <span class="fn-ptype">caracter</span>) <span class="fn-ret">→ Promise&lt;vazio&gt;</span></div>
+        <div class="fn-body"><div class="fn-desc">Renderiza LaTeX <em>inline</em> na saída. Use raw string <code>#"..."</code> para evitar interpretação de barras invertidas.</div><div class="code-ex">lt.<span class="fn">linha</span>(#"\frac{1}{2} \cdot \pi");</div></div>
+      </div>
+      <div class="fn-entry">
+        <div class="fn-sig"><span class="fn-name">lt.bloco</span>(<span class="fn-pname">...exprs</span>: <span class="fn-ptype">caracter</span>) <span class="fn-ret">→ Promise&lt;vazio&gt;</span></div>
+        <div class="fn-body"><div class="fn-desc">Renderiza LaTeX em bloco (ambiente <code>aligned</code>). Aceita múltiplas expressões.</div></div>
+      </div>
+      <div class="fn-entry">
+        <div class="fn-sig"><span class="fn-name">lt.converterParaLatex</span>(<span class="fn-pname">fn</span>: <span class="fn-ptype">funcao | caracter</span>) <span class="fn-ret">→ Promise&lt;vazio&gt;</span></div>
+        <div class="fn-body"><div class="fn-desc">Converte uma expressão JS para LaTeX e a renderiza no console.</div></div>
+      </div>
+      <div class="fn-entry">
+        <div class="fn-sig"><span class="fn-name">lt.texString</span>(<span class="fn-pname">fn</span>: <span class="fn-ptype">funcao | caracter</span>) <span class="fn-ret">→ caracter</span></div>
+        <div class="fn-body"><div class="fn-desc">Converte expressão JS → string LaTeX <em>sem renderizar</em>. A única função síncrona do módulo.</div></div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════ ARQUIVOS ═══ -->
+    <section class="lib-section" id="arquivos">
+      <h2><code>arquivos</code> — Leitura de Arquivos</h2>
+      <div class="import-box">importar arquivos como arq;</div>
+      <p class="desc">Todas as funções de leitura são assíncronas (abrem um diálogo de arquivo) e retornam tipos nativos do Pseudo. Não depende de nenhuma outra biblioteca.</p>
+
+      <h3>Opção <code>tipo</code> — formas de retorno de dados tabulares</h3>
+      <table class="type-table">
+        <tr><th>tipo</th><th>Retorno</th><th>Descrição</th></tr>
+        <tr><td>"lista"</td><td>Lista de valores</td><td>Apenas a primeira coluna.</td></tr>
+        <tr><td>"lista-mapas" <em>(padrão)</em></td><td>Lista de Mapas</td><td>Cada linha é um Mapa <code>{coluna → valor}</code>.</td></tr>
+        <tr><td>"lista-listas"</td><td>Lista de Listas</td><td>Cada linha é uma Lista de valores.</td></tr>
+        <tr><td>"mapa-listas"</td><td>Mapa de Listas</td><td>Cada coluna é uma Lista acessível pela chave.</td></tr>
+        <tr><td>"matriz"</td><td>Matriz</td><td>Todos os valores como números (parseFloat). Use para dados 100% numéricos.</td></tr>
+      </table>
+
+      <div class="fn-entry">
+        <div class="fn-sig"><span class="fn-name">arq.lerCSV</span>(<span class="fn-pname">opcoes</span>?: <span class="fn-ptype">Mapa | {separador?, cabecalho?, tipo?, converterNumeros?}</span>) <span class="fn-ret">→ Promise&lt;Lista|Mapa|Matriz&gt;</span></div>
+        <div class="fn-body">
+          <div class="fn-desc">Abre diálogo para arquivo CSV/TSV/TXT e retorna dados estruturados conforme <code>tipo</code>.</div>
+          <table class="param-table">
+            <tr><th>Opção</th><th>Padrão</th><th>Descrição</th></tr>
+            <tr><td>separador</td><td class="t">","</td><td>Caractere separador de colunas.</td></tr>
+            <tr><td>cabecalho</td><td class="t">verdadeiro</td><td>Se verdadeiro, a primeira linha é usada como nomes das colunas.</td></tr>
+            <tr><td>tipo</td><td class="t">"lista-mapas"</td><td>Formato de retorno (ver tabela acima).</td></tr>
+            <tr><td>converterNumeros</td><td class="t">verdadeiro</td><td>Converte automaticamente strings numéricas para número.</td></tr>
+          </table>
+        </div>
+      </div>
+
+      <div class="fn-entry">
+        <div class="fn-sig"><span class="fn-name">arq.lerJSON</span>(<span class="fn-pname">opcoes</span>?: <span class="fn-ptype">{caminho?}</span>) <span class="fn-ret">→ Promise&lt;Lista|Mapa|qualquer&gt;</span></div>
+        <div class="fn-body">
+          <div class="fn-desc">Abre diálogo para arquivo JSON. Arrays JSON → <code>Lista</code>; objetos JSON → <code>Mapa</code>; valores primitivos retornam como estão. A conversão é <strong>recursiva</strong>. <code>opcoes.caminho</code> permite navegar em subpropriedades separadas por <code>"."</code>.</div>
+          <div class="code-ex"><span class="c">// JSON: {"dados": [1, 2, 3]}</span>
+<span class="t">Lista</span> nums = arq.<span class="fn">lerJSON</span>({caminho: <span class="s">"dados"</span>});
+<span class="c">// retorna Lista [1, 2, 3]</span></div>
+        </div>
+      </div>
+
+      <div class="fn-entry">
+        <div class="fn-sig"><span class="fn-name">arq.lerTXT</span>(<span class="fn-pname">opcoes</span>?: <span class="fn-ptype">{tipo?, separador?}</span>) <span class="fn-ret">→ Promise&lt;Lista|caracter&gt;</span></div>
+        <div class="fn-body">
+          <div class="fn-desc">Lê arquivo de texto. <code>tipo="texto"</code> → <code>caracter</code> com conteúdo completo. Caso contrário → <code>Lista</code> de linhas não-vazias, divididas pelo <code>separador</code> (padrão: <code>"\n"</code>).</div>
+        </div>
+      </div>
+
+      <div class="fn-entry">
+        <div class="fn-sig"><span class="fn-name">arq.lerPDADOS</span>(<span class="fn-pname">opcoes</span>?: <span class="fn-ptype">{tipo?, converterNumeros?}</span>) <span class="fn-ret">→ Promise&lt;Lista|Mapa|Matriz&gt;</span></div>
+        <div class="fn-body">
+          <div class="fn-desc">Lê arquivo no formato nativo <code>.pdados</code> (cabeçalho <code>§PSEUDO-DADOS:1.0</code>). Aceita as mesmas opções de <code>tipo</code> e <code>converterNumeros</code> que <code>lerCSV</code>. Lança erro se o arquivo não tiver cabeçalho válido.</div>
+        </div>
+      </div>
+
+      <div class="fn-entry">
+        <div class="fn-sig"><span class="fn-name">arq.abrirImportador</span>() <span class="fn-ret">→ vazio</span></div>
+        <div class="fn-body"><div class="fn-desc">Abre o <strong>Importador de Dados</strong> em nova aba — ferramenta visual para explorar CSV/JSON/TXT e gerar código Pseudo automaticamente.</div></div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script>
+  // Highlight active sidebar link on scroll
+  const links = document.querySelectorAll('.sidebar a[href^="#"]');
+  const sections = [...links].map(l => document.querySelector(l.getAttribute('href')));
+  const onScroll = () => {
+    let cur = 0;
+    sections.forEach((s, i) => { if (s && s.getBoundingClientRect().top < 80) cur = i; });
+    links.forEach((l, i) => l.classList.toggle('active', i === cur));
+  };
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+</script>
+</body>
+</html>
