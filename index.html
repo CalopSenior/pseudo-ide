@@ -572,7 +572,28 @@ lt.linha(<span class="ex-str">#"e^{i\pi} + 1 = 0"</span>)
 lt.linha(<span class="ex-str">"\frac{1}{2}"</span>) <span class="ex-cmt">// ERRADO — \f é interpretado pelo JS</span></pre>
                     <p class="tab-intro">
                         <strong>Quando usar:</strong> sempre que a string contiver <code>\</code> — para LaTeX, expressões regulares literais ou qualquer texto com barras.<br>
-                        <strong>Limitação:</strong> não é possível incluir o mesmo caractere de aspas dentro do raw string (use <code>#'...'</code> se precisar de <code>"</code> no conteúdo).
+                        <strong>Limitação:</strong> raw strings não permitem interpolação <code>{expr}</code>. Para combinar <code>\</code> literal <em>e</em> interpolação, use <code>#f"..."</code>.
+                    </p>
+
+                    <h4>Raw f-strings — prefixo <code>#f</code></h4>
+                    <p class="tab-intro">
+                        Combina o melhor dos dois: barras são literais (como <code>#"..."</code>) e interpolação <code>{expr}</code> funciona (como <code>f"..."</code>).
+                        Essencial para gerar LaTeX dinamicamente com valores calculados:
+                    </p>
+                    <pre class="code-example"><span class="ex-kw">importar</span> latex <span class="ex-kw">como</span> lt;
+<span class="ex-kw">importar</span> mat <span class="ex-kw">como</span> mat;
+
+real coef = <span class="ex-num">3.14</span>;
+super termo = <span class="ex-str">"x^2"</span>;
+
+<span class="ex-cmt">// f"..." perde a barra: \cdot vira cdot — ERRADO</span>
+lt.linha(f<span class="ex-str">"{coef} \cdot {termo}"</span>)      <span class="ex-cmt">// renderiza: 3.14cdotx^2</span>
+
+<span class="ex-cmt">// #f"..." preserva a barra e interpola — CORRETO</span>
+lt.linha(<span class="ex-str">#f"{coef} \cdot {termo}"</span>)    <span class="ex-cmt">// renderiza: 3.14·x²</span>
+lt.bloco(<span class="ex-str">#f"\frac{coef}{mat.abs(-2)}"</span>) <span class="ex-cmt">// renderiza: fração LaTeX</span></pre>
+                    <p class="tab-intro">
+                        <strong>Regra geral para LaTeX:</strong> se a string for fixa, use <code>#"..."</code>. Se precisar interpolar variáveis, use <code>#f"..."</code>. Nunca use <code>f"..."</code> comum com comandos LaTeX.
                     </p>
 
                     <h4>Repetição de texto</h4>
