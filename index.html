@@ -611,6 +611,31 @@ real pequeno = <span class="ex-num">1.5e-3</span>; <span class="ex-cmt">// 0.001
 
 super x = <span class="ex-fn">intervalo</span>(<span class="ex-num">0</span>, <span class="ex-num">360</span>, <span class="ex-num">5</span>);</pre>
 
+                    <h3>Operador de range <code>a...b</code></h3>
+                    <p class="tab-intro">
+                        Cria um array de inteiros de <code>a</code> até <code>b</code> (ambos <strong>incluídos</strong>).
+                        Pode ser passado diretamente para os construtores de <code>lista</code>, <code>conjunto</code>, <code>mapa</code>, <code>vetor</code>:
+                    </p>
+                    <table class="doc-table">
+                        <tr><th>Forma</th><th>Resultado</th></tr>
+                        <tr><td><code>1...5</code></td><td>[1, 2, 3, 4, 5] — inclusivo nos dois extremos</td></tr>
+                        <tr><td><code>5...1</code></td><td>[5, 4, 3, 2, 1] — passo automático negativo</td></tr>
+                        <tr><td><code>m.lista(1...n)</code></td><td>PseudoLista com os inteiros do intervalo</td></tr>
+                        <tr><td><code>m.conjunto(1...n)</code></td><td>PseudoConjunto com os inteiros do intervalo</td></tr>
+                        <tr><td><code>m.vetor(1...n)</code></td><td>PseudoVetor com os inteiros do intervalo</td></tr>
+                    </table>
+                    <pre class="code-example"><span class="ex-kw">importar</span> metodos.lista <span class="ex-kw">como</span> li;
+<span class="ex-kw">importar</span> metodos.conjunto <span class="ex-kw">como</span> cj;
+<span class="ex-kw">importar</span> metodos.vetor <span class="ex-kw">como</span> vc;
+
+<span class="ex-kw">super</span> xi = li(<span class="ex-num">1</span>...<span class="ex-num">10</span>);   <span class="ex-cmt">// lista [1,2,3,4,5,6,7,8,9,10]</span>
+<span class="ex-kw">super</span> s  = cj(<span class="ex-num">1</span>...<span class="ex-num">5</span>);    <span class="ex-cmt">// conjunto {1,2,3,4,5}</span>
+<span class="ex-kw">super</span> v  = vc(<span class="ex-num">0</span>...<span class="ex-num">3</span>);    <span class="ex-cmt">// vetor [0,1,2,3]</span>
+
+<span class="ex-cmt">// Espalhamento (spread) nativo também é suportado:</span>
+<span class="ex-kw">super</span> a = [<span class="ex-num">1</span>, <span class="ex-num">2</span>, <span class="ex-num">3</span>];
+<span class="ex-kw">super</span> b = [...a, <span class="ex-num">4</span>, <span class="ex-num">5</span>];   <span class="ex-cmt">// [1,2,3,4,5]</span></pre>
+
                 </div><!-- /tab-tipos -->
 
 
@@ -1134,6 +1159,18 @@ saudar(<span class="ex-str">"Bruno"</span>, <span class="ex-str">"Oi"</span>);  
 <span class="ex-cmt">// Fatorial via produtório: Π i de 1 a 5 = 120</span>
 <span class="ex-kw">funcao</span> id(i) { <span class="ex-kw">retorno</span> i; }
 <span class="ex-fn">imprima</span>(m.produtorio(id, <span class="ex-num">1</span>, <span class="ex-num">5</span>)); <span class="ex-cmt">// 120</span></pre>
+
+                    <h4>m.linspace(inicio, fim, n)</h4>
+                    <p class="tab-intro">Gera um array com <strong>n</strong> valores igualmente espaçados de <code>inicio</code> até <code>fim</code> (ambos incluídos). Análogo ao <code>numpy.linspace</code>.</p>
+                    <pre class="code-example"><span class="ex-kw">importar</span> mat <span class="ex-kw">como</span> m;
+
+<span class="ex-fn">imprima</span>(m.linspace(<span class="ex-num">0</span>, <span class="ex-num">1</span>, <span class="ex-num">5</span>));   <span class="ex-cmt">// [0, 0.25, 0.5, 0.75, 1]</span>
+<span class="ex-fn">imprima</span>(m.linspace(<span class="ex-num">0</span>, <span class="ex-num">360</span>, <span class="ex-num">7</span>)); <span class="ex-cmt">// [0, 60, 120, 180, 240, 300, 360]</span>
+
+<span class="ex-cmt">// Útil para eixos de gráficos:</span>
+<span class="ex-kw">super</span> x = m.linspace(<span class="ex-num">0</span>, <span class="ex-num">2</span>*m.PI, <span class="ex-num">100</span>);
+<span class="ex-kw">super</span> y = x.map(v => m.sen(v));</pre>
+
                 </div><!-- /tab-mat -->
 
 
@@ -2411,6 +2448,15 @@ importar metodos como m;
 <span class="ex-fn">imprima</span>(<span class="ex-str">"det(A):"</span>, al.determinante(A));
 <span class="ex-fn">imprima</span>(<span class="ex-str">"A⁻¹:"</span>, al.inversa(A));</pre>
                     </div>
+
+
+                    <h3>al.linspace(inicio, fim, n)</h3>
+                    <p class="tab-intro">Gera um <strong>vetor</strong> com <code>n</code> valores igualmente espaçados de <code>inicio</code> a <code>fim</code> (inclusivo). Retorna um objeto <code>vetor</code> pronto para operações de álgebra linear.</p>
+                    <pre class="code-example"><span class="ex-kw">importar</span> algebra <span class="ex-kw">como</span> al;
+
+<span class="ex-kw">super</span> v = al.linspace(<span class="ex-num">0</span>, <span class="ex-num">1</span>, <span class="ex-num">5</span>);
+<span class="ex-fn">imprima</span>(v);               <span class="ex-cmt">// vetor [0, 0.25, 0.5, 0.75, 1]</span>
+<span class="ex-fn">imprima</span>(al.norma(v));      <span class="ex-cmt">// norma do vetor</span></pre>
 
                 </div><!-- /tab-algebra -->
 

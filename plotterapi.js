@@ -985,6 +985,13 @@ const Bibliotecas = {
       for (let i = mn; i <= mx; i++) p *= fn(i);
       return p;
     },
+    linspace: (inicio, fim, n) => {
+      __vp(inicio, ["numero"], "mat.linspace", "inicio");
+      __vp(fim, ["numero"], "mat.linspace", "fim");
+      __vp(n, ["inteiro"], "mat.linspace", "n");
+      if (n < 2) throw new Error("mat.linspace(): n deve ser ≥ 2.");
+      return Array.from({length: n}, (_, i) => inicio + i * (fim - inicio) / (n - 1));
+    },
 
   },
 
@@ -1179,9 +1186,34 @@ const Bibliotecas = {
         throw new Error(`metodos.real(): "${v}" não pode ser convertido.`);
       return n;
     },
-    lista: (...is) => new PseudoLista(is),
-    mapa: () => new PseudoMapa(),
-    conjunto: () => new PseudoConjunto(),
+    lista: function (...is) {
+      if (is.length === 1) {
+        const x = is[0];
+        if (Array.isArray(x))            return new PseudoLista(x);
+        if (x instanceof PseudoLista)    return new PseudoLista([...x._v]);
+        if (x instanceof PseudoConjunto) return new PseudoLista([...x._v]);
+      }
+      return new PseudoLista(is);
+    },
+    mapa: function (...is) {
+      const m = new PseudoMapa();
+      if (is.length === 1) {
+        const x = is[0];
+        const arr = Array.isArray(x) ? x : x instanceof PseudoLista ? x._v : null;
+        if (arr) { arr.forEach((v, i) => m._v.set(i, v)); return m; }
+      }
+      return m;
+    },
+    conjunto: function (...is) {
+      const c = new PseudoConjunto();
+      if (is.length === 1) {
+        const x = is[0];
+        const src = Array.isArray(x) ? x : x instanceof PseudoLista ? x._v : x instanceof PseudoConjunto ? [...x._v] : null;
+        if (src) { src.forEach(v => c._v.add(v)); return c; }
+      }
+      is.forEach(v => c._v.add(v));
+      return c;
+    },
     numero: (v) => new PseudoNumero(v),
 
     // ── Funções de validação de tipo ──────────────────────────
@@ -2427,6 +2459,14 @@ const Bibliotecas = {
       return Math.abs(normal.ponto(D.subtrair(A))) < 1e-8;
     };
 
+    _al.linspace = (inicio, fim, n) => {
+      __vp(inicio, ["numero"], "algebra.linspace", "inicio");
+      __vp(fim, ["numero"], "algebra.linspace", "fim");
+      __vp(n, ["inteiro"], "algebra.linspace", "n");
+      if (n < 2) throw new Error("algebra.linspace(): n deve ser ≥ 2.");
+      return new PseudoVetor(Array.from({length: n}, (_, i) => inicio + i * (fim - inicio) / (n - 1)));
+    };
+
     return _al;
   })(),
 
@@ -2796,6 +2836,16 @@ const Bibliotecas = {
 /* ============================================================
    8. BUILT-IN GLOBAL UTILITIES
    ============================================================ */
+
+/* a...b range operator helper — inclusive on both ends, integer step */
+function _pseudoRange(a, b) {
+  if (typeof a !== "number" || typeof b !== "number")
+    throw new Error("Operador de intervalo (...): ambos os lados devem ser números.");
+  const step = a <= b ? 1 : -1;
+  const result = [];
+  for (let i = a; step > 0 ? i <= b : i >= b; i += step) result.push(i);
+  return result;
+}
 
 /* intervalo(fim)                  → [0, 1, 2, ..., fim-1]
    intervalo(inicio, fim)          → [inicio, ..., fim-1]  (passo auto-detectado)
