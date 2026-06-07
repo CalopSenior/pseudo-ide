@@ -1198,16 +1198,23 @@ const Bibliotecas = {
         const x = is[0];
         if (Array.isArray(x))            return new PseudoLista(x);
         if (x instanceof PseudoLista)    return new PseudoLista([...x._v]);
+        if (x instanceof PseudoVetor)    return new PseudoLista([...x._v]);
         if (x instanceof PseudoConjunto) return new PseudoLista([...x._v]);
       }
       return new PseudoLista(is);
     },
     mapa: function (...is) {
       const m = new PseudoMapa();
+      const _indexar = (arr) => { arr.forEach((v, i) => m._v.set(i, v)); return m; };
       if (is.length === 1) {
         const x = is[0];
-        const arr = Array.isArray(x) ? x : x instanceof PseudoLista ? x._v : null;
-        if (arr) { arr.forEach((v, i) => m._v.set(i, v)); return m; }
+        const arr = Array.isArray(x) ? x
+          : x instanceof PseudoLista  ? x._v
+          : x instanceof PseudoVetor  ? x._v
+          : null;
+        if (arr) return _indexar(arr);
+      } else if (is.length > 1) {
+        return _indexar(is);
       }
       return m;
     },
@@ -1215,7 +1222,11 @@ const Bibliotecas = {
       const c = new PseudoConjunto();
       if (is.length === 1) {
         const x = is[0];
-        const src = Array.isArray(x) ? x : x instanceof PseudoLista ? x._v : x instanceof PseudoConjunto ? [...x._v] : null;
+        const src = Array.isArray(x)            ? x
+          : x instanceof PseudoLista             ? x._v
+          : x instanceof PseudoVetor             ? [...x._v]
+          : x instanceof PseudoConjunto          ? [...x._v]
+          : null;
         if (src) { src.forEach(v => c._v.add(v)); return c; }
       }
       is.forEach(v => c._v.add(v));
@@ -1239,11 +1250,10 @@ const Bibliotecas = {
 
     vetor: function (componentes) {
       return new PseudoVetor(
-        componentes instanceof PseudoLista
-          ? componentes._v
-          : Array.isArray(componentes)
-            ? componentes
-            : [...arguments],
+        componentes instanceof PseudoLista  ? componentes._v
+        : componentes instanceof PseudoVetor ? [...componentes._v]
+        : Array.isArray(componentes)         ? componentes
+        : [...arguments],
       );
     },
     matriz: (linhas) => new PseudoMatriz(linhas),
