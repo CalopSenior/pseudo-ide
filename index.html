@@ -2932,46 +2932,212 @@ minhaBiblioteca() {
     }
 }</pre>
 
-                <h4>3. Como Configurar o Servidor (Backend)</h4>
-                <p>A Pseudo-IDE não exige um banco de dados complexo. O servidor só precisa aceitar requisições
-                    <strong>POST</strong> (texto simples) para salvar o pacote e <strong>GET</strong> para retornar o
-                    pacote em JSON.
-                </p>
+                <h4>3. Convenção <code>ajuda()</code> — Documentando sua Biblioteca</h4>
+                <p>Inclua uma função pública <code>ajuda()</code> em toda biblioteca que criar.
+                    Quando o aluno a chamar, ela imprime a documentação diretamente no console — sem abrir nenhum guia externo:</p>
+                <pre class="code-example"><span class="ex-marker">@NOME</span><span class="ex-marker-bracket">[</span><span class="ex-marker-val">Estatística Aplicada</span><span class="ex-marker-bracket">]</span>
+<span class="ex-marker">@AUTOR</span><span class="ex-marker-bracket">[</span><span class="ex-marker-val">Prof. Gabriel</span><span class="ex-marker-bracket">]</span>
+<span class="ex-marker">@VERSAO</span><span class="ex-marker-bracket">[</span><span class="ex-marker-val">1.2</span><span class="ex-marker-bracket">]</span>
+<span class="ex-marker">@BIBLIOTECA</span><span class="ex-marker-bracket">[</span><span class="ex-marker-val">estatistica</span><span class="ex-marker-bracket">]</span>
 
-                <div class="doc-note">
-                    <strong>Por que texto simples no POST?</strong> O envio é feito via Simple Request
-                    (<code>text/plain</code>) para evitar bloqueios automáticos de CORS (requisições OPTIONS de
-                    preflight) em servidores serverless (ex: Google Apps Script).
-                </div>
+minhaBiblioteca() {
+    <span class="ex-kw">importar</span> mat <span class="ex-kw">como</span> m;
 
-                <h5>Exemplo de Servidor: Google Apps Script (Planilha)</h5>
-                <pre class="code-example"><span class="ex-cmt">// doPost: Grava a biblioteca na Planilha</span>
-function doPost(e) {
-  const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
-  const data = JSON.parse(e.postData.contents);
-  sheet.appendRow([data.nome, data.autor, data.versao, data.codigoInjetor]);
-  return ContentService.createTextOutput("OK").setMimeType(ContentService.MimeType.TEXT);
-}
-
-<span class="ex-cmt">// doGet: Busca a biblioteca mais recente (lendo de baixo para cima)</span>
-function doGet(e) {
-  const nome = e.parameter.nome;
-  const data = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet().getDataRange().getValues();
-  for (let i = data.length - 1; i >= 0; i--) {
-    if (data[i][0] === nome) {
-      const payload = { tipo: 'biblioteca', nome: data[i][0], autor: data[i][1], versao: data[i][2], codigoInjetor: data[i][3] };
-      return ContentService.createTextOutput(JSON.stringify(payload)).setMimeType(ContentService.MimeType.JSON);
+    <span class="ex-cmt">// O aluno chama estatistica.ajuda() para ver isto:</span>
+    <span class="ex-kw">funcao</span> ajuda() {
+        <span class="ex-fn">imprima</span>(<span class="ex-str">"══ Estatística Aplicada v1.2 ═══════════════════"</span>);
+        <span class="ex-fn">imprima</span>(<span class="ex-str">"Autor: Prof. Gabriel"</span>);
+        <span class="ex-fn">imprima</span>(<span class="ex-str">""</span>);
+        <span class="ex-fn">imprima</span>(<span class="ex-str">"Funções disponíveis:"</span>);
+        <span class="ex-fn">imprima</span>(<span class="ex-str">"  media(lista)       → média aritmética"</span>);
+        <span class="ex-fn">imprima</span>(<span class="ex-str">"  variancia(lista)   → variância amostral"</span>);
+        <span class="ex-fn">imprima</span>(<span class="ex-str">"  desvPadrao(lista)  → desvio padrão"</span>);
+        <span class="ex-fn">imprima</span>(<span class="ex-str">"  correlacao(lx, ly) → coeficiente de Pearson [-1, 1]"</span>);
+        <span class="ex-fn">imprima</span>(<span class="ex-str">""</span>);
+        <span class="ex-fn">imprima</span>(<span class="ex-str">"Exemplo: importar estatistica como e;"</span>);
+        <span class="ex-fn">imprima</span>(<span class="ex-str">"         e.media(m.lista(2, 4, 6, 8))  → 5"</span>);
     }
-  }
-  return ContentService.createTextOutput("{}").setMimeType(ContentService.MimeType.JSON);
+
+    <span class="ex-kw">funcao</span> media(lista) {
+        <span class="ex-kw">retorno</span> lista.reduzir(<span class="ex-str">'+'</span>) / lista.tamanho();
+    }
+    <span class="ex-kw">funcao</span> variancia(lista) {
+        <span class="ex-kw">super</span> med = media(lista);
+        <span class="ex-kw">retorno</span> lista.transformar(x => (x - med)**<span class="ex-num">2</span>).reduzir(<span class="ex-str">'+'</span>) / (lista.tamanho() - <span class="ex-num">1</span>);
+    }
+    <span class="ex-kw">funcao</span> desvPadrao(lista) { <span class="ex-kw">retorno</span> m.raiz(variancia(lista)); }
+    <span class="ex-kw">funcao</span> correlacao(lx, ly) {
+        <span class="ex-kw">super</span> mx = media(lx), my = media(ly);
+        <span class="ex-kw">super</span> num = lx.transformar((x, i) => (x - mx) * (ly[i] - my)).reduzir(<span class="ex-str">'+'</span>);
+        <span class="ex-kw">super</span> den = m.raiz(variancia(lx) * variancia(ly)) * (lx.tamanho() - <span class="ex-num">1</span>);
+        <span class="ex-kw">retorno</span> num / den;
+    }
 }</pre>
 
-                <h4>4. Como o Aluno Utiliza</h4>
-                <p>No cabeçalho da Pseudo-IDE, o aluno clica no botão <strong>⚙️ API</strong> e cola a URL do seu
-                    servidor. Depois, basta importar o pacote:</p>
+                <h4>4. Servidor de Bibliotecas com Versionamento (Google Apps Script)</h4>
+                <p>Backend completo que substitui o exemplo simples acima. Suporta múltiplas versões da mesma
+                    biblioteca, busca por versão específica e listagem do catálogo completo.</p>
+
+                <div class="doc-note">
+                    <strong>Como publicar:</strong> Crie (ou abra) uma Planilha Google → <em>Extensões → Apps Script</em>
+                    → cole o código abaixo → <em>Implantar → Nova implantação → App da Web</em>.<br>
+                    Defina <em>"Executar como: eu mesmo"</em> e <em>"Quem tem acesso: qualquer pessoa"</em>.
+                    Copie a URL gerada e cole no botão <strong>⚙ API</strong> da IDE.<br>
+                    <strong>Por que <code>text/plain</code> no POST?</strong> Evita o preflight CORS que bloqueia
+                    servidores serverless como o Apps Script.
+                </div>
+
+                <pre class="code-example"><span class="ex-cmt">// ══ Pseudo-IDE — Repositório de Bibliotecas com Versionamento ══════════════
+// Crie uma Planilha Google, vá em Extensões → Apps Script, cole este código
+// e publique como "App da Web" com acesso público.</span>
+
+const PLANILHA_LIBS = <span class="ex-str">"Bibliotecas"</span>; <span class="ex-cmt">// aba criada automaticamente na primeira publicação</span>
+
+function _aba() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  return ss.getSheetByName(PLANILHA_LIBS) || ss.insertSheet(PLANILHA_LIBS);
+}
+function _json(obj) {
+  return ContentService.createTextOutput(JSON.stringify(obj))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+<span class="ex-cmt">// ── POST: publica (ou atualiza) uma biblioteca ─────────────────────────────
+// Body (text/plain, JSON): { nome, autor?, versao?, codigoInjetor, descricao? }</span>
+function doPost(e) {
+  try {
+    const d = JSON.parse(e.postData.contents);
+    if (!d.nome || !d.codigoInjetor)
+      return _json({ ok: false, erro: <span class="ex-str">"Campos 'nome' e 'codigoInjetor' são obrigatórios."</span> });
+
+    _aba().appendRow([
+      d.nome,
+      d.autor      || <span class="ex-str">"—"</span>,
+      d.versao     || <span class="ex-str">"1.0"</span>,
+      d.codigoInjetor,
+      d.descricao  || <span class="ex-str">""</span>,
+      new Date().toISOString()
+    ]);
+    return _json({ ok: true, mensagem: `'${d.nome}' v${d.versao || <span class="ex-str">"1.0"</span>} publicada com sucesso.` });
+  } catch (err) {
+    return _json({ ok: false, erro: err.message });
+  }
+}
+
+<span class="ex-cmt">// ── GET: recupera biblioteca ou lista o catálogo ───────────────────────────
+//   ?nome=fisica_basica              → versão mais recente
+//   ?nome=fisica_basica&versao=1.1   → versão específica
+//   ?listar=1                        → catálogo de todas as bibliotecas disponíveis</span>
+function doGet(e) {
+  const p = e.parameter;
+
+  if (p.listar) {
+    const cat = {};
+    _aba().getDataRange().getValues().forEach(r => {
+      if (!r[0]) return;
+      if (!cat[r[0]]) cat[r[0]] = { nome: r[0], autor: r[1], descricao: r[4], versoes: [] };
+      cat[r[0]].versoes.push(r[2]);
+    });
+    return _json({ ok: true, bibliotecas: Object.values(cat) });
+  }
+
+  if (!p.nome) return _json({ ok: false, erro: <span class="ex-str">"Parâmetro 'nome' é obrigatório."</span> });
+
+  const dados = _aba().getDataRange().getValues();
+  for (let i = dados.length - 1; i >= 0; i--) { <span class="ex-cmt">// de baixo para cima → mais recente primeiro</span>
+    if (dados[i][0] !== p.nome) continue;
+    if (p.versao && dados[i][2] !== p.versao) continue;
+    return _json({
+      tipo: <span class="ex-str">"biblioteca"</span>,
+      nome:          dados[i][0],
+      autor:         dados[i][1],
+      versao:        dados[i][2],
+      codigoInjetor: dados[i][3],
+      descricao:     dados[i][4]
+    });
+  }
+  const msg = p.versao
+    ? `'${p.nome}' v${p.versao} não encontrada.`
+    : `'${p.nome}' não encontrada.`;
+  return _json({ ok: false, erro: msg });
+}</pre>
+
+                <h4>5. Servidor de Compartilhamento de Códigos (Google Apps Script)</h4>
+                <p>Permite salvar e recuperar trechos de código via um ID curto de 8 caracteres.
+                    Ideal para o professor distribuir gabaritos, exercícios-modelo e exemplos prontos —
+                    sem precisar enviar arquivos por e-mail.</p>
+                <p><strong>Fluxo:</strong> professor faz um POST com o código → recebe um ID de 8 letras →
+                    compartilha o link <code>?id=XXXXXXXX</code> com os alunos → aluno faz GET e recebe o
+                    código de volta (pode ser colado diretamente no editor).</p>
+
+                <div class="doc-note">
+                    <strong>Atenção:</strong> Use um projeto Apps Script <strong>separado</strong> do repositório de
+                    bibliotecas — cada implantação tem sua própria URL e propósito distinto. A Planilha pode ser a
+                    mesma (basta usar uma aba diferente) ou uma planilha dedicada.
+                </div>
+
+                <pre class="code-example"><span class="ex-cmt">// ══ Pseudo-IDE — Compartilhamento de Códigos ══════════════════════════════
+// Projeto Apps Script separado do repositório de bibliotecas.
+// Publique como "App da Web" com acesso público.</span>
+
+const PLANILHA_CODIGOS = <span class="ex-str">"Codigos"</span>;
+
+function _aba() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  return ss.getSheetByName(PLANILHA_CODIGOS) || ss.insertSheet(PLANILHA_CODIGOS);
+}
+function _json(obj) {
+  return ContentService.createTextOutput(JSON.stringify(obj))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+<span class="ex-cmt">// ── POST: salva o código e devolve um ID de 8 caracteres ──────────────────
+// Body (text/plain, JSON): { titulo?, autor?, codigo }
+// Resposta: { ok: true, id: "A3F7C2B1", url: "https://script.google.com/...?id=A3F7C2B1" }</span>
+function doPost(e) {
+  try {
+    const d = JSON.parse(e.postData.contents);
+    if (!d.codigo) return _json({ ok: false, erro: <span class="ex-str">"Campo 'codigo' é obrigatório."</span> });
+
+    const id = Utilities.getUuid().substring(0, 8).toUpperCase();
+    _aba().appendRow([
+      id,
+      d.titulo || <span class="ex-str">"Sem título"</span>,
+      d.autor  || <span class="ex-str">"Anônimo"</span>,
+      d.codigo,
+      new Date().toISOString()
+    ]);
+
+    const url = ScriptApp.getService().getUrl() + <span class="ex-str">"?id="</span> + id;
+    return _json({ ok: true, id, url });
+  } catch (err) {
+    return _json({ ok: false, erro: err.message });
+  }
+}
+
+<span class="ex-cmt">// ── GET ?id=XXXXXXXX: recupera o código pelo ID ───────────────────────────
+// Resposta: { ok: true, id, titulo, autor, codigo, criado }</span>
+function doGet(e) {
+  const id = (e.parameter.id || <span class="ex-str">""</span>).trim().toUpperCase();
+  if (!id) return _json({ ok: false, erro: <span class="ex-str">"Parâmetro 'id' é obrigatório."</span> });
+
+  const dados = _aba().getDataRange().getValues();
+  for (let i = 0; i < dados.length; i++) {
+    if (dados[i][0] === id)
+      return _json({ ok: true, id,
+        titulo: dados[i][1], autor: dados[i][2],
+        codigo: dados[i][3], criado: dados[i][4] });
+  }
+  return _json({ ok: false, erro: `ID '${id}' não encontrado.` });
+}</pre>
+
+                <h4>6. Como o Aluno Utiliza</h4>
+                <p>No cabeçalho da Pseudo-IDE, o aluno clica no botão <strong>⚙️ API</strong> e cola a URL do
+                    repositório de bibliotecas. Depois, basta importar o pacote e, se desejar, pedir ajuda:</p>
                 <pre class="code-example"><span class="ex-kw">importar</span> fisica_basica <span class="ex-kw">como</span> fb;
 
-<span class="ex-fn">imprima</span>(fb.mru(0, 10, 5)); <span class="ex-cmt">// Resultado: 50</span></pre>
+fb.ajuda();               <span class="ex-cmt">// imprime a documentação da biblioteca</span>
+<span class="ex-fn">imprima</span>(fb.mru(0, 10, 5)); <span class="ex-cmt">// usa normalmente → 50</span></pre>
             </div>
 
             <div class="modal-footer">
