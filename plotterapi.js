@@ -1827,6 +1827,13 @@ const Bibliotecas = {
     _extrairPontos: (item, f) => {
       const normUm = (raw) => {
         if (raw instanceof PseudoLista || raw instanceof PseudoVetor) raw = raw._v;
+        // PseudoMapa com chaves "x"/"y" → ponto único
+        if (raw instanceof PseudoMapa) {
+          const x = raw._v.get("x") ?? raw._v.get("X") ?? null;
+          const y = raw._v.get("y") ?? raw._v.get("Y") ?? null;
+          if (x != null && y != null) return { x: Number(x), y: Number(y) };
+          return null;
+        }
         // Resultado de método numérico: { root, raiz, x }
         if (raw && typeof raw === "object" && !Array.isArray(raw)) {
           const x = raw.root ?? raw.raiz ?? raw.x ?? null;
@@ -1849,6 +1856,14 @@ const Bibliotecas = {
       };
 
       if (item instanceof PseudoLista || item instanceof PseudoVetor) item = item._v;
+
+      // PseudoMapa como fonte de pontos: cada entrada (chave → valor) vira {x, y}
+      if (item instanceof PseudoMapa) {
+        return [...item._v.entries()].map(([k, v]) => {
+          const x = Number(k), y = Number(v);
+          return isFinite(x) && isFinite(y) ? { x, y } : null;
+        }).filter(Boolean).sort((a, b) => a.x - b.x);
+      }
 
       if (Array.isArray(item)) {
         const first = item[0];
