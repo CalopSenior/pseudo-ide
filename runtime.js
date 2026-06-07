@@ -263,6 +263,7 @@ const KW_FN = new Set([
   "uniforme",
   "rolarDados",
   "monteCarlo",
+  "intervalo",
   // metodos — verificadores de tipo
   "eNumero",
   "eInteiro",
@@ -674,6 +675,9 @@ const COMPLETIONS = [
   { label: "importar", detail: "importar biblioteca" },
   { label: "como", detail: "alias de importação" },
   { label: "mod", detail: "operador — resto da divisão" },
+  { label: "intervalo(fim)", detail: "lista [0, 1, …, fim-1]", insert: "intervalo(" },
+  { label: "intervalo(inicio, fim)", detail: "lista de inicio até fim-1", insert: "intervalo(" },
+  { label: "intervalo(inicio, fim, passo)", detail: "lista com passo personalizado", insert: "intervalo(" },
   { label: "imprima()", detail: "saída no console", insert: "imprima(" },
   { label: "leia()", detail: "entrada do usuário", insert: "leia(" },
   { label: "raiz()", detail: "raiz quadrada nativa", insert: "raiz(" },

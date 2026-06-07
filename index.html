@@ -587,6 +587,30 @@ real pequeno = <span class="ex-num">1.5e-3</span>; <span class="ex-cmt">// 0.001
 <span class="ex-fn">imprima</span>(dias[<span class="ex-num">0</span>]);  <span class="ex-cmt">// Seg  (primeiro)</span>
 <span class="ex-fn">imprima</span>(dias[<span class="ex-num">4</span>]);  <span class="ex-cmt">// Sex  (quinto)</span>
 <span class="ex-fn">imprima</span>(dias.length); <span class="ex-cmt">// 5 (total de elementos)</span></pre>
+
+                    <h3>Listas dinâmicas com <code>intervalo()</code></h3>
+                    <p class="tab-intro">
+                        Cria uma lista de números de forma automática — similar ao <code>range()</code> do Python.
+                        Aceita 1, 2 ou 3 argumentos.
+                    </p>
+                    <table class="doc-table">
+                        <tr><th>Forma</th><th>Resultado</th></tr>
+                        <tr><td><code>intervalo(fim)</code></td><td>De 0 até <code>fim-1</code>, passo 1 (ou −1 se fim &lt; 0)</td></tr>
+                        <tr><td><code>intervalo(inicio, fim)</code></td><td>De <code>inicio</code> até <code>fim-1</code></td></tr>
+                        <tr><td><code>intervalo(inicio, fim, passo)</code></td><td>Passo personalizado (pode ser decimal)</td></tr>
+                    </table>
+                    <pre class="code-example"><span class="ex-fn">imprima</span>(<span class="ex-fn">intervalo</span>(<span class="ex-num">5</span>));           <span class="ex-cmt">// [0, 1, 2, 3, 4]</span>
+<span class="ex-fn">imprima</span>(<span class="ex-fn">intervalo</span>(<span class="ex-num">2</span>, <span class="ex-num">8</span>));        <span class="ex-cmt">// [2, 3, 4, 5, 6, 7]</span>
+<span class="ex-fn">imprima</span>(<span class="ex-fn">intervalo</span>(<span class="ex-num">0</span>, <span class="ex-num">1</span>, <span class="ex-num">0.2</span>));  <span class="ex-cmt">// [0, 0.2, 0.4, 0.6, 0.8]</span>
+<span class="ex-fn">imprima</span>(<span class="ex-fn">intervalo</span>(<span class="ex-num">5</span>, <span class="ex-num">0</span>, <span class="ex-num">-1</span>));  <span class="ex-cmt">// [5, 4, 3, 2, 1]</span>
+
+<span class="ex-cmt">// Útil em laços e como eixo x de gráficos:</span>
+<span class="ex-kw">para</span> i <span class="ex-kw">em</span> <span class="ex-fn">intervalo</span>(<span class="ex-num">10</span>) <span class="ex-kw">faça</span>
+    <span class="ex-fn">imprima</span>(i * i);
+<span class="ex-kw">fim</span>
+
+super x = <span class="ex-fn">intervalo</span>(<span class="ex-num">0</span>, <span class="ex-num">360</span>, <span class="ex-num">5</span>);</pre>
+
                 </div><!-- /tab-tipos -->
 
 
