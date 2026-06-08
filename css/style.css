@@ -1797,6 +1797,17 @@ section {
   border-left: 3px solid var(--accent-dim); margin: 8px 0;
   padding: 4px 14px; color: var(--text-dim);
 }
+.nb-md-preview h4 { font-size: 13px; margin: 7px 0 3px; font-weight: 600; }
+.nb-md-preview h5 { font-size: 12px; margin: 6px 0 2px; font-weight: 600; }
+.nb-md-preview h6 { font-size: 12px; margin: 6px 0 2px; font-weight: 600; color: var(--text-dim); }
+.nb-md-preview del { text-decoration: line-through; color: var(--text-dim); }
+.nb-md-preview u { text-decoration: underline; }
+.nb-md-preview mark { background: rgba(250,204,21,0.25); color: inherit; padding: 0 2px; border-radius: 2px; }
+.nb-md-preview sup, .nb-md-preview sub { font-size: 0.75em; }
+.nb-md-preview .md-align-center { text-align: center; }
+.nb-md-preview .md-align-right  { text-align: right; }
+.nb-md-preview .md-align-left   { text-align: left; }
+.nb-md-preview .md-align-justify { text-align: justify; }
 
 /* Add-cell bar */
 .nb-add-bar {

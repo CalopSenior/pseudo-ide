@@ -48,11 +48,18 @@
     let inCode = false, codeBuf = [], codeLang = "";
     let inList = false, listOl = false;
     let inMath = false, mathBuf = [], mathCloser = "", mathIncludeClose = false;
+    let inAlign = false, alignBuf = [], alignDir = "";
 
     function flushList() {
       if (!inList) return;
       out.push(listOl ? "</ol>" : "</ul>");
       inList = false;
+    }
+
+    function flushAlign() {
+      if (!inAlign) return;
+      out.push(`<div class="md-align-${alignDir}">${_renderMd(alignBuf.join("\n"))}</div>`);
+      inAlign = false; alignBuf = []; alignDir = "";
     }
 
     function _katexBlock(tex) {
@@ -90,7 +97,11 @@
         .replace(/\*\*\*([^*\n]+)\*\*\*/g, "<strong><em>$1</em></strong>")
         .replace(/\*\*([^*\n]+)\*\*/g, "<strong>$1</strong>")
         .replace(/\*([^*\n]+)\*/g, "<em>$1</em>")
+        .replace(/__([^_\n]+)__/g, "<u>$1</u>")
         .replace(/~~([^~\n]+)~~/g, "<del>$1</del>")
+        .replace(/~([^~\n]+)~/g, "<sub>$1</sub>")
+        .replace(/\^([^\^\n]+)\^/g, "<sup>$1</sup>")
+        .replace(/==([^=\n]+)==/g, "<mark>$1</mark>")
         .replace(/`([^`\n]+)`/g, "<code>$1</code>")
         .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" style="max-width:100%">')
         .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
@@ -127,6 +138,12 @@
         continue;
       }
       if (inCode) { codeBuf.push(line); continue; }
+
+      // alignment block: collect lines until :::
+      if (inAlign) {
+        if (line.trim() === ":::") { flushAlign(); } else { alignBuf.push(line); }
+        continue;
+      }
 
       // collecting block math (must check before any new math opener)
       if (inMath) {
@@ -177,6 +194,10 @@
         continue;
       }
 
+      // alignment block opener  :::center / :::right / :::left / :::justify
+      const am = line.match(/^:::(center|right|left|justify)\s*$/);
+      if (am) { flushList(); inAlign = true; alignDir = am[1]; alignBuf = []; continue; }
+
       // heading (H1–H6)
       const hm = line.match(/^(#{1,6})\s+(.+)$/);
       if (hm) {
@@ -212,6 +233,7 @@
       out.push(`<p>${inline(line)}</p>`);
     }
     flushList();
+    flushAlign();
     if (inMath && mathBuf.length) out.push(_katexBlock(mathBuf.join("\n")));
     if (inCode && codeBuf.length) {
       const esc = codeBuf.join("\n").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -793,6 +815,15 @@
     .exp-md-body hr{border:none;border-top:1px solid var(--border);margin:12px 0}
     .exp-md-body a{color:var(--accent)}
     .exp-md-body blockquote{border-left:3px solid var(--accent);margin:8px 0;padding:4px 14px;color:var(--dim)}
+    .exp-md-body h4{font-size:13px;margin:6px 0 3px;font-weight:600}
+    .exp-md-body h5,.exp-md-body h6{font-size:12px;margin:5px 0 2px;font-weight:600}
+    .exp-md-body del{text-decoration:line-through;opacity:.6}
+    .exp-md-body u{text-decoration:underline}
+    .exp-md-body mark{background:rgba(250,204,21,.25);padding:0 2px;border-radius:2px}
+    .exp-md-body sup,.exp-md-body sub{font-size:.75em}
+    .exp-md-body .md-align-center{text-align:center}
+    .exp-md-body .md-align-right{text-align:right}
+    .exp-md-body .md-align-justify{text-align:justify}
     .console-line{padding:2px 0;display:flex;align-items:baseline;gap:6px}
     .console-line-arrow{color:var(--muted)}
     .console-error{color:var(--red);padding:3px 0}

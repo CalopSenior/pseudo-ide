@@ -206,9 +206,15 @@ imprima(f"Montante: {resultado:.2f}")</code></pre></div>
               <tr><th>Sintaxe</th><th>Resultado</th></tr>
               <tr><td><code># Título</code></td><td>Cabeçalho H1</td></tr>
               <tr><td><code>## Subtítulo</code></td><td>Cabeçalho H2</td></tr>
-              <tr><td><code>### Seção</code></td><td>Cabeçalho H3</td></tr>
+              <tr><td><code>### Seção</code></td><td>Cabeçalho H3–H6</td></tr>
               <tr><td><code>**negrito**</code></td><td><strong>negrito</strong></td></tr>
               <tr><td><code>*itálico*</code></td><td><em>itálico</em></td></tr>
+              <tr><td><code>***negrito itálico***</code></td><td><strong><em>negrito itálico</em></strong></td></tr>
+              <tr><td><code>__sublinhado__</code></td><td><u>sublinhado</u></td></tr>
+              <tr><td><code>~~tachado~~</code></td><td><del>tachado</del></td></tr>
+              <tr><td><code>==destaque==</code></td><td><mark style="background:rgba(250,204,21,.3);padding:0 2px;border-radius:2px">destaque</mark></td></tr>
+              <tr><td><code>^super^</code></td><td>texto<sup>super</sup></td></tr>
+              <tr><td><code>~sub~</code></td><td>texto<sub>sub</sub></td></tr>
               <tr><td><code>`código`</code></td><td><code>código</code></td></tr>
               <tr><td><code>- item</code></td><td>Lista com marcador</td></tr>
               <tr><td><code>1. item</code></td><td>Lista numerada</td></tr>
@@ -218,6 +224,19 @@ imprima(f"Montante: {resultado:.2f}")</code></pre></div>
               <tr><td><code>---</code></td><td>Linha divisória</td></tr>
               <tr><td><code>&gt; texto</code></td><td>Citação/nota</td></tr>
             </table>
+            <p>Blocos de <strong>alinhamento</strong> — use <code>:::</code> como abertura e fechamento:</p>
+            <pre class="nb-gc-pre"><code>:::center
+Este parágrafo fica **centralizado**.
+:::
+
+:::right
+Texto à direita.
+:::
+
+:::justify
+Texto justificado nas duas margens.
+:::</code></pre>
+            <p class="nb-gc-tip">&#9432; Dentro dos blocos <code>:::</code> todo o Markdown (negrito, LaTeX, listas…) continua funcionando.</p>
           </div>
         </details>
 
