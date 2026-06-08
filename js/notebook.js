@@ -897,11 +897,85 @@
     _setStatus("HTML exportado ✓");
   }
 
+  // ---------- run-all sequential (respects env mode per cell) ----------
+  async function _runAllEnv() {
+    _setStatus("executando (amb)…");
+    const runBtn = document.getElementById("nb-run-all-btn");
+    if (runBtn) runBtn.disabled = true;
+    window._nbEnv = {};
+
+    const codeCells = _cells.filter((c) => c.type === "codigo");
+    const outputs = [];
+
+    codeCells.forEach((cell) => {
+      const outputEl = cell.el.querySelector(".nb-cell-output");
+      outputEl.innerHTML = "";
+      _setOutputVisible(outputEl, false);
+      outputs.push(outputEl);
+    });
+    window._nbOutputs = outputs;
+
+    if (codeCells.length === 0) {
+      _setStatus("nada para executar");
+      if (runBtn) runBtn.disabled = false;
+      return;
+    }
+
+    let execOk = true;
+    window.__inicioExecucao = Date.now();
+
+    for (let i = 0; i < codeCells.length; i++) {
+      const cell = codeCells[i];
+      const src = _getCellSource(cell) || "";
+      if (!src.trim()) continue;
+
+      let translated;
+      try {
+        translated = traduzirCodigo(src, false);
+      } catch (e) {
+        _appendError(outputs[i], e);
+        _setOutputVisible(outputs[i], true);
+        execOk = false;
+        break;
+      }
+
+      const captureCode = cell.envMode ? _buildEnvCapture(_extractPublicVars(translated)) : "";
+      const execCode = `with(window._nbEnv||{}){\n${translated}\n${captureCode}\n}`;
+      const ctx = `(async function __NBCE${i}__(){\ntry{\nwindow._nbSwitch(${i});\n${execCode}\n}catch(__e){\n_imprimaErro(__e);\n}})();`;
+
+      try {
+        // eslint-disable-next-line no-eval
+        await (0, eval)(ctx);
+      } catch (e) {
+        console.error("[Pseudo Notebook] Erro na célula", i, e);
+        execOk = false;
+        break;
+      }
+    }
+
+    outputs.forEach((o) => { if (o.hasChildNodes()) _setOutputVisible(o, true); });
+    if (execOk) _setStatus("executado (amb) ✓");
+    else _setStatus("erro de execução", true);
+    if (runBtn) runBtn.disabled = false;
+  }
+
+  // ---------- run-mode selector ----------
+  let _runMode = "amb"; // 'amb' | 'livre'
+
+  function _setRunMode(mode) {
+    _runMode = mode;
+    const label = document.getElementById("nb-run-label");
+    if (label) label.textContent = mode === "livre" ? "Executar Tudo (Livre)" : "Executar Tudo";
+    document.querySelectorAll(".nb-run-menu-item").forEach((btn) => {
+      btn.classList.toggle("nb-run-menu-active", btn.dataset.mode === mode);
+    });
+  }
+
   // ---------- keyboard shortcut: Ctrl+Shift+Enter → run all ----------
   document.addEventListener("keydown", (e) => {
     if (e.ctrlKey && e.shiftKey && e.key === "Enter") {
       e.preventDefault();
-      _runAll();
+      _runMode === "livre" ? _runAll() : _runAllEnv();
     }
   });
 
@@ -923,6 +997,35 @@
 
     // Expose public API
     window.nbRunAll = _runAll;
+    window.nbRunAllEnv = _runAllEnv;
+    window.nbRunDefault = () => (_runMode === "livre" ? _runAll() : _runAllEnv());
+    window.nbToggleRunMenu = () => {
+      const menu = document.getElementById("nb-run-menu");
+      if (!menu) return;
+      const open = menu.classList.toggle("nb-run-menu-open");
+      if (open) {
+        const close = (ev) => {
+          if (!document.getElementById("nb-run-group")?.contains(ev.target)) {
+            menu.classList.remove("nb-run-menu-open");
+            document.removeEventListener("click", close, true);
+          }
+        };
+        setTimeout(() => document.addEventListener("click", close, true), 0);
+      }
+    };
+    window.nbRunMenuSelect = (mode) => {
+      _setRunMode(mode);
+      document.getElementById("nb-run-menu")?.classList.remove("nb-run-menu-open");
+      mode === "livre" ? _runAll() : _runAllEnv();
+    };
+    window.nbGuideOpen = () => {
+      const el = document.getElementById("nb-guide-overlay");
+      if (el) el.style.display = "flex";
+    };
+    window.nbGuideClose = () => {
+      const el = document.getElementById("nb-guide-overlay");
+      if (el) el.style.display = "none";
+    };
     window.nbSave = _save;
     window.nbLoad = _load;
     window.nbExportHTML = _exportHTML;
@@ -934,6 +1037,9 @@
         _addCell(type);
       }
     };
+
+    // Apply default run mode visual state
+    _setRunMode("amb");
   }
 
   document.addEventListener("DOMContentLoaded", _init);
