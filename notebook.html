@@ -206,9 +206,15 @@ imprima(f"Montante: {resultado:.2f}")</code></pre></div>
               <tr><th>Sintaxe</th><th>Resultado</th></tr>
               <tr><td><code># Título</code></td><td>Cabeçalho H1</td></tr>
               <tr><td><code>## Subtítulo</code></td><td>Cabeçalho H2</td></tr>
-              <tr><td><code>### Seção</code></td><td>Cabeçalho H3</td></tr>
+              <tr><td><code>### Seção</code></td><td>Cabeçalho H3–H6</td></tr>
               <tr><td><code>**negrito**</code></td><td><strong>negrito</strong></td></tr>
               <tr><td><code>*itálico*</code></td><td><em>itálico</em></td></tr>
+              <tr><td><code>***negrito itálico***</code></td><td><strong><em>negrito itálico</em></strong></td></tr>
+              <tr><td><code>__sublinhado__</code></td><td><u>sublinhado</u></td></tr>
+              <tr><td><code>~~tachado~~</code></td><td><del>tachado</del></td></tr>
+              <tr><td><code>==destaque==</code></td><td><mark style="background:rgba(250,204,21,.3);padding:0 2px;border-radius:2px">destaque</mark></td></tr>
+              <tr><td><code>^super^</code></td><td>texto<sup>super</sup></td></tr>
+              <tr><td><code>~sub~</code></td><td>texto<sub>sub</sub></td></tr>
               <tr><td><code>`código`</code></td><td><code>código</code></td></tr>
               <tr><td><code>- item</code></td><td>Lista com marcador</td></tr>
               <tr><td><code>1. item</code></td><td>Lista numerada</td></tr>
@@ -218,38 +224,89 @@ imprima(f"Montante: {resultado:.2f}")</code></pre></div>
               <tr><td><code>---</code></td><td>Linha divisória</td></tr>
               <tr><td><code>&gt; texto</code></td><td>Citação/nota</td></tr>
             </table>
+            <p>Blocos de <strong>alinhamento</strong> — use <code>:::</code> como abertura e fechamento:</p>
+            <pre class="nb-gc-pre"><code>:::center
+Este parágrafo fica **centralizado**.
+:::
+
+:::right
+Texto à direita.
+:::
+
+:::justify
+Texto justificado nas duas margens.
+:::</code></pre>
+            <p class="nb-gc-tip">&#9432; Dentro dos blocos <code>:::</code> todo o Markdown (negrito, LaTeX, listas…) continua funcionando.</p>
           </div>
         </details>
 
         <details class="nb-gs">
-          <summary>LaTeX — Fórmulas Matemáticas</summary>
+          <summary>LaTeX — Delimitadores e Blocos</summary>
           <div class="nb-gc">
-            <p>Use <code>$...$</code> para fórmulas inline e <code>$$...$$</code> para fórmulas em bloco centralizado. Renderizado via <strong>KaTeX</strong>.</p>
+            <p>Renderizado via <strong>KaTeX</strong>. Quatro formas de inserir fórmulas:</p>
             <table class="nb-gc-table">
-              <tr><th>Descrição</th><th>Código LaTeX</th></tr>
-              <tr><td>Fração</td><td><code>\frac{a}{b}</code></td></tr>
-              <tr><td>Potência</td><td><code>x^{2}</code> ou <code>x^2</code></td></tr>
-              <tr><td>Índice inferior</td><td><code>x_{i}</code></td></tr>
+              <tr><th>Sintaxe</th><th>Tipo</th><th>Exemplo</th></tr>
+              <tr><td><code>$...$</code></td><td>Inline</td><td><code>A área é $\pi r^2$.</code></td></tr>
+              <tr><td><code>\(...\)</code></td><td>Inline (alternativo)</td><td><code>\(E = mc^2\)</code></td></tr>
+              <tr><td><code>$$...$$</code></td><td>Bloco centralizado</td><td><code>$$\int_0^\infty e^{-x}dx$$</code></td></tr>
+              <tr><td><code>\[...\]</code></td><td>Bloco centralizado (alternativo)</td><td><code>\[\frac{a}{b} = c\]</code></td></tr>
+            </table>
+            <p>Os delimitadores <code>$$</code> e <code>\[</code> aceitam múltiplas linhas:</p>
+            <pre class="nb-gc-pre"><code>$$
+\int_0^1 f(x)\,dx \approx \sum_{i=0}^{n} f(x_i)\,\Delta x
+$$</code></pre>
+            <p>Ambientes <code>\begin{...}...\end{...}</code> são detectados automaticamente como blocos:</p>
+            <pre class="nb-gc-pre"><code>\begin{align}
+  f(x) &= ax^2 + bx + c \\
+  f'(x) &= 2ax + b
+\end{align}</code></pre>
+            <p>Ambientes suportados: <code>equation</code>, <code>align</code>, <code>aligned</code>, <code>gather</code>, <code>multline</code>, <code>split</code>, <code>cases</code>, <code>pmatrix</code>, <code>bmatrix</code>, <code>vmatrix</code>, <code>matrix</code>, <code>array</code>.</p>
+            <p class="nb-gc-tip">&#9432; Use <code>\$</code> para um cifrão literal dentro de texto.</p>
+          </div>
+        </details>
+
+        <details class="nb-gs">
+          <summary>LaTeX — Referência Rápida</summary>
+          <div class="nb-gc">
+            <table class="nb-gc-table">
+              <tr><th>Descrição</th><th>Código</th></tr>
+              <tr><td>Fração</td><td><code>\frac{num}{den}</code></td></tr>
+              <tr><td>Potência / índice</td><td><code>x^{2},\ x_{i}</code></td></tr>
               <tr><td>Raiz quadrada</td><td><code>\sqrt{x}</code></td></tr>
               <tr><td>Raiz n-ésima</td><td><code>\sqrt[n]{x}</code></td></tr>
               <tr><td>Somatório</td><td><code>\sum_{i=1}^{n} x_i</code></td></tr>
-              <tr><td>Produtório</td><td><code>\prod_{i=1}^{n}</code></td></tr>
-              <tr><td>Integral</td><td><code>\int_0^1 f(x)\,dx</code></td></tr>
-              <tr><td>Integral dupla</td><td><code>\iint_D f\,dA</code></td></tr>
+              <tr><td>Produtório</td><td><code>\prod_{i=1}^{n} x_i</code></td></tr>
+              <tr><td>Integral simples</td><td><code>\int_a^b f(x)\,dx</code></td></tr>
+              <tr><td>Integral dupla / tripla</td><td><code>\iint_D,\ \iiint_V</code></td></tr>
+              <tr><td>Integral de linha</td><td><code>\oint_C</code></td></tr>
               <tr><td>Limite</td><td><code>\lim_{x \to 0} f(x)</code></td></tr>
               <tr><td>Derivada parcial</td><td><code>\frac{\partial f}{\partial x}</code></td></tr>
-              <tr><td>Vetor</td><td><code>\vec{v}</code></td></tr>
-              <tr><td>Norma</td><td><code>\|v\|</code></td></tr>
+              <tr><td>Nabla / Laplaciano</td><td><code>\nabla f,\ \nabla^2 f</code></td></tr>
+              <tr><td>Vetor</td><td><code>\vec{v},\ \hat{u},\ \mathbf{v}</code></td></tr>
+              <tr><td>Norma</td><td><code>\|v\|,\ |x|</code></td></tr>
               <tr><td>Produto escalar</td><td><code>a \cdot b</code></td></tr>
               <tr><td>Produto vetorial</td><td><code>a \times b</code></td></tr>
-              <tr><td>Grego minúsculo</td><td><code>\alpha\ \beta\ \gamma\ \delta\ \pi\ \sigma</code></td></tr>
-              <tr><td>Grego maiúsculo</td><td><code>\Gamma\ \Delta\ \Sigma\ \Omega</code></td></tr>
-              <tr><td>Infinito</td><td><code>\infty</code></td></tr>
-              <tr><td>Aprovado / pertence</td><td><code>\in\ \notin\ \subset\ \cup\ \cap</code></td></tr>
-              <tr><td>Implica / equivale</td><td><code>\Rightarrow\ \Leftrightarrow</code></td></tr>
-              <tr><td>Matriz / sistema</td><td><code>\begin{pmatrix} a &amp; b \\ c &amp; d \end{pmatrix}</code></td></tr>
+              <tr><td>Transposta</td><td><code>A^T,\ A^\top</code></td></tr>
+              <tr><td>Inversa</td><td><code>A^{-1}</code></td></tr>
+              <tr><td>Determinante / traço</td><td><code>\det(A),\ \text{tr}(A)</code></td></tr>
+              <tr><td>Grego minúsculo</td><td><code>\alpha\ \beta\ \gamma\ \delta\ \epsilon\ \lambda\ \mu\ \pi\ \sigma\ \tau\ \omega</code></td></tr>
+              <tr><td>Grego maiúsculo</td><td><code>\Gamma\ \Delta\ \Theta\ \Lambda\ \Pi\ \Sigma\ \Phi\ \Psi\ \Omega</code></td></tr>
+              <tr><td>Infinito / indeterminado</td><td><code>\infty,\ \pm\infty,\ \pm</code></td></tr>
+              <tr><td>Pertence / contém</td><td><code>\in,\ \notin,\ \ni</code></td></tr>
+              <tr><td>Subconjunto</td><td><code>\subset,\ \subseteq,\ \supset</code></td></tr>
+              <tr><td>União / interseção</td><td><code>\cup,\ \cap</code></td></tr>
+              <tr><td>Para todo / existe</td><td><code>\forall,\ \exists</code></td></tr>
+              <tr><td>Implica / bicondicional</td><td><code>\Rightarrow,\ \Leftrightarrow</code></td></tr>
+              <tr><td>Aproximado / equivale</td><td><code>\approx,\ \equiv,\ \sim</code></td></tr>
+              <tr><td>Desigualdade</td><td><code>\leq,\ \geq,\ \neq,\ \ll,\ \gg</code></td></tr>
+              <tr><td>Combinação / arranjo</td><td><code>\binom{n}{k}</code></td></tr>
+              <tr><td>Espaços / texto</td><td><code>\quad,\ \,\ \text{palavra}</code></td></tr>
+              <tr><td>Número real / complexo</td><td><code>\mathbb{R},\ \mathbb{C},\ \mathbb{Z}</code></td></tr>
+              <tr><td>Matriz (colchetes)</td><td><code>\begin{bmatrix} a &amp; b \\ c &amp; d \end{bmatrix}</code></td></tr>
+              <tr><td>Matriz (parênteses)</td><td><code>\begin{pmatrix} a &amp; b \\ c &amp; d \end{pmatrix}</code></td></tr>
+              <tr><td>Sistema de casos</td><td><code>\begin{cases} x &amp; \text{se} \geq 0 \\ -x &amp; \text{caso contrário} \end{cases}</code></td></tr>
             </table>
-            <p class="nb-gc-tip">&#9432; Em f-strings de código, use <code>#f"..."</code> (com <code>#</code>) para preservar a barra invertida do LaTeX: <code>#f"\cdot {valor}"</code>.</p>
+            <p class="nb-gc-tip">&#9432; Em f-strings de código, use <code>#f"..."</code> para preservar <code>\</code>: <code>#f"\frac{{num}}{{den}} = {resultado:.4f}"</code></p>
           </div>
         </details>
 
