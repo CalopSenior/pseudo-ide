@@ -47,7 +47,7 @@
     const out = [];
     let inCode = false, codeBuf = [], codeLang = "";
     let inList = false, listOl = false;
-    let inMath = false, mathBuf = [];
+    let inMath = false, mathBuf = [], mathCloser = "", mathIncludeClose = false;
 
     function flushList() {
       if (!inList) return;
@@ -67,27 +67,49 @@
     }
 
     function inline(s) {
-      // Extract $...$ spans BEFORE HTML-escaping so LaTeX < > survive
-      const mathSpans = [];
-      let t = s.replace(/\$([^$\n]+)\$/g, (_, tex) => {
-        mathSpans.push(tex);
-        return `\x00M${mathSpans.length - 1}\x00`;
-      });
+      const spans = [];
+      const mark = (tex, display) => {
+        spans.push({ tex, display });
+        return `\x00M${spans.length - 1}\x00`;
+      };
+      let t = s;
+      // \$ → literal dollar (protect from math detection)
+      t = t.replace(/\\\$/g, "\x00DOLLAR\x00");
+      // $$...$$ display (inline, single line)
+      t = t.replace(/\$\$([^$\n]+?)\$\$/g, (_, tex) => mark(tex, true));
+      // \[...\] display (inline, single line)
+      t = t.replace(/\\\[(.+?)\\\]/g, (_, tex) => mark(tex, true));
+      // $...$ inline math
+      t = t.replace(/\$([^$\n]+?)\$/g, (_, tex) => mark(tex, false));
+      // \(...\) inline math
+      t = t.replace(/\\\((.+?)\\\)/g, (_, tex) => mark(tex, false));
+      // Restore escaped dollar
+      t = t.replace(/\x00DOLLAR\x00/g, "&#36;");
       t = t
         .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+        .replace(/\*\*\*([^*\n]+)\*\*\*/g, "<strong><em>$1</em></strong>")
         .replace(/\*\*([^*\n]+)\*\*/g, "<strong>$1</strong>")
         .replace(/\*([^*\n]+)\*/g, "<em>$1</em>")
+        .replace(/~~([^~\n]+)~~/g, "<del>$1</del>")
         .replace(/`([^`\n]+)`/g, "<code>$1</code>")
+        .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" style="max-width:100%">')
         .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
       return t.replace(/\x00M(\d+)\x00/g, (_, i) => {
-        const tex = mathSpans[+i];
+        const { tex, display } = spans[+i];
         if (window.katex) {
-          try { return window.katex.renderToString(tex, { displayMode: false, throwOnError: false }); }
-          catch (_) {}
+          try {
+            return window.katex.renderToString(tex, { displayMode: display, throwOnError: false });
+          } catch (_) {}
         }
-        return `<code>$${tex.replace(/</g, "&lt;")}$</code>`;
+        return display
+          ? `<span class="latex-block"><code>$$${tex.replace(/</g, "&lt;")}$$</code></span>`
+          : `<code>$${tex.replace(/</g, "&lt;")}$</code>`;
       });
     }
+
+    // \begin{env} environments treated as block display math
+    const MATH_ENVS =
+      /^\\begin\{(equation\*?|align\*?|aligned|gather\*?|multline\*?|split|cases|dcases|pmatrix|bmatrix|vmatrix|Bmatrix|Vmatrix|matrix|array)\}/;
 
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
@@ -106,31 +128,64 @@
       }
       if (inCode) { codeBuf.push(line); continue; }
 
-      // block math $$
-      if (/^\$\$/.test(line)) {
-        if (!inMath) {
-          const single = line.match(/^\$\$(.+)\$\$\s*$/);
-          if (single) { flushList(); out.push(_katexBlock(single[1])); }
-          else {
-            flushList();
-            inMath = true; mathBuf = [];
-            const rest = line.slice(2).trim();
-            if (rest) mathBuf.push(rest);
-          }
-        } else {
+      // collecting block math (must check before any new math opener)
+      if (inMath) {
+        if (line.trim() === mathCloser) {
+          if (mathIncludeClose) mathBuf.push(line);
           out.push(_katexBlock(mathBuf.join("\n")));
-          inMath = false; mathBuf = [];
+          inMath = false; mathBuf = []; mathCloser = ""; mathIncludeClose = false;
+        } else {
+          mathBuf.push(line);
         }
         continue;
       }
-      if (inMath) { mathBuf.push(line); continue; }
 
-      // heading
-      const hm = line.match(/^(#{1,3})\s+(.+)$/);
-      if (hm) { flushList(); out.push(`<h${hm[1].length}>${inline(hm[2])}</h${hm[1].length}>`); continue; }
+      // block math: $$ (single or multi-line)
+      if (/^\$\$/.test(line)) {
+        const single = line.match(/^\$\$(.+)\$\$\s*$/);
+        if (single) { flushList(); out.push(_katexBlock(single[1])); }
+        else {
+          flushList();
+          const rest = line.slice(2).trim();
+          inMath = true; mathCloser = "$$"; mathIncludeClose = false;
+          mathBuf = rest ? [rest] : [];
+        }
+        continue;
+      }
 
-      // hr
-      if (/^---+$/.test(line.trim())) { flushList(); out.push("<hr>"); continue; }
+      // block math: \[...\] (single or multi-line)
+      if (/^\\\[/.test(line)) {
+        const single = line.match(/^\\\[(.+?)\\\]\s*$/);
+        if (single) { flushList(); out.push(_katexBlock(single[1])); }
+        else {
+          flushList();
+          const rest = line.slice(2).trim();
+          inMath = true; mathCloser = "\\]"; mathIncludeClose = false;
+          mathBuf = rest ? [rest] : [];
+        }
+        continue;
+      }
+
+      // block math: \begin{env}...\end{env}
+      const bm = line.match(MATH_ENVS);
+      if (bm) {
+        flushList();
+        inMath = true;
+        mathCloser = `\\end{${bm[1]}}`;
+        mathIncludeClose = true;
+        mathBuf = [line];
+        continue;
+      }
+
+      // heading (H1–H6)
+      const hm = line.match(/^(#{1,6})\s+(.+)$/);
+      if (hm) {
+        const lvl = hm[1].length;
+        flushList(); out.push(`<h${lvl}>${inline(hm[2])}</h${lvl}>`); continue;
+      }
+
+      // hr  ---  ___  ***
+      if (/^(?:-{3,}|_{3,}|\*{3,})\s*$/.test(line)) { flushList(); out.push("<hr>"); continue; }
 
       // blockquote
       if (/^> /.test(line)) { flushList(); out.push(`<blockquote>${inline(line.slice(2))}</blockquote>`); continue; }
