@@ -35,12 +35,29 @@
       <input id="nb-title" class="nb-title-input" value="sem título" title="Clique para renomear" />
     </div>
     <div class="nb-header-right">
-      <button id="nb-run-all-btn" class="nb-btn-run-all" onclick="nbRunAll()" title="Executar todas as células (Ctrl+Shift+Enter)">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:-2px;margin-right:4px">
-          <polygon points="5 3 19 12 5 21 5 3" />
-          <polygon points="15 3 19 12 15 21 15 3" />
-        </svg>Executar Tudo
-      </button>
+      <!-- Run-All dropdown group -->
+      <div class="nb-run-group" id="nb-run-group">
+        <button class="nb-btn-run-all" id="nb-run-all-btn" onclick="nbRunDefault()"
+          title="Executar todas as células (Ctrl+Shift+Enter)">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:-2px;margin-right:4px">
+            <polygon points="5 3 19 12 5 21 5 3" />
+            <polygon points="15 3 19 12 15 21 15 3" />
+          </svg><span id="nb-run-label">Executar Tudo</span>
+        </button>
+        <button class="nb-run-arrow" id="nb-run-mode-btn" onclick="nbToggleRunMenu()"
+          title="Escolher modo de execução">&#9660;</button>
+        <div class="nb-run-menu" id="nb-run-menu">
+          <button class="nb-run-menu-item" data-mode="amb" onclick="nbRunMenuSelect('amb')">
+            <span class="nb-run-menu-name">Amb <span class="nb-run-menu-badge">★</span></span>
+            <span class="nb-run-menu-desc">Respeita modo ambiente — células amb exportam; demais ficam isoladas</span>
+          </button>
+          <button class="nb-run-menu-item" data-mode="livre" onclick="nbRunMenuSelect('livre')">
+            <span class="nb-run-menu-name">Livre</span>
+            <span class="nb-run-menu-desc">Todas as células em um único escopo compartilhado</span>
+          </button>
+        </div>
+      </div>
+
       <button onclick="nbAddCell('codigo')" title="Adicionar célula de código no fim">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
           stroke-linecap="round" style="vertical-align:-2px;margin-right:4px">
@@ -73,6 +90,7 @@
           <polyline points="16 18 22 12 16 6" /><polyline points="8 6 2 12 8 18" />
         </svg>Exportar HTML
       </button>
+      <button class="nb-guide-btn" onclick="nbGuideOpen()" title="Guia do Notebook">?</button>
     </div>
   </header>
 
@@ -97,6 +115,146 @@
     <span style="color:var(--border-light)">|</span>
     <span>Pseudo Notebook v1.0</span>
     <span style="margin-left:auto" id="nb-status-text"></span>
+  </div>
+
+  <!-- ===== GUIDE MODAL ===== -->
+  <div class="nb-guide-overlay" id="nb-guide-overlay" style="display:none" onclick="if(event.target===this)nbGuideClose()">
+    <div class="nb-guide-panel" role="dialog" aria-modal="true" aria-label="Guia do Notebook">
+      <div class="nb-guide-hd">
+        <span class="nb-guide-title">Guia do Notebook</span>
+        <button class="nb-guide-close" onclick="nbGuideClose()" title="Fechar">&#215;</button>
+      </div>
+      <div class="nb-guide-body">
+
+        <details class="nb-gs" open>
+          <summary>Visão Geral</summary>
+          <div class="nb-gc">
+            <p>O <strong>Pseudo Notebook</strong> organiza código e texto em <em>células</em> intercaladas. Células de código executam algoritmos em pseudo-linguagem; células de texto aceitam Markdown com LaTeX para documentação.</p>
+            <p>Arquivos são salvos no formato <code>.pseudonb</code> (JSON) e podem ser exportados como HTML estático.</p>
+          </div>
+        </details>
+
+        <details class="nb-gs">
+          <summary>Células de Código</summary>
+          <div class="nb-gc">
+            <ul>
+              <li><kbd>Ctrl</kbd>+<kbd>Enter</kbd> — executar a célula atual</li>
+              <li><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Enter</kbd> — executar tudo</li>
+              <li><kbd>Tab</kbd> — indentar (2 espaços)</li>
+              <li>Botão <strong>▶ Executar</strong> na toolbar da célula</li>
+            </ul>
+            <p>A saída aparece abaixo da célula. Erros são exibidos em vermelho com número da linha.</p>
+            <pre class="nb-gc-pre"><code>// Exemplo básico
+inteiro n = 10
+real soma = 0
+
+para (inteiro i = 1; i &lt;= n; i++) {
+    soma = soma + i
+}
+imprima(f"Soma de 1 a {n}: {soma}")</code></pre>
+          </div>
+        </details>
+
+        <details class="nb-gs">
+          <summary>Modo Ambiente (amb)</summary>
+          <div class="nb-gc">
+            <p>Ative o botão <strong>amb</strong> na toolbar de uma célula de código para <em>expor</em> suas variáveis ao ambiente compartilhado. Variáveis que começam com <code>_</code> <strong>não</strong> são exportadas.</p>
+            <p><strong>Ao executar individualmente</strong> qualquer célula, o ambiente é injetado automaticamente — você pode ler variáveis de células amb mesmo sem executar tudo.</p>
+            <div class="nb-gc-example">
+              <div class="nb-gc-cell nb-gc-env"><span class="nb-gc-badge">amb</span>
+<pre><code>// Célula 1 — configura parâmetros (amb ativo)
+inteiro periodos = 12
+real taxa = 0.015
+
+funcao montante(p, i, n) {
+    retorne p * (1 + i) ^ n
+}</code></pre></div>
+              <div class="nb-gc-cell"><span class="nb-gc-badge nb-gc-badge-dim">sem amb</span>
+<pre><code>// Célula 2 — usa o ambiente da célula 1
+real resultado = montante(1000, taxa, periodos)
+imprima(f"Montante: {resultado:.2f}")</code></pre></div>
+            </div>
+          </div>
+        </details>
+
+        <details class="nb-gs">
+          <summary>Modos de Executar Tudo</summary>
+          <div class="nb-gc">
+            <p>Clique no <strong>&#9660;</strong> ao lado de <em>Executar Tudo</em> para escolher o modo:</p>
+            <table class="nb-gc-table">
+              <tr>
+                <th>Modo</th><th>Comportamento</th>
+              </tr>
+              <tr>
+                <td><strong>Amb ★</strong> <em>(padrão)</em></td>
+                <td>Cada célula roda isolada com o ambiente injetado. Somente células amb escrevem no ambiente. Ideal para notebooks com células de "configuração" e células de "uso".</td>
+              </tr>
+              <tr>
+                <td><strong>Livre</strong></td>
+                <td>Todas as células rodam em um único escopo — qualquer variável é automaticamente visível nas células seguintes, independente do modo amb.</td>
+              </tr>
+            </table>
+            <p class="nb-gc-tip">&#9432; Em ambos os modos, ao final da execução as variáveis das células amb são capturadas para o ambiente, permitindo execuções individuais subsequentes.</p>
+          </div>
+        </details>
+
+        <details class="nb-gs">
+          <summary>Células de Texto (Markdown)</summary>
+          <div class="nb-gc">
+            <p>Dê duplo clique em uma célula de texto para editar. Clique em <strong>&#10003; Ok</strong> para renderizar.</p>
+            <table class="nb-gc-table">
+              <tr><th>Sintaxe</th><th>Resultado</th></tr>
+              <tr><td><code># Título</code></td><td>Cabeçalho H1</td></tr>
+              <tr><td><code>## Subtítulo</code></td><td>Cabeçalho H2</td></tr>
+              <tr><td><code>### Seção</code></td><td>Cabeçalho H3</td></tr>
+              <tr><td><code>**negrito**</code></td><td><strong>negrito</strong></td></tr>
+              <tr><td><code>*itálico*</code></td><td><em>itálico</em></td></tr>
+              <tr><td><code>`código`</code></td><td><code>código</code></td></tr>
+              <tr><td><code>- item</code></td><td>Lista com marcador</td></tr>
+              <tr><td><code>1. item</code></td><td>Lista numerada</td></tr>
+              <tr><td><code>```pseudo ... ```</code></td><td>Bloco de código</td></tr>
+              <tr><td><code>$formula$</code></td><td>LaTeX inline</td></tr>
+              <tr><td><code>$$formula$$</code></td><td>LaTeX em bloco</td></tr>
+              <tr><td><code>---</code></td><td>Linha divisória</td></tr>
+              <tr><td><code>&gt; texto</code></td><td>Citação/nota</td></tr>
+            </table>
+          </div>
+        </details>
+
+        <details class="nb-gs">
+          <summary>LaTeX — Fórmulas Matemáticas</summary>
+          <div class="nb-gc">
+            <p>Use <code>$...$</code> para fórmulas inline e <code>$$...$$</code> para fórmulas em bloco centralizado. Renderizado via <strong>KaTeX</strong>.</p>
+            <table class="nb-gc-table">
+              <tr><th>Descrição</th><th>Código LaTeX</th></tr>
+              <tr><td>Fração</td><td><code>\frac{a}{b}</code></td></tr>
+              <tr><td>Potência</td><td><code>x^{2}</code> ou <code>x^2</code></td></tr>
+              <tr><td>Índice inferior</td><td><code>x_{i}</code></td></tr>
+              <tr><td>Raiz quadrada</td><td><code>\sqrt{x}</code></td></tr>
+              <tr><td>Raiz n-ésima</td><td><code>\sqrt[n]{x}</code></td></tr>
+              <tr><td>Somatório</td><td><code>\sum_{i=1}^{n} x_i</code></td></tr>
+              <tr><td>Produtório</td><td><code>\prod_{i=1}^{n}</code></td></tr>
+              <tr><td>Integral</td><td><code>\int_0^1 f(x)\,dx</code></td></tr>
+              <tr><td>Integral dupla</td><td><code>\iint_D f\,dA</code></td></tr>
+              <tr><td>Limite</td><td><code>\lim_{x \to 0} f(x)</code></td></tr>
+              <tr><td>Derivada parcial</td><td><code>\frac{\partial f}{\partial x}</code></td></tr>
+              <tr><td>Vetor</td><td><code>\vec{v}</code></td></tr>
+              <tr><td>Norma</td><td><code>\|v\|</code></td></tr>
+              <tr><td>Produto escalar</td><td><code>a \cdot b</code></td></tr>
+              <tr><td>Produto vetorial</td><td><code>a \times b</code></td></tr>
+              <tr><td>Grego minúsculo</td><td><code>\alpha\ \beta\ \gamma\ \delta\ \pi\ \sigma</code></td></tr>
+              <tr><td>Grego maiúsculo</td><td><code>\Gamma\ \Delta\ \Sigma\ \Omega</code></td></tr>
+              <tr><td>Infinito</td><td><code>\infty</code></td></tr>
+              <tr><td>Aprovado / pertence</td><td><code>\in\ \notin\ \subset\ \cup\ \cap</code></td></tr>
+              <tr><td>Implica / equivale</td><td><code>\Rightarrow\ \Leftrightarrow</code></td></tr>
+              <tr><td>Matriz / sistema</td><td><code>\begin{pmatrix} a &amp; b \\ c &amp; d \end{pmatrix}</code></td></tr>
+            </table>
+            <p class="nb-gc-tip">&#9432; Em f-strings de código, use <code>#f"..."</code> (com <code>#</code>) para preservar a barra invertida do LaTeX: <code>#f"\cdot {valor}"</code>.</p>
+          </div>
+        </details>
+
+      </div><!-- /nb-guide-body -->
+    </div>
   </div>
 
   <!-- ===== SCRIPTS =====
