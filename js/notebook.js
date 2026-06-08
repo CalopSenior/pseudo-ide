@@ -21,6 +21,9 @@
         : null;
   };
 
+  // ---------- shared environment namespace ----------
+  window._nbEnv = {};
+
   // ---------- auto-resize textarea ----------
   function _autoResize(ta) {
     // height:0 forces scrollHeight to reflect full content regardless of overflow
@@ -176,6 +179,7 @@
           <button class="nb-btn-icon" data-action="down" title="Mover abaixo">&#8595;</button>
           <button class="nb-btn-icon" data-action="add-code" title="Inserir c&eacute;lula c&oacute;digo abaixo">+C</button>
           <button class="nb-btn-icon" data-action="add-md" title="Inserir c&eacute;lula texto abaixo">+T</button>
+          <button class="nb-btn-icon nb-btn-env" data-action="toggle-env" title="Expor variáveis ao ambiente">amb</button>
           <button class="nb-btn-icon nb-btn-del" data-action="del" title="Remover c&eacute;lula">&#215;</button>
         </div>
       </div>
@@ -305,6 +309,20 @@
       case "add-md":    _addCell("markdown", idx); break;
       case "del":       _deleteCell(idx); break;
       case "toggle-md": _toggleMdEdit(_cells[idx].el); break;
+      case "toggle-env": _toggleEnvMode(id); break;
+    }
+  }
+
+  function _toggleEnvMode(id) {
+    const cell = _cells.find((c) => c.id === id);
+    if (!cell || cell.type !== "codigo") return;
+    cell.envMode = !cell.envMode;
+    cell.el.classList.toggle("nb-env-mode", cell.envMode);
+    const btn = cell.el.querySelector(".nb-btn-env");
+    if (btn) {
+      btn.title = cell.envMode
+        ? "Variáveis desta célula são visíveis nas outras (clique para desativar)"
+        : "Expor variáveis ao ambiente";
     }
   }
 
@@ -315,7 +333,7 @@
       type === "markdown"
         ? _buildMdCell(id, "")
         : _buildCodeCell(id, "");
-    const cell = { id, type, el };
+    const cell = { id, type, el, envMode: false };
     const container = _container();
 
     if (afterIdx !== undefined && afterIdx >= 0 && afterIdx < _cells.length) {
@@ -369,11 +387,38 @@
     outputEl.classList.toggle("nb-has-output", hasContent);
   }
 
+  // ---------- env helpers ----------
+  function _extractPublicVars(compiledCode) {
+    const names = new Set();
+    const declRe = /\b(?:let|const|var)\s+([A-Za-z_$][A-Za-z0-9_$]*)/g;
+    let m;
+    while ((m = declRe.exec(compiledCode)) !== null) {
+      const n = m[1];
+      if (!n.startsWith("_") && n !== "undefined" && n !== "null") names.add(n);
+    }
+    const fnRe = /\bfunction\s+([A-Za-z_$][A-Za-z0-9_$]*)\s*\(/g;
+    while ((m = fnRe.exec(compiledCode)) !== null) {
+      const n = m[1];
+      if (!n.startsWith("_")) names.add(n);
+    }
+    return [...names];
+  }
+
+  function _buildEnvCapture(names) {
+    if (!names.length) return "";
+    return (
+      names
+        .map((n) => `try{window._nbEnv[${JSON.stringify(n)}]=${n};}catch(_nbE){}`)
+        .join(";") + ";"
+    );
+  }
+
   // ---------- execution ----------
   async function _runAll() {
     _setStatus("executando…");
     const runBtn = document.getElementById("nb-run-all-btn");
     if (runBtn) runBtn.disabled = true;
+    window._nbEnv = {};
 
     const codeCells = _cells.filter((c) => c.type === "codigo");
     const outputs = [];
@@ -408,6 +453,17 @@
       return;
     }
 
+    // Append env capture for env-mode cells (runs after all cells share scope)
+    const _envCapVars = new Set();
+    codeCells.forEach((cell) => {
+      if (!cell.envMode) return;
+      const src = _getCellSource(cell) || "";
+      let cComp = "";
+      try { cComp = traduzirCodigo(src, false); } catch (_) {}
+      _extractPublicVars(cComp).forEach((n) => _envCapVars.add(n));
+    });
+    if (_envCapVars.size) translated += "\n" + _buildEnvCapture([..._envCapVars]);
+
     console.groupCollapsed("[Pseudo Notebook] JS gerado — executar tudo");
     console.log(translated);
     console.groupEnd();
@@ -417,7 +473,8 @@
     const ctx = `(async function __NB__(){\ntry{\n${translated}\n}catch(__e){\n_imprimaErro(__e);\n}})();`;
     let execOk = true;
     try {
-      await eval(ctx);
+      // eslint-disable-next-line no-eval
+      await (0, eval)(ctx);
     } catch (e) {
       // only reached if the eval wrapper itself explodes (rare)
       console.error("[Pseudo Notebook] Erro de execução (wrapper):", e);
@@ -462,14 +519,20 @@
       return;
     }
 
+    // Wrap with env injection (with) + optional capture for env-mode cells
+    const captureCode = cell.envMode ? _buildEnvCapture(_extractPublicVars(translated)) : "";
+    const execCode = `with(window._nbEnv||{}){\n${translated}\n${captureCode}\n}`;
+
     console.groupCollapsed("[Pseudo Notebook] JS gerado — célula");
-    console.log(translated);
+    console.log(execCode);
     console.groupEnd();
 
     window.__inicioExecucao = Date.now();
-    const ctx = `(async function __NBC__(){\ntry{\nwindow._nbSwitch(0);\n${translated}\n}catch(__e){\n_imprimaErro(__e);\n}})();`;
+    const ctx = `(async function __NBC__(){\ntry{\nwindow._nbSwitch(0);\n${execCode}\n}catch(__e){\n_imprimaErro(__e);\n}})();`;
     try {
-      await eval(ctx);
+      // (0,eval) = indirect eval → non-strict context, allows `with` for env injection
+      // eslint-disable-next-line no-eval
+      await (0, eval)(ctx);
     } catch (_e) {
       // errors are handled inside __NBC__ by _imprimaErro
       console.error("[Pseudo Notebook] Erro de execução (wrapper):", _e);
@@ -508,7 +571,9 @@
         const ta = cell.el.querySelector(".nb-md-editor");
         conteudo = ta ? ta.value : "";
       }
-      return { tipo: cell.type, conteudo };
+      const obj = { tipo: cell.type, conteudo };
+      if (cell.envMode) obj.env = true;
+      return obj;
     });
     return JSON.stringify({ versao: "1.0", titulo: title, celulas }, null, 2);
   }
@@ -531,7 +596,9 @@
           type === "markdown"
             ? _buildMdCell(id, c.conteudo || "")
             : _buildCodeCell(id, c.conteudo || "");
-        _cells.push({ id, type, el });
+        const envMode = !!c.env;
+        if (envMode) el.classList.add("nb-env-mode");
+        _cells.push({ id, type, el, envMode });
         container.appendChild(el);
       });
     }

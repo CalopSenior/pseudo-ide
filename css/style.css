@@ -1458,6 +1458,18 @@ section {
 .nb-btn-del { color: var(--red); opacity: 0.55; }
 .nb-btn-del:hover { opacity: 1; background: var(--red-dim); }
 
+/* Env-mode cell */
+.nb-cell.nb-env-mode { border-left: 3px solid rgba(124,131,255,0.45); }
+.nb-btn-env {
+  font-family: var(--font-code);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+}
+.nb-cell.nb-env-mode .nb-btn-env {
+  color: var(--accent);
+  background: var(--accent-glow);
+}
+
 /* Code cell editor */
 .nb-cell-editor {
   display: block;
