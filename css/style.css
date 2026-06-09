@@ -1692,6 +1692,25 @@ section {
 .nb-btn-del { color: var(--red); opacity: 0.55; }
 .nb-btn-del:hover { opacity: 1; background: var(--red-dim); }
 
+/* Collapse button */
+.nb-btn-collapse {
+  font-size: 8px;
+  opacity: 0.45;
+  padding: 2px 5px;
+  transition: opacity 150ms;
+  flex-shrink: 0;
+}
+.nb-cell:hover .nb-btn-collapse,
+.nb-cell:focus-within .nb-btn-collapse { opacity: 0.75; }
+.nb-btn-collapse:hover { opacity: 1 !important; }
+
+/* Collapsed cell — hide body, keep toolbar */
+.nb-cell-collapsed .nb-editor-wrap,
+.nb-cell-collapsed .nb-cell-output,
+.nb-cell-collapsed .nb-md-edit,
+.nb-cell-collapsed .nb-md-preview { display: none !important; }
+.nb-cell-collapsed .nb-cell-toolbar { border-bottom: none; }
+
 /* Env-mode cell */
 .nb-cell.nb-env-mode { border-left: 3px solid rgba(124,131,255,0.45); }
 .nb-btn-env {
