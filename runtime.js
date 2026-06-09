@@ -312,14 +312,12 @@ function esc(s) {
 }
 
 function kwClass(word) {
-  if (KW_TYPE.has(word))   return `<span class="t-type">${esc(word)}</span>`;
-  if (KW_CTRL.has(word))   return `<span class="t-ctrl">${esc(word)}</span>`;
-  if (KW_VAL.has(word))    return `<span class="t-val">${esc(word)}</span>`;
-  if (KW_OP.has(word))     return `<span class="t-op">${esc(word)}</span>`;
+  if (KW_TYPE.has(word)) return `<span class="t-type">${esc(word)}</span>`;
+  if (KW_CTRL.has(word)) return `<span class="t-ctrl">${esc(word)}</span>`;
+  if (KW_VAL.has(word)) return `<span class="t-val">${esc(word)}</span>`;
+  if (KW_OP.has(word)) return `<span class="t-op">${esc(word)}</span>`;
   if (KW_IMPORT.has(word)) return `<span class="t-import">${esc(word)}</span>`;
-  if (KW_FN.has(word))     return `<span class="t-fn">${esc(word)}</span>`;
-  if (window._userFnSet  && window._userFnSet.has(word))  return `<span class="t-user-fn">${esc(word)}</span>`;
-  if (window._userVarSet && window._userVarSet.has(word)) return `<span class="t-user-var">${esc(word)}</span>`;
+  if (KW_FN.has(word)) return `<span class="t-fn">${esc(word)}</span>`;
   return esc(word);
 }
 
@@ -431,6 +429,11 @@ function aplicarHighlight(texto) {
         n += texto[i++];
       }
       html += `<span class="t-num">${esc(n)}</span>`;
+      continue;
+    }
+    if (ch === '?') {
+      html += `<span class="t-op">?</span>`;
+      i++;
       continue;
     }
     html += esc(ch);
@@ -646,7 +649,7 @@ codeEditor.addEventListener("scroll", () => {
 /* ============================================================
    AUTOCOMPLETE
    ============================================================ */
-const BASE_COMPLETIONS = [
+const COMPLETIONS = [
   { label: "inteiro", detail: "tipo — número inteiro" },
   { label: "real", detail: "tipo — número decimal" },
   { label: "caracter", detail: "tipo — texto/string" },
@@ -839,259 +842,485 @@ const BASE_COMPLETIONS = [
     insert:
       "importar tempo como tp;\nfuncao minhaFuncao(n) {\n    // implementação O(?)\n    retorno n;\n}\ntp.testeStress(minhaFuncao, 1000000);\n",
   },
-];  // end BASE_COMPLETIONS
-
-/* Definições por biblioteca — completions contextuais */
-const LIB_METHODS = {
-  mat: {
-    props: [
-      { name: "pi", detail: "π" }, { name: "e", detail: "e de Euler" },
-      { name: "Infinito", detail: "+∞" }, { name: "NegInfinito", detail: "−∞" },
-    ],
-    methods: [
-      { name: "abs",        args: ["x"],                 detail: "valor absoluto" },
-      { name: "arred",      args: ["x","casas?"],        detail: "arredondamento" },
-      { name: "piso",       args: ["x"],                 detail: "floor" },
-      { name: "teto",       args: ["x"],                 detail: "ceil" },
-      { name: "max",        args: ["a","b"],             detail: "máximo" },
-      { name: "min",        args: ["a","b"],             detail: "mínimo" },
-      { name: "sen",        args: ["x"],                 detail: "seno (rad)" },
-      { name: "cos",        args: ["x"],                 detail: "cosseno (rad)" },
-      { name: "tan",        args: ["x"],                 detail: "tangente (rad)" },
-      { name: "arcsen",     args: ["x"],                 detail: "arcosseno" },
-      { name: "arccos",     args: ["x"],                 detail: "arcocosseno" },
-      { name: "arctan",     args: ["x"],                 detail: "arcotangente" },
-      { name: "arctan2",    args: ["y","x"],             detail: "atan2(y,x)" },
-      { name: "hipot",      args: ["a","b"],             detail: "√(a²+b²)" },
-      { name: "senh",       args: ["x"],                 detail: "seno hiperbólico" },
-      { name: "cosh",       args: ["x"],                 detail: "cosseno hiperbólico" },
-      { name: "tanh",       args: ["x"],                 detail: "tang. hiperbólica" },
-      { name: "ln",         args: ["x"],                 detail: "log natural" },
-      { name: "log2",       args: ["x"],                 detail: "log base 2" },
-      { name: "log10",      args: ["x"],                 detail: "log base 10" },
-      { name: "log",        args: ["x","base"],          detail: "log qualquer base" },
-      { name: "truncar",    args: ["x","casas?"],        detail: "trunca decimais" },
-      { name: "grauParaRad",args: ["graus"],             detail: "graus→rad" },
-      { name: "radParaGrau",args: ["rad"],               detail: "rad→graus" },
-      { name: "aleatorio",  args: ["min","max"],         detail: "int aleatório" },
-      { name: "somatorio",  args: ["fn","ini","fim"],    detail: "Σ fn(i)" },
-      { name: "produtorio", args: ["fn","ini","fim"],    detail: "Π fn(i)" },
-      { name: "sinal",      args: ["x"],                 detail: "−1, 0 ou 1" },
-      { name: "linspace",   args: ["ini","fim","n"],     detail: "n pts espaçados" },
-    ],
+  { label: "m.pi", detail: "mat — π ≈ 3.14159" },
+  { label: "m.e", detail: "mat — e ≈ 2.71828" },
+  { label: "m.Infinito", detail: "mat — +∞" },
+  { label: "m.NegInfinito", detail: "mat — −∞" },
+  { label: "m.abs()", detail: "mat — |x|", insert: "m.abs(" },
+  { label: "m.arred()", detail: "mat — arredonda", insert: "m.arred(" },
+  { label: "m.piso()", detail: "mat — floor ⌊x⌋", insert: "m.piso(" },
+  { label: "m.teto()", detail: "mat — ceil ⌈x⌉", insert: "m.teto(" },
+  { label: "m.max()", detail: "mat — maior dos dois", insert: "m.max(" },
+  { label: "m.min()", detail: "mat — menor dos dois", insert: "m.min(" },
+  { label: "m.sen()", detail: "mat — seno (rad)", insert: "m.sen(" },
+  { label: "m.cos()", detail: "mat — cosseno", insert: "m.cos(" },
+  { label: "m.tan()", detail: "mat — tangente", insert: "m.tan(" },
+  { label: "m.ln()", detail: "mat — log natural", insert: "m.ln(" },
+  { label: "m.log2()", detail: "mat — log₂", insert: "m.log2(" },
+  { label: "m.log10()", detail: "mat — log₁₀", insert: "m.log10(" },
+  {
+    label: "m.log(x, base)",
+    detail: "mat — log qualquer base",
+    insert: "m.log(",
   },
-  metodos: {
-    props: [],
-    methods: [
-      { name: "lista",      args: ["...items?"],  detail: "lista dinâmica" },
-      { name: "mapa",       args: [],             detail: "dicionário" },
-      { name: "conjunto",   args: [],             detail: "conjunto único" },
-      { name: "numero",     args: ["valor"],      detail: "objeto numérico" },
-      { name: "caracter",   args: ["texto"],      detail: "objeto texto" },
-      { name: "vetor",      args: ["...vals"],    detail: "vetor matemático" },
-      { name: "matriz",     args: ["linhas"],     detail: "matriz 2D" },
-      { name: "eNumero",    args: ["v"],          detail: "v é número?" },
-      { name: "eInteiro",   args: ["v"],          detail: "v é inteiro?" },
-      { name: "eReal",      args: ["v"],          detail: "v é real?" },
-      { name: "eTexto",     args: ["v"],          detail: "v é texto?" },
-      { name: "eBooleano",  args: ["v"],          detail: "v é booleano?" },
-      { name: "eLista",     args: ["v"],          detail: "v é lista?" },
-      { name: "eMapa",      args: ["v"],          detail: "v é mapa?" },
-      { name: "eConjunto",  args: ["v"],          detail: "v é conjunto?" },
-      { name: "eVetor",     args: ["v"],          detail: "v é vetor?" },
-      { name: "eMatriz",    args: ["v"],          detail: "v é matriz?" },
-      { name: "eVazio",     args: ["v"],          detail: "v é vazio?" },
-      { name: "eIndefinido",args: ["v"],          detail: "v é indefinido?" },
-    ],
+  {
+    label: "m.aleatorio()",
+    detail: "mat — inteiro em [min,max]",
+    insert: "m.aleatorio(",
   },
-  calculo: {
-    props: [],
-    methods: [
-      { name: "limite",    args: ["fn","ponto"],          detail: "lim x→p f(x)" },
-      { name: "derivada",  args: ["fn","ponto","ordem?"], detail: "f'(x) ordem n" },
-      { name: "integral",  args: ["fn","a","b"],          detail: "∫f dx em [a,b]" },
-      { name: "gamma",     args: ["x"],                   detail: "Γ(x)" },
-      { name: "digamma",   args: ["x"],                   detail: "ψ(x)" },
-      { name: "zeta",      args: ["s"],                   detail: "ζ(s)" },
-      { name: "phi",       args: ["n"],                   detail: "φ(n) totiente" },
-      { name: "lambertW",  args: ["x"],                   detail: "W(x)" },
-      { name: "taylor",    args: ["fn","a","x","n"],      detail: "série de Taylor" },
-    ],
+  {
+    label: "m.somatorio()",
+    detail: "mat — Σ fn(i) de min a max",
+    insert: "m.somatorio(",
   },
-  estatistica: {
-    props: [],
-    methods: [
-      { name: "fatorial",     args: ["n"],     detail: "n!" },
-      { name: "combinacao",   args: ["n","k"], detail: "C(n,k)" },
-      { name: "arranjo",      args: ["n","k"], detail: "A(n,k)" },
-      { name: "media",        args: ["lista"], detail: "média aritmética" },
-      { name: "mediana",      args: ["lista"], detail: "mediana" },
-      { name: "moda",         args: ["lista"], detail: "moda" },
-      { name: "variancia",    args: ["lista"], detail: "variância σ²" },
-      { name: "desvioPadrao", args: ["lista"], detail: "desvio padrão σ" },
-    ],
+  {
+    label: "m.produtorio()",
+    detail: "mat — Π fn(i) de min a max",
+    insert: "m.produtorio(",
   },
-  tabular: {
-    props: [],
-    methods: [
-      { name: "tabela",        args: ["dados","opcoes?"],                       detail: "tabela HTML" },
-      { name: "separador",     args: [],                                         detail: "linha divisória" },
-      { name: "progresso",     args: ["valor","max"],                            detail: "barra de progresso" },
-      { name: "tabelaVerdade", args: ["exprs","vars","mostrarInter?"],           detail: "tabela-verdade" },
-    ],
+  {
+    label: "m.linspace(inicio, fim, n)",
+    detail: "mat — n valores igualmente espaçados de inicio a fim",
+    insert: "m.linspace(",
   },
-  graficos: {
-    props: [],
-    methods: [
-      { name: "plotar",          args: ["dados","config?"],             detail: "plota dados ou função" },
-      { name: "plotarFuncao",    args: ["fn","intervalo?","opcoes?"],   detail: "plota uma função" },
-      { name: "plotarMultiplas", args: ["fns","intervalo?","opcoes?"],  detail: "várias funções" },
-      { name: "dispersao",       args: ["pontos","opcoes?"],            detail: "gráfico de dispersão" },
-      { name: "superficie3D",    args: ["fn","opcoes?"],                detail: "superfície 3D" },
-      { name: "grafico",         args: ["funcoes","opcoes?"],           detail: "gráfico composto" },
-      { name: "pontos",          args: ["lista","opcoes?"],             detail: "lista de pontos" },
-      { name: "conica",          args: ["A","B","C","D","E","F"],       detail: "cônica Ax²+…" },
-      { name: "relacao",         args: ["rel","opcoes?"],               detail: "relação implícita" },
-      { name: "anotado",         args: ["f","marcadores","opcoes?"],    detail: "função com marcadores" },
-    ],
+  {
+    label: "c.limite(fn, ponto)",
+    detail: "calculo — lim x→p",
+    insert: "c.limite(",
   },
-  "graficos.interativo": {
-    props: [],
-    methods: [
-      { name: "plotar",  args: ["dado","opcoes?"],    detail: "curva/pontos interativos" },
-      { name: "serie",   args: ["fn","opcoes?"],      detail: "série discreta" },
-      { name: "grafico", args: ["plotaveis","cfg?"],  detail: "canvas 2D pan/zoom" },
-    ],
+  {
+    label: "c.derivada(fn, x, n)",
+    detail: "calculo — f'(x) ordem n",
+    insert: "c.derivada(",
   },
-  algebra: {
-    props: [],
-    methods: [
-      { name: "vetor",              args: ["componentes"],  detail: "cria vetor" },
-      { name: "matriz",             args: ["linhas"],       detail: "cria matriz" },
-      { name: "soma",               args: ["a","b"],        detail: "soma" },
-      { name: "subtrair",           args: ["a","b"],        detail: "subtrai" },
-      { name: "escalar",            args: ["k","v"],        detail: "escalar k·v" },
-      { name: "ponto",              args: ["a","b"],        detail: "produto escalar ⟨a,b⟩" },
-      { name: "vetorial",           args: ["a","b"],        detail: "produto vetorial 3D" },
-      { name: "norma",              args: ["v"],            detail: "‖v‖" },
-      { name: "normalizar",         args: ["v"],            detail: "vetor unitário" },
-      { name: "transposta",         args: ["m"],            detail: "Mᵀ" },
-      { name: "determinante",       args: ["m"],            detail: "det(A)" },
-      { name: "inversa",            args: ["m"],            detail: "A⁻¹" },
-      { name: "resolverSistema",    args: ["A","b"],        detail: "Ax=b" },
-      { name: "distancia",          args: ["p1","p2"],      detail: "dist. euclidiana" },
-      { name: "angulo",             args: ["a","b"],        detail: "ângulo (rad)" },
-      { name: "anguloDeg",          args: ["a","b"],        detail: "ângulo (°)" },
-      { name: "pontoMedio",         args: ["p1","p2"],      detail: "ponto médio" },
-      { name: "projecao",           args: ["v","u"],        detail: "proj v→u" },
-      { name: "saoParalelos",       args: ["v","u"],        detail: "v ∥ u?" },
-      { name: "saoOrtogonais",      args: ["v","u"],        detail: "v ⊥ u?" },
-      { name: "identidade",         args: ["n"],            detail: "I n×n" },
-      { name: "zeros",              args: ["m","n?"],       detail: "matriz zeros" },
-      { name: "traco",              args: ["m"],            detail: "tr(A)" },
-      { name: "linspace",           args: ["ini","fim","n"],detail: "n pontos" },
-      { name: "distPontoReta",      args: ["P","A","B"],    detail: "dist ponto→reta" },
-      { name: "intersecaoRetas",    args: ["A","B","C","D"],detail: "interseção AB∩CD" },
-      { name: "areaTriangulo",      args: ["A","B","C"],    detail: "área triângulo" },
-      { name: "perimetroTriangulo", args: ["A","B","C"],    detail: "perímetro triângulo" },
-      { name: "areaCirculo",        args: ["r"],            detail: "π·r²" },
-      { name: "perimetroCirculo",   args: ["r"],            detail: "2·π·r" },
-      { name: "equacaoReta",        args: ["A","B"],        detail: "ax+by+c=0" },
-      { name: "equacaoPlano",       args: ["A","B","C"],    detail: "ax+by+cz+d=0" },
-      { name: "distPontoPlano",     args: ["P","plano"],    detail: "dist ponto→plano" },
-      { name: "saoColineares",      args: ["A","B","C"],    detail: "colineares?" },
-      { name: "saoCoplanares",      args: ["A","B","C","D"],detail: "coplanares?" },
-      { name: "pontoCirculo",       args: ["cx","cy","r","theta"], detail: "ponto na circunf." },
-    ],
+  {
+    label: "c.integral(fn, a, b)",
+    detail: "calculo — ∫f dx de a a b",
+    insert: "c.integral(",
   },
-  latex: {
-    props: [],
-    methods: [
-      { name: "linha",             args: ["tex"],           detail: "LaTeX inline" },
-      { name: "bloco",             args: ["...tex"],        detail: "LaTeX display" },
-      { name: "converterParaLatex",args: ["fn"],            detail: "fn → TeX renderizado" },
-      { name: "texString",         args: ["fn"],            detail: "fn → string TeX" },
-    ],
+  { label: "c.gamma(x)", detail: "calculo — função Γ(x)", insert: "c.gamma(" },
+  {
+    label: "c.digamma(x)",
+    detail: "calculo — função ψ(x)",
+    insert: "c.digamma(",
   },
-  tempo: {
-    props: [],
-    methods: [
-      { name: "agora",         args: [],              detail: "timestamp em ms" },
-      { name: "milisegundos",  args: [],              detail: "ms desde epoch" },
-      { name: "medirExecucao", args: ["fn"],          detail: "cronometra função" },
-      { name: "testeStress",   args: ["fn","n?"],     detail: "stress test N iter." },
-    ],
+  {
+    label: "c.zeta(s)",
+    detail: "calculo — Riemann ζ(s) (s>1)",
+    insert: "c.zeta(",
   },
-  probabilidade: {
-    props: [],
-    methods: [
-      { name: "sortearComPesos",  args: ["itens","pesos"],   detail: "sorteia com pesos" },
-      { name: "uniforme",         args: ["a","b"],            detail: "real uniforme [a,b]" },
-      { name: "aleatorioInteiro", args: ["min","max"],        detail: "int em [min,max]" },
-      { name: "rolarDados",       args: ["qtd","faces"],      detail: "simula dados" },
-      { name: "monteCarlo",       args: ["fn","n"],           detail: "Monte Carlo" },
-      { name: "intervalo",        args: ["dados","conf?"],    detail: "int. de confiança" },
-    ],
+  {
+    label: "c.phi(n)",
+    detail: "calculo — Totiente de Euler φ(n)",
+    insert: "c.phi(",
   },
-  arquivos: {
-    props: [],
-    methods: [
-      { name: "lerCSV",          args: ["opcoes?"],  detail: "CSV → lista de mapas" },
-      { name: "lerJSON",         args: ["opcoes?"],  detail: "JSON → objeto" },
-      { name: "lerTXT",          args: ["opcoes?"],  detail: "TXT → lista de linhas" },
-      { name: "lerPDADOS",       args: ["opcoes?"],  detail: ".pdados nativo" },
-      { name: "abrirImportador", args: [],           detail: "tela de importação" },
-    ],
+  {
+    label: "c.lambertW(x)",
+    detail: "calculo — função W(x)",
+    insert: "c.lambertW(",
   },
-};
-
-/* Extrai alias→libName das importações */
-function _parseImports(texto) {
-  const imports = {};
-  const re = /\bimportar\s+([\w.]+)\s+como\s+([A-Za-zÀ-ÖØ-öø-ÿ_][A-Za-zÀ-ÖØ-öø-ÿ0-9_]*)/g;
-  let m;
-  while ((m = re.exec(texto)) !== null) imports[m[2]] = m[1];
-  return imports;
-}
-
-/* Gera completions usando os aliases reais do código */
-function _buildLibCompletions(imports) {
-  const items = [];
-  for (const [alias, libName] of Object.entries(imports)) {
-    const lib = LIB_METHODS[libName];
-    if (!lib) continue;
-    lib.props.forEach((p) =>
-      items.push({ label: `${alias}.${p.name}`, detail: `${libName} — ${p.detail}`, insert: `${alias}.${p.name}` })
-    );
-    lib.methods.forEach((md) =>
-      items.push({ label: `${alias}.${md.name}()`, detail: `${libName} — ${md.detail}`, insert: `${alias}.${md.name}(` })
-    );
-  }
-  return items;
-}
-
-/* Gera mapa "alias.metodo" → [params] para o balão de assinatura */
-function _buildLibSignatures(imports) {
-  const sigs = {};
-  for (const [alias, libName] of Object.entries(imports)) {
-    const lib = LIB_METHODS[libName];
-    if (!lib) continue;
-    lib.methods.forEach((md) => { sigs[`${alias}.${md.name}`] = md.args; });
-  }
-  return sigs;
-}
-
-/* Token contextual antes do cursor: alias.metodo, alias.sub.metodo ou palavra simples */
-function getContextBefore(pos) {
-  const text = codeEditor.value.slice(0, pos);
-  let m = text.match(/[A-Za-zÀ-ÖØ-öø-ÿ_]\w*\.[A-Za-zÀ-ÖØ-öø-ÿ_]\w*\.([A-Za-zÀ-ÖØ-öø-ÿ_]\w*)?$/);
-  if (m) return { full: m[0], replaceLen: m[0].length };
-  m = text.match(/[A-Za-zÀ-ÖØ-öø-ÿ_]\w*\.([A-Za-zÀ-ÖØ-öø-ÿ_]\w*)?$/);
-  if (m) return { full: m[0], replaceLen: m[0].length };
-  m = text.match(/[A-Za-zÀ-ÖØ-öø-ÿ_]\w*$/);
-  if (m) return { full: m[0], replaceLen: m[0].length };
-  return { full: "", replaceLen: 0 };
-}
+  {
+    label: "c.taylor(fn, a, x, n)",
+    detail: 'calculo — série de Taylor em "a"',
+    insert: "c.taylor(",
+  },
+  { label: "e.fatorial(n)", detail: "estat — n!", insert: "e.fatorial(" },
+  {
+    label: "e.combinacao(n,k)",
+    detail: "estat — C(n,k)",
+    insert: "e.combinacao(",
+  },
+  { label: "e.arranjo(n,k)", detail: "estat — A(n,k)", insert: "e.arranjo(" },
+  { label: "e.media(lista)", detail: "estat — média", insert: "e.media(" },
+  {
+    label: "e.mediana(lista)",
+    detail: "estat — mediana",
+    insert: "e.mediana(",
+  },
+  { label: "e.moda(lista)", detail: "estat — moda(s)", insert: "e.moda(" },
+  { label: "e.variancia(lista)", detail: "estat — σ²", insert: "e.variancia(" },
+  {
+    label: "e.desvioPadrao(lista)",
+    detail: "estat — σ",
+    insert: "e.desvioPadrao(",
+  },
+  {
+    label: "t.tabela(cab, linhas)",
+    detail: "tabular — tabela formatada",
+    insert: "t.tabela(",
+  },
+  {
+    label: "t.separador()",
+    detail: "tabular — linha divisória",
+    insert: "t.separador()",
+  },
+  {
+    label: "t.progresso(val, max)",
+    detail: "tabular — barra visual",
+    insert: "t.progresso(",
+  },
+  {
+    label: "t.tabelaVerdade(expr, vars, inter?)",
+    detail: "tabular — tabela-verdade",
+    insert: "t.tabelaVerdade(",
+  },
+  {
+    label: "m.lista(a...b)",
+    detail: "metodos — lista; aceita range a...b ou array",
+    insert: "m.lista(",
+  },
+  { label: "m.mapa(a...b)", detail: "metodos — mapa; aceita array/range", insert: "m.mapa(" },
+  {
+    label: "m.conjunto(a...b)",
+    detail: "metodos — conjunto; aceita array/range",
+    insert: "m.conjunto(",
+  },
+  {
+    label: "m.numero(v)",
+    detail: "metodos — objeto numérico",
+    insert: "m.numero(",
+  },
+  {
+    label: "m.caracter(v)",
+    detail: "metodos — objeto texto",
+    insert: "m.caracter(",
+  },
+  {
+    label: "m.vetor([...])",
+    detail: "metodos — vetor N-dim",
+    insert: "m.vetor([",
+  },
+  {
+    label: "m.matriz([[...]])",
+    detail: "metodos — matriz M×N",
+    insert: "m.matriz([[\n    \n]])",
+  },
+  { label: "tp.agora()", detail: "tempo — ms atual", insert: "tp.agora()" },
+  {
+    label: "tp.medirExecucao(fn)",
+    detail: "tempo — mede e imprime",
+    insert: "tp.medirExecucao(",
+  },
+  {
+    label: "tp.testeStress(fn,max)",
+    detail: "tempo — tabela Big-O",
+    insert: "tp.testeStress(",
+  },
+  {
+    label: "g.plotar(dados, config)",
+    detail: "graficos — interface unificada",
+    insert: "g.plotar(",
+  },
+  {
+    label: "g.plotarFuncao(fn, [-,+])",
+    detail: "graficos — função 2D",
+    insert: "g.plotarFuncao(",
+  },
+  {
+    label: "g.plotarMultiplas(lista_fn, [-,+])",
+    detail: "graficos — várias funções",
+    insert: "g.plotarMultiplas(",
+  },
+  {
+    label: "g.dispersao(pontos)",
+    detail: "graficos — scatter {x,y}",
+    insert: "g.dispersao(",
+  },
+  {
+    label: "g.superficie3D(fn)",
+    detail: "graficos — z=f(x,z) 3D",
+    insert: "g.superficie3D(",
+  },
+  {
+    label: "p.sortearComPesos(itens, pesos)",
+    detail: "prob — sorteio ponderado",
+    insert: "p.sortearComPesos(",
+  },
+  {
+    label: "p.uniforme(min, max)",
+    detail: "prob — real em [min,max]",
+    insert: "p.uniforme(",
+  },
+  {
+    label: "p.aleatorioInteiro(min, max)",
+    detail: "prob — int em [min,max]",
+    insert: "p.aleatorioInteiro(",
+  },
+  {
+    label: "p.rolarDados(qtd, faces)",
+    detail: "prob — simula dados",
+    insert: "p.rolarDados(",
+  },
+  {
+    label: "p.monteCarlo(fn, n)",
+    detail: "prob — simulação Monte Carlo",
+    insert: "p.monteCarlo(",
+  },
+  // ── algebra ──────────────────────────────────────────────
+  {
+    label: "importar algebra como al",
+    detail: "snippet",
+    insert: "importar algebra como al;\n",
+  },
+  {
+    label: "al.vetorial(v, u)",
+    detail: "algebra — produto vetorial 3D",
+    insert: "al.vetorial(",
+  },
+  {
+    label: "al.angulo(v, u)",
+    detail: "algebra — ângulo entre vetores (rad)",
+    insert: "al.angulo(",
+  },
+  {
+    label: "al.anguloDeg(v, u)",
+    detail: "algebra — ângulo entre vetores (graus)",
+    insert: "al.anguloDeg(",
+  },
+  {
+    label: "al.projecao(v, u)",
+    detail: "algebra — projeção de v sobre u",
+    insert: "al.projecao(",
+  },
+  {
+    label: "al.saoParalelos(v, u)",
+    detail: "algebra — v ∥ u ?",
+    insert: "al.saoParalelos(",
+  },
+  {
+    label: "al.saoOrtogonais(v, u)",
+    detail: "algebra — v ⊥ u ?",
+    insert: "al.saoOrtogonais(",
+  },
+  {
+    label: "al.identidade(n)",
+    detail: "algebra — matriz identidade n×n",
+    insert: "al.identidade(",
+  },
+  {
+    label: "al.zeros(m, n)",
+    detail: "algebra — matriz zero m×n",
+    insert: "al.zeros(",
+  },
+  {
+    label: "al.determinante(M)",
+    detail: "algebra — det(M)",
+    insert: "al.determinante(",
+  },
+  {
+    label: "al.traco(M)",
+    detail: "algebra — tr(M) soma da diagonal",
+    insert: "al.traco(",
+  },
+  {
+    label: "al.inversa(M)",
+    detail: "algebra — M⁻¹",
+    insert: "al.inversa(",
+  },
+  {
+    label: "al.resolverSistema(A, b)",
+    detail: "algebra — Ax = b, retorna vetor x",
+    insert: "al.resolverSistema(",
+  },
+  {
+    label: "al.distancia(p1, p2)",
+    detail: "algebra — distância euclidiana",
+    insert: "al.distancia(",
+  },
+  {
+    label: "al.pontoMedio(p1, p2)",
+    detail: "algebra — ponto médio",
+    insert: "al.pontoMedio(",
+  },
+  {
+    label: "al.equacaoReta(A, B)",
+    detail: "algebra — mapa {a,b,c} de ax+by+c=0",
+    insert: "al.equacaoReta(",
+  },
+  {
+    label: "al.distPontoReta(P, A, B)",
+    detail: "algebra — dist ponto→reta",
+    insert: "al.distPontoReta(",
+  },
+  {
+    label: "al.intersecaoRetas(A, B, C, D)",
+    detail: "algebra — interseção 2D AB∩CD",
+    insert: "al.intersecaoRetas(",
+  },
+  {
+    label: "al.areaTriangulo(A, B, C)",
+    detail: "algebra — área do triângulo",
+    insert: "al.areaTriangulo(",
+  },
+  {
+    label: "al.perimetroTriangulo(A, B, C)",
+    detail: "algebra — perímetro do triângulo",
+    insert: "al.perimetroTriangulo(",
+  },
+  {
+    label: "al.areaCirculo(r)",
+    detail: "algebra — π·r²",
+    insert: "al.areaCirculo(",
+  },
+  {
+    label: "al.perimetroCirculo(r)",
+    detail: "algebra — 2·π·r",
+    insert: "al.perimetroCirculo(",
+  },
+  {
+    label: "al.pontoCirculo(cx, cy, r, theta)",
+    detail: "algebra — ponto na circunferência",
+    insert: "al.pontoCirculo(",
+  },
+  {
+    label: "al.equacaoPlano(A, B, C)",
+    detail: "algebra — mapa {a,b,c,d} de ax+by+cz+d=0",
+    insert: "al.equacaoPlano(",
+  },
+  {
+    label: "al.distPontoPlano(P, plano)",
+    detail: "algebra — dist ponto→plano",
+    insert: "al.distPontoPlano(",
+  },
+  {
+    label: "al.saoColineares(A, B, C)",
+    detail: "algebra — A, B, C colineares?",
+    insert: "al.saoColineares(",
+  },
+  {
+    label: "al.saoCoplanares(A, B, C, D)",
+    detail: "algebra — A,B,C,D coplanares?",
+    insert: "al.saoCoplanares(",
+  },
+  {
+    label: "al.linspace(inicio, fim, n)",
+    detail: "algebra — vetor com n valores de inicio a fim (inclusivo)",
+    insert: "al.linspace(",
+  },
+  // ── latex ─────────────────────────────────────────────────
+  {
+    label: "importar latex como lt",
+    detail: "snippet",
+    insert: "importar latex como lt;\n",
+  },
+  {
+    label: "lt.linha(tex)",
+    detail: "latex — renderiza LaTeX inline",
+    insert: 'lt.linha("',
+  },
+  {
+    label: "lt.bloco(tex)",
+    detail: "latex — renderiza LaTeX em bloco display",
+    insert: 'lt.bloco("',
+  },
+  {
+    label: "lt.bloco(tex1, tex2, …)",
+    detail: "latex — múltiplas expressões alinhadas",
+    insert: "lt.bloco(\n    \"",
+  },
+  {
+    label: "lt.converterParaLatex(fn)",
+    detail: "latex — converte função Pseudo → TeX e renderiza",
+    insert: "lt.converterParaLatex(",
+  },
+  {
+    label: "lt.texString(fn)",
+    detail: "latex — retorna string TeX sem renderizar",
+    insert: "lt.texString(",
+  },
+  // ── arquivos ──────────────────────────────────────────────
+  {
+    label: "importar arquivos como arq",
+    detail: "snippet",
+    insert: "importar arquivos como arq;\n",
+  },
+  {
+    label: "arq.lerCSV(opcoes)",
+    detail: "arquivos — lê CSV e retorna dados",
+    insert: "arq.lerCSV({tipo: \"lista-mapas\"})",
+  },
+  {
+    label: "arq.lerJSON(opcoes)",
+    detail: "arquivos — lê JSON e retorna objeto",
+    insert: "arq.lerJSON()",
+  },
+  {
+    label: "arq.lerTXT(opcoes)",
+    detail: "arquivos — lê TXT e retorna lista de linhas",
+    insert: "arq.lerTXT()",
+  },
+  {
+    label: "arq.lerPDADOS(opcoes)",
+    detail: "arquivos — lê arquivo .pdados (formato nativo Pseudo-IDE)",
+    insert: "arq.lerPDADOS()",
+  },
+  {
+    label: "arq.abrirImportador()",
+    detail: "arquivos — abre a tela de importação visual",
+    insert: "arq.abrirImportador()",
+  },
+  // ── metodos — verificadores de tipo ──────────────────────
+  {
+    label: "m.eNumero(v)",
+    detail: "metodos — v é número (não-NaN)?",
+    insert: "m.eNumero(",
+  },
+  {
+    label: "m.eInteiro(v)",
+    detail: "metodos — v é inteiro?",
+    insert: "m.eInteiro(",
+  },
+  {
+    label: "m.eReal(v)",
+    detail: "metodos — v é real (não inteiro)?",
+    insert: "m.eReal(",
+  },
+  {
+    label: "m.eTexto(v)",
+    detail: "metodos — v é caracter/texto?",
+    insert: "m.eTexto(",
+  },
+  {
+    label: "m.eBooleano(v)",
+    detail: "metodos — v é booleano?",
+    insert: "m.eBooleano(",
+  },
+  {
+    label: "m.eLista(v)",
+    detail: "metodos — v é lista?",
+    insert: "m.eLista(",
+  },
+  {
+    label: "m.eMapa(v)",
+    detail: "metodos — v é mapa?",
+    insert: "m.eMapa(",
+  },
+  {
+    label: "m.eConjunto(v)",
+    detail: "metodos — v é conjunto?",
+    insert: "m.eConjunto(",
+  },
+  {
+    label: "m.eVetor(v)",
+    detail: "metodos — v é vetor?",
+    insert: "m.eVetor(",
+  },
+  {
+    label: "m.eMatriz(v)",
+    detail: "metodos — v é matriz?",
+    insert: "m.eMatriz(",
+  },
+  {
+    label: "m.eVazio(v)",
+    detail: "metodos — v é vazio (null)?",
+    insert: "m.eVazio(",
+  },
+  {
+    label: "m.eIndefinido(v)",
+    detail: "metodos — v é indefinido?",
+    insert: "m.eIndefinido(",
+  },
+];
 
 let acList = [],
   acIdx = -1;
@@ -1131,31 +1360,25 @@ function extrairSimbolosDoCodigo() {
   window.simbolosDinamicos = Array.from(
     new Map(novos.map((item) => [item.label, item])).values(),
   );
-  window._userFnSet  = new Set(window.assinaturasDinamicas.keys());
-  window._userVarSet = new Set(
-    novos.filter((s) => !window.assinaturasDinamicas.has(s.label)).map((s) => s.label),
-  );
 }
 
 function showAutocomplete() {
   const pos = codeEditor.selectionStart;
-  const { full, replaceLen } = getContextBefore(pos);
-  if (replaceLen < 1) {
+  const word = getWordBefore(pos);
+  if (word.length < 1) {
     hideAutocomplete();
     return;
   }
-  const imports = _parseImports(codeEditor.value);
-  const libItems = _buildLibCompletions(imports);
-  const all = [...window.simbolosDinamicos, ...BASE_COMPLETIONS, ...libItems];
+  const all = [...window.simbolosDinamicos, ...COMPLETIONS];
   acList = all.filter((c) =>
-    c.label.toLowerCase().startsWith(full.toLowerCase()),
+    c.label.toLowerCase().startsWith(word.toLowerCase()),
   );
   if (!acList.length) {
     hideAutocomplete();
     return;
   }
   acIdx = 0;
-  renderAutocomplete(pos, replaceLen);
+  renderAutocomplete(pos, word.length);
 }
 
 function renderAutocomplete(pos, wordLen) {
@@ -1189,8 +1412,8 @@ function applyCompletion(idx) {
   if (idx < 0 || idx >= acList.length) return;
   const item = acList[idx];
   const pos = codeEditor.selectionStart;
-  const { replaceLen } = getContextBefore(pos);
-  const before = codeEditor.value.slice(0, pos - replaceLen);
+  const word = getWordBefore(pos);
+  const before = codeEditor.value.slice(0, pos - word.length);
   const after = codeEditor.value.slice(pos);
   const insert = item.insert !== undefined ? item.insert : item.label;
   codeEditor.value = before + insert + after;
@@ -1219,6 +1442,29 @@ const ASSINATURAS_NATIVAS = {
   leia: ["mensagem"],
   raiz: ["x"],
   expo: ["base", "expoente"],
+  "c.limite": ["fn", "ponto"],
+  "c.derivada": ["fn", "ponto", "ordem"],
+  "c.integral": ["fn", "a", "b"],
+  "c.gamma": ["x"],
+  "c.digamma": ["x"],
+  "c.zeta": ["s"],
+  "c.phi": ["n"],
+  "c.lambertW": ["x"],
+  "c.taylor": ["fn", "pontoA", "valorX", "nTermos"],
+  "t.tabelaVerdade": ["expressoes", "variaveis", "mostrarIntermediarias"],
+  "t.progresso": ["valor", "max"],
+  "tp.medirExecucao": ["fn", "...args"],
+  "tp.testeStress": ["fn", "n_max"],
+  "g.plotar": ["dados", "config"],
+  "g.plotarFuncao": ["fn", "intervalo", "opcoes"],
+  "g.plotarMultiplas": ["listaFuncoes", "intervalo", "opcoes"],
+  "g.dispersao": ["pontos", "opcoes"],
+  "g.superficie3D": ["fn", "opcoes"],
+  "p.sortearComPesos": ["itens", "pesos"],
+  "p.uniforme": ["min", "max"],
+  "p.aleatorioInteiro": ["min", "max"],
+  "p.rolarDados": ["quantidade", "faces"],
+  "p.monteCarlo": ["fn", "n"],
   _pseudoLancar: ["tipo", "mensagem", "dadoEntrada", "dadoEsperado"],
 };
 
@@ -1248,11 +1494,8 @@ function verificarBalaoAssinatura() {
     sigPopup.classList.add("hidden");
     return;
   }
-  const _libSigs = _buildLibSignatures(_parseImports(codeEditor.value));
   const params =
-    window.assinaturasDinamicas.get(fnName) ||
-    _libSigs[fnName] ||
-    ASSINATURAS_NATIVAS[fnName];
+    window.assinaturasDinamicas.get(fnName) || ASSINATURAS_NATIVAS[fnName];
   if (!params) {
     sigPopup.classList.add("hidden");
     return;
@@ -1477,6 +1720,7 @@ codeEditor.addEventListener("input", () => {
   showAutocomplete();
   verificarBalaoAssinatura();
   _scheduleSnap();
+  _asSchedule();
 });
 codeEditor.addEventListener("click", verificarBalaoAssinatura);
 codeEditor.addEventListener("click", (e) => {
@@ -2053,6 +2297,53 @@ function _decodeShareToken(token) {
 }
 
 /* ============================================================
+   DROPDOWN DE CABEÇALHO
+   ============================================================ */
+window.toggleHdrDd = function (id) {
+  const all = document.querySelectorAll(".hdr-dd");
+  all.forEach((dd) => { if (dd.id !== id) dd.classList.remove("hdr-dd-open"); });
+  document.getElementById(id)?.classList.toggle("hdr-dd-open");
+};
+document.addEventListener("click", (e) => {
+  if (!e.target.closest(".hdr-dd")) {
+    document.querySelectorAll(".hdr-dd").forEach((dd) => dd.classList.remove("hdr-dd-open"));
+  }
+});
+
+/* ============================================================
+   AUTOSAVE
+   ============================================================ */
+const AS_KEY    = "pseudo_ide_autosave";
+const AS_EN_KEY = "pseudo_ide_autosave_on";
+let _asTimer = null;
+
+function _asSave() {
+  const val = document.getElementById("code-editor")?.value;
+  if (val !== undefined) localStorage.setItem(AS_KEY, val);
+}
+function _asSchedule() {
+  if (!localStorage.getItem(AS_EN_KEY)) return;
+  clearTimeout(_asTimer);
+  _asTimer = setTimeout(_asSave, 3000);
+}
+function _asUpdateBtn() {
+  const btn = document.getElementById("btn-autosave");
+  if (!btn) return;
+  const on = !!localStorage.getItem(AS_EN_KEY);
+  btn.classList.toggle("active", on);
+  btn.title = on ? "Autosave ativo" : "Autosave desativado";
+}
+window.toggleAutosave = function () {
+  if (localStorage.getItem(AS_EN_KEY)) {
+    localStorage.removeItem(AS_EN_KEY);
+  } else {
+    localStorage.setItem(AS_EN_KEY, "1");
+    _asSave();
+  }
+  _asUpdateBtn();
+};
+
+/* ============================================================
    ATALHOS GLOBAIS + INIT
    ============================================================ */
 window.addEventListener("keydown", (e) => {
@@ -2087,65 +2378,16 @@ window.addEventListener("keydown", (e) => {
   }
 });
 
-/* ============================================================
-   HEADER DROPDOWNS
-   ============================================================ */
-window.toggleHdrDd = function (id) {
-  const all = document.querySelectorAll(".hdr-dd");
-  all.forEach((dd) => { if (dd.id !== id) dd.classList.remove("hdr-dd-open"); });
-  document.getElementById(id)?.classList.toggle("hdr-dd-open");
-};
-document.addEventListener("click", (e) => {
-  if (!e.target.closest(".hdr-dd")) {
-    document.querySelectorAll(".hdr-dd").forEach((dd) => dd.classList.remove("hdr-dd-open"));
-  }
-});
-
-/* ============================================================
-   AUTOSAVE
-   ============================================================ */
-const AS_KEY    = "pseudo_autosave_v1";
-const AS_EN_KEY = "pseudo_autosave_enabled";
-let _asTimer    = null;
-
-function _asEnabled() { return localStorage.getItem(AS_EN_KEY) !== "0"; }
-function _asSave() {
-  if (!_asEnabled()) return;
-  localStorage.setItem(AS_KEY, JSON.stringify({ code: codeEditor.value, ts: Date.now() }));
-}
-function _asSchedule() { clearTimeout(_asTimer); _asTimer = setTimeout(_asSave, 1500); }
-function _asUpdateBtn() {
-  const btn = document.getElementById("btn-autosave");
-  if (!btn) return;
-  btn.classList.toggle("as-on", _asEnabled());
-}
-window.toggleAutosave = function () {
-  localStorage.setItem(AS_EN_KEY, _asEnabled() ? "0" : "1");
-  _asUpdateBtn();
-  if (_asEnabled()) _asSave();
-};
-
-codeEditor.addEventListener("input", () => _asSchedule());
-
 window.addEventListener("load", async () => {
   _lastSnap = codeEditor.value;
   _UNDO_STACK.push({ value: "", ss: 0, se: 0 });
   extrairSimbolosDoCodigo();
   atualizarEditor();
   _asUpdateBtn();
-
-  /* Autosave restore prompt */
-  if (_asEnabled()) {
-    try {
-      const saved = JSON.parse(localStorage.getItem(AS_KEY) || "null");
-      if (saved && saved.code && saved.code !== codeEditor.value) {
-        const age = Math.round((Date.now() - saved.ts) / 60000);
-        if (confirm(`Há um rascunho salvo há ${age} min. Restaurar?`)) {
-          codeEditor.value = saved.code;
-          atualizarEditor();
-        }
-      }
-    } catch (_) {}
+  const saved = localStorage.getItem(AS_KEY);
+  if (saved && saved.trim() && saved !== codeEditor.value) {
+    const restore = confirm("Autosave encontrou código da última sessão. Restaurar?");
+    if (restore) { codeEditor.value = saved; foldState.clear(); atualizarEditor(); }
   }
 
   const urlParams = new URLSearchParams(window.location.search);

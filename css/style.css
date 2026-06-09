@@ -121,6 +121,11 @@ code {
   width: auto;
   flex-shrink: 0;
 }
+.app-logo {
+  height: 28px;
+  width: auto;
+  flex-shrink: 0;
+}
 .app-title {
   font-size: 13px;
   font-weight: 700;
@@ -283,6 +288,9 @@ code {
 }
 .btn-group .btn-icon:last-child {
   border-right: none;
+}
+#btn-autosave.active {
+  color: var(--green);
 }
 
 /* ---- Metadata bar ---- */

@@ -1,26 +1,22 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="30 20 440 370" width="100%" height="100%">
-  <path d="M 130 170 L 45 250 L 130 330" fill="none" stroke="#282a3f" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"/>
-  
-  <path d="M 370 170 L 455 250 L 370 330" fill="none" stroke="#282a3f" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"/>
-
-  <path d="M 250 180 C 220 90 290 50 340 30 C 300 80 280 110 270 180 Z" fill="#ffe042"/>
-  
-  <path d="M 260 180 C 270 120 320 100 340 95 C 310 125 285 140 275 180 Z" fill="#ffc830"/>
-
-  <path d="M 165 240 C 165 140 335 140 335 240 C 335 345 250 380 250 380 C 250 380 165 345 165 240 Z" fill="#f4f5f9"/>
-
-  <circle cx="200" cy="265" r="22" fill="#ff9136"/>  
-  <circle cx="300" cy="265" r="22" fill="#ff9136"/>
-
-  <polygon points="235,255 265,255 250,285" fill="#9ea5b5"/>
-
-  <line x1="225" y1="220" x2="275" y2="220" stroke="#151515" stroke-width="14"/>  
-  <rect x="170" y="190" width="60" height="60" rx="16" fill="none" stroke="#151515" stroke-width="12"/>  
-  <rect x="270" y="190" width="60" height="60" rx="16" fill="none" stroke="#151515" stroke-width="12"/>
-
-  <circle cx="200" cy="220" r="10" fill="#151515"/>  
-  <circle cx="300" cy="220" r="10" fill="#151515"/>
-
-  <text x="220" y="348" font-family="Arial, Helvetica, sans-serif" font-size="58" font-weight="normal" fill="#9296ff" text-anchor="middle">P</text>  
-  <line x1="250" y1="352" x2="280" y2="352" stroke="#9296ff" stroke-width="6" stroke-linecap="round"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 48" height="48">
+  <!-- Mascot icon (28×28 at left) -->
+  <g transform="translate(2,2) scale(0.044)">
+    <rect x="15" y="15" width="470" height="470" rx="110" fill="#0f111a" stroke="#222436" stroke-width="15"/>
+    <path d="M 250 180 C 220 90 290 50 340 30 C 300 80 280 110 270 180 Z" fill="#ffe042"/>
+    <path d="M 260 180 C 270 120 320 100 340 95 C 310 125 285 140 275 180 Z" fill="#ffc830"/>
+    <path d="M 165 240 C 165 140 335 140 335 240 C 335 345 250 380 250 380 C 250 380 165 345 165 240 Z" fill="#f4f5f9"/>
+    <circle cx="200" cy="265" r="22" fill="#ff9136"/>
+    <circle cx="300" cy="265" r="22" fill="#ff9136"/>
+    <polygon points="235,255 265,255 250,285" fill="#9ea5b5"/>
+    <line x1="225" y1="220" x2="275" y2="220" stroke="#151515" stroke-width="14"/>
+    <rect x="170" y="190" width="60" height="60" rx="16" fill="none" stroke="#151515" stroke-width="12"/>
+    <rect x="270" y="190" width="60" height="60" rx="16" fill="none" stroke="#151515" stroke-width="12"/>
+    <circle cx="200" cy="220" r="10" fill="#151515"/>
+    <circle cx="300" cy="220" r="10" fill="#151515"/>
+    <text x="220" y="348" font-family="Arial, Helvetica, sans-serif" font-size="58" font-weight="normal" fill="#9296ff" text-anchor="middle">P</text>
+    <line x1="250" y1="352" x2="280" y2="352" stroke="#9296ff" stroke-width="6" stroke-linecap="round"/>
+  </g>
+  <!-- Brand text -->
+  <text x="36" y="20" font-family="Outfit, system-ui, sans-serif" font-size="14" font-weight="700" fill="#c8ccd8">Pseudo</text>
+  <text x="36" y="36" font-family="Outfit, system-ui, sans-serif" font-size="12" font-weight="400" fill="#7880a0">IDE  v4.0</text>
 </svg>

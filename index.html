@@ -18,125 +18,132 @@
     <!-- ===== HEADER ===== -->
     <header id="header">
         <div class="header-left">
+            <div class="traffic-lights">
+                <span class="tl tl-red"></span>
+                <span class="tl tl-yellow"></span>
+                <span class="tl tl-green"></span>
+            </div>
             <div class="app-brand">
                 <img src="logo-horizontal.svg" class="app-logo" alt="Pseudo-IDE">
-                <span class="app-title">Pseudo-IDE</span>
-                <span class="app-sub">v4.0</span>
             </div>
         </div>
-
         <div class="header-center" id="algo-name-display">sem título</div>
-
         <div class="header-right">
-
-            <!-- ── Guias dropdown ── -->
-            <div class="hdr-dd" id="hdr-dd-guias">
-                <button class="btn-icon hdr-dd-trigger" onclick="toggleHdrDd('hdr-dd-guias')" title="Guias">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                        stroke-linecap="round" stroke-linejoin="round">
-                        <rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect>
-                        <rect x="3" y="14" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect>
-                    </svg>
-                    Guias
-                    <svg class="hdr-dd-arrow" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
-                </button>
-                <div class="hdr-dd-menu">
-                    <a href="notebook.html" class="hdr-dd-item">
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="9" x2="9" y2="21"></line></svg>
-                        Notebook
-                    </a>
-                    <a href="docs-api.html" class="hdr-dd-item">
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
-                        Referência API
-                    </a>
-                    <a href="importador.html" class="hdr-dd-item">
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                        Importar dados
-                    </a>
-                    <div class="hdr-dd-sep"></div>
-                    <button class="hdr-dd-item" onclick="toggleHelp(); toggleHdrDd('hdr-dd-guias')">
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
-                        Docs (F1)
-                    </button>
-                </div>
-            </div>
-
-            <!-- ── Arquivo ── -->
+            <button class="btn-icon" onclick="toggleHelp()" title="Documentação (F1)">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10" />
+                    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+                    <line x1="12" y1="17" x2="12.01" y2="17" />
+                </svg>
+                Docs
+            </button>
+            <a href="notebook.html" class="btn-icon" title="Abrir Pseudo Notebook" style="text-decoration:none">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                    <line x1="3" y1="9" x2="21" y2="9"></line>
+                    <line x1="3" y1="15" x2="21" y2="15"></line>
+                    <line x1="9" y1="9" x2="9" y2="21"></line>
+                </svg>
+                Notebook
+            </a>
+            <a href="docs-api.html" class="btn-icon" title="Referência da API" style="text-decoration:none">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                </svg>
+                Referência
+            </a>
+            <a href="importador.html" class="btn-icon" title="Importador de Dados" style="text-decoration:none">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+                Importar
+            </a>
             <div class="btn-group">
                 <button class="btn-icon" onclick="abrirArquivo()" title="Abrir arquivo">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
                         <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
                     </svg>
                     Abrir
                 </button>
+
                 <button class="btn-icon" onclick="salvarArquivo()" title="Salvar local">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
                         <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
-                        <polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline>
+                        <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                        <polyline points="7 3 7 8 15 8"></polyline>
                     </svg>
                     Salvar
                 </button>
-            </div>
 
-            <!-- ── Publicar dropdown ── -->
-            <div class="hdr-dd" id="hdr-dd-publicar">
-                <button class="btn-icon hdr-dd-trigger" onclick="toggleHdrDd('hdr-dd-publicar')" title="Compartilhar e publicar">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle>
-                        <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+                <button id="btn-autosave" class="btn-icon" onclick="toggleAutosave()" title="Autosave inativo (clique para ativar)">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 22C6.48 22 2 17.52 2 12S6.48 2 12 2s10 4.48 10 10-4.48 10-10 10z"/>
+                        <path d="M12 6v6l4 2"/>
+                    </svg>
+                    AS
+                </button>
+
+                <button class="btn-icon" onclick="gerarLinkCompartilhamento()" title="Compartilhar Link">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                        <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+                    </svg>
+                    Link
+                </button>
+
+                <button class="btn-icon" onclick="publicarNaNuvem()" title="Publicar na Nuvem">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path>
+                        <polyline points="16 16 12 12 8 16"></polyline>
+                        <line x1="12" y1="12" x2="12" y2="21"></line>
                     </svg>
                     Publicar
-                    <svg class="hdr-dd-arrow" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
                 </button>
-                <div class="hdr-dd-menu">
-                    <button class="hdr-dd-item" onclick="gerarLinkCompartilhamento(); toggleHdrDd('hdr-dd-publicar')">
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
-                        Gerar link
-                    </button>
-                    <button class="hdr-dd-item" onclick="publicarNaNuvem(); toggleHdrDd('hdr-dd-publicar')">
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path><polyline points="16 16 12 12 8 16"></polyline><line x1="12" y1="12" x2="12" y2="21"></line></svg>
-                        Publicar na nuvem
-                    </button>
-                    <div class="hdr-dd-sep"></div>
-                    <button class="hdr-dd-item" onclick="configurarNuvem(); toggleHdrDd('hdr-dd-publicar')">
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
-                        Configurar API
-                    </button>
-                </div>
+
+                <button class="btn-icon" onclick="configurarNuvem()" title="Configurar URL">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path
+                            d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
+                        </path>
+                    </svg>
+                    API
+                </button>
+                <button class="btn-icon" onclick="toggleTeacherModal()" title="Área do Professor"
+                    style="color: #fbbf24;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                    </svg>
+                    Professor
+                </button>
             </div>
-
-            <!-- ── Professor ── -->
-            <button class="btn-icon btn-professor" onclick="toggleTeacherModal()" title="Área do Professor">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
-                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
-                </svg>
-                Professor
-            </button>
-
-            <!-- ── Console ── -->
             <button class="btn-icon" onclick="limparConsole()" title="Limpar console (Ctrl+M)">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <polyline points="3 6 5 6 21 6" /><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
-                    <path d="M10 11v6M14 11v6" /><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="3 6 5 6 21 6" />
+                    <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                    <path d="M10 11v6M14 11v6" />
+                    <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
                 </svg>
                 Limpar
             </button>
-            <button class="btn-icon btn-debug" onclick="iniciarDepuracao()" title="Depurar Passo-a-Passo (F9)">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                    <polygon points="5 3 19 12 5 21 5 3" fill="none"></polygon>
-                    <line x1="19" y1="12" x2="23" y2="12"></line><line x1="19" y1="8" x2="23" y2="8"></line><line x1="19" y1="16" x2="23" y2="16"></line>
-                </svg>
+            <button class="btn-icon" onclick="iniciarDepuracao()" style="color: var(--green);"
+                title="Depurar Passo-a-Passo (F9)">
                 Depurar
             </button>
-
-            <!-- ── Autosave ── -->
-            <button id="btn-autosave" class="btn-icon" onclick="toggleAutosave()" title="Autosave">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
-                Autosave
-            </button>
-
-            <!-- ── Executar ── -->
             <button class="btn-run" onclick="executarCodigo()" title="Executar (Ctrl+S)">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
                     <polygon points="5 3 19 12 5 21 5 3" />
@@ -2299,86 +2306,6 @@ g.anotado(f, [[<span class="ex-num">1</span>,<span class="ex-num">0</span>], rai
     legendas: [<span class="ex-str">"ponto avulso"</span>, <span class="ex-str">"raízes"</span>, <span class="ex-str">"críticos"</span>],
     intervalo: [-<span class="ex-num">3</span>, <span class="ex-num">3</span>]
 });</pre>
-
-                    <!-- ════════════════════════════════════════
-                         g.interativo  (sub-biblioteca)
-                         ════════════════════════════════════════ -->
-                    <hr style="border:none;border-top:1px solid var(--border);margin:2rem 0 1.5rem">
-                    <h3 style="color:var(--accent);margin-bottom:.6rem">graficos.interativo</h3>
-                    <p class="tab-intro">Sub-biblioteca que cria gráficos 2D <strong>interativos</strong> via Canvas: suporte a arrastar (pan), zoom com scroll, toque, e tooltip de hover com o par ordenado.
-                    Ao contrário das funções estáticas acima, o resultado é um widget embutido na saída da célula que pode ser explorado livremente.</p>
-                    <p class="tab-intro">Importe diretamente: <code>importar graficos.interativo como g;</code> — ou use via namespace: <code>graficos.interativo.grafico(...)</code>.</p>
-
-                    <!-- grafico -->
-                    <h4>g.grafico(plotaveis, cfg?)</h4>
-                    <p class="tab-intro">Ponto de entrada principal. Aceita uma função, uma lista de pontos <em>ou</em> uma lista mista de plotáveis (funções, listas, descritores <code>plotar</code>/<code>serie</code>). Cores são atribuídas automaticamente por índice. O domínio e a escala são detectados a partir dos dados.</p>
-                    <table class="doc-table">
-                        <thead><tr><th>Campo de cfg</th><th>Padrão</th><th>Descrição</th></tr></thead>
-                        <tbody>
-                            <tr><td><code>largura</code></td><td>560</td><td>Largura do canvas em px</td></tr>
-                            <tr><td><code>altura</code></td><td>360</td><td>Altura do canvas em px</td></tr>
-                        </tbody>
-                    </table>
-                    <pre class="code-example"><span class="ex-kw">importar</span> graficos.interativo <span class="ex-kw">como</span> g;
-
-<span class="ex-cmt">// Caso mais simples — uma função</span>
-<span class="ex-kw">funcao</span> f(x) { <span class="ex-kw">retorno</span> x*x - <span class="ex-num">2</span>; }
-g.grafico(f);
-
-<span class="ex-cmt">// Múltiplos objetos — cores automáticas</span>
-<span class="ex-kw">funcao</span> g2(x) { <span class="ex-kw">retorno</span> x**<span class="ex-num">3</span> - x; }
-super pts = m.lista({x: <span class="ex-num">0</span>, y: <span class="ex-num">0</span>}, {x: <span class="ex-num">1</span>, y: <span class="ex-num">1</span>}, {x: <span class="ex-num">-1</span>, y: <span class="ex-num">-1</span>});
-g.grafico([f, g2, pts]);</pre>
-
-                    <!-- plotar -->
-                    <h4>g.plotar(dado, opcoes?)</h4>
-                    <p class="tab-intro">Cria um <em>descritor</em> a partir de uma função ou lista de pontos. Use quando quiser personalizar cor, rótulo de legenda ou raio antes de passar ao <code>grafico</code>. Se nenhuma opção for necessária, passe o objeto diretamente ao <code>grafico</code> sem usar <code>plotar</code>.</p>
-                    <table class="doc-table">
-                        <thead><tr><th>Campo de opcoes</th><th>Padrão</th><th>Descrição</th></tr></thead>
-                        <tbody>
-                            <tr><td><code>cor</code></td><td>automático</td><td>Cor hex da curva/pontos</td></tr>
-                            <tr><td><code>rotulo</code></td><td>—</td><td>Texto na legenda do canvas</td></tr>
-                            <tr><td><code>raio</code></td><td>4</td><td>Raio dos pontos (apenas para listas)</td></tr>
-                        </tbody>
-                    </table>
-                    <pre class="code-example"><span class="ex-kw">importar</span> graficos.interativo <span class="ex-kw">como</span> g;
-
-<span class="ex-kw">funcao</span> f(x) { <span class="ex-kw">retorno</span> m.sen(x); }
-super pts = m.lista({x: <span class="ex-num">0</span>, y: <span class="ex-num">0</span>}, {x: <span class="ex-num">3.14</span>, y: <span class="ex-num">0</span>});
-
-<span class="ex-cmt">// Sem plotar: tudo automático</span>
-g.grafico([f, pts]);
-
-<span class="ex-cmt">// Com plotar: personalizado</span>
-super curva = g.plotar(f,   { cor: <span class="ex-str">"#f87171"</span>, rotulo: <span class="ex-str">"sen(x)"</span> });
-super zeros = g.plotar(pts, { cor: <span class="ex-str">"#4ade80"</span>, raio: <span class="ex-num">6</span>, rotulo: <span class="ex-str">"zeros"</span> });
-g.grafico([curva, zeros]);</pre>
-
-                    <!-- serie -->
-                    <h4>g.serie(funcao, opcoes?)</h4>
-                    <p class="tab-intro">Cria um descritor de <strong>série discreta</strong>: avalia <code>funcao(n)</code> apenas em valores inteiros de x visíveis no canvas a cada frame. Ideal para sequências, progressões e funções de domínio discreto. Os pontos são redesenhados ao arrastar/zoom conforme o domínio muda.</p>
-                    <table class="doc-table">
-                        <thead><tr><th>Campo de opcoes</th><th>Padrão</th><th>Descrição</th></tr></thead>
-                        <tbody>
-                            <tr><td><code>cor</code></td><td>automático</td><td>Cor hex dos pontos</td></tr>
-                            <tr><td><code>rotulo</code></td><td>—</td><td>Texto na legenda</td></tr>
-                            <tr><td><code>raio</code></td><td>4</td><td>Raio dos pontos em px</td></tr>
-                            <tr><td><code>linha</code></td><td>verdadeiro</td><td>Conecta pontos com segmento de reta</td></tr>
-                        </tbody>
-                    </table>
-                    <pre class="code-example"><span class="ex-kw">importar</span> graficos.interativo <span class="ex-kw">como</span> g;
-
-<span class="ex-cmt">// Fibonacci (usando memoização manual)</span>
-<span class="ex-kw">funcao</span> fib(n) {
-    <span class="ex-kw">se</span> (n &lt;= <span class="ex-num">1</span>) { <span class="ex-kw">retorno</span> n; }
-    <span class="ex-kw">retorno</span> fib(n-<span class="ex-num">1</span>) + fib(n-<span class="ex-num">2</span>);
-}
-
-<span class="ex-cmt">// Função contínua + pontos inteiros</span>
-<span class="ex-kw">funcao</span> f(x) { <span class="ex-kw">retorno</span> x*x; }
-super curva = g.plotar(f,    { rotulo: <span class="ex-str">"x²"</span> });
-super pontos = g.serie(f,    { rotulo: <span class="ex-str">"inteiros"</span>, linha: falso });
-g.grafico([curva, pontos]);</pre>
 
                 </div><!-- /tab-graficos -->
 
