@@ -67,8 +67,6 @@
 
     window._userFnSet = fnSet;
     window._userVarSet = varSet;
-
-    // Re-render all highlight layers with updated symbol info
     _cells.forEach((c) => {
       if (c.type !== "codigo") return;
       const ta = c.el && c.el.querySelector(".nb-cell-editor");
@@ -352,6 +350,7 @@
       _autoResize(ta);
       _updateHL(ta, hlLayer);
       _scheduleExtractSymbols();
+      _nbAsSchedule();
     }
 
     ta.value = content || "";
@@ -1246,6 +1245,32 @@
     }).join("");
   }
 
+  // ---------- autosave ----------
+  const NB_AS_KEY    = "pseudo_nb_autosave_v1";
+  const NB_AS_EN_KEY = "pseudo_nb_autosave_enabled";
+  let _nbAsTimer     = null;
+
+  function _nbAsEnabled() { return localStorage.getItem(NB_AS_EN_KEY) !== "0"; }
+
+  function _nbAsSave() {
+    if (!_nbAsEnabled()) return;
+    localStorage.setItem(NB_AS_KEY, JSON.stringify({ nb: _toJSON(), ts: Date.now() }));
+  }
+
+  function _nbAsSchedule() {
+    clearTimeout(_nbAsTimer);
+    _nbAsTimer = setTimeout(_nbAsSave, 2000);
+  }
+
+  function _nbAsUpdateBtn() {
+    const btn = document.getElementById("nb-btn-autosave");
+    if (!btn) return;
+    const on = _nbAsEnabled();
+    btn.title  = on ? "Autosave ativo — clique para desativar" : "Autosave inativo — clique para ativar";
+    btn.classList.toggle("as-on", on);
+    btn.textContent = on ? "💾 Autosave" : "💾 Autosave";
+  }
+
   // ---------- init ----------
   function _init() {
     _addCell("codigo");
@@ -1309,6 +1334,28 @@
 
     // Apply default run mode visual state
     _setRunMode("amb");
+
+    window.nbToggleAutosave = function () {
+      const on = _nbAsEnabled();
+      localStorage.setItem(NB_AS_EN_KEY, on ? "0" : "1");
+      _nbAsUpdateBtn();
+      if (!on) _nbAsSave();
+    };
+
+    _nbAsUpdateBtn();
+
+    // Restaurar autosave se habilitado e houver dados salvos
+    if (_nbAsEnabled()) {
+      try {
+        const saved = JSON.parse(localStorage.getItem(NB_AS_KEY) || "null");
+        if (saved && saved.nb) {
+          const dt = new Date(saved.ts).toLocaleString("pt-BR");
+          if (confirm(`Há um notebook salvo automaticamente (${dt}).\nDeseja restaurá-lo?`)) {
+            _fromJSON(saved.nb);
+          }
+        }
+      } catch (_) {}
+    }
   }
 
   document.addEventListener("DOMContentLoaded", _init);

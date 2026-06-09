@@ -50,6 +50,9 @@
     "equacaoPlano", "distPontoPlano", "saoColineares", "saoCoplanares",
     // iteradores de lista
     "transformar", "filtrar", "reduzir", "percorrer",
+    // graficos.interativo
+    "plotarFuncao", "plotarMultiplas", "grafico", "pontos", "conica",
+    "relacao", "anotado", "interativo", "serie",
   ]);
 
   function esc(s) {
