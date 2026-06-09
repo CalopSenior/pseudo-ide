@@ -26,9 +26,10 @@
 
   // ---------- auto-resize textarea ----------
   function _autoResize(ta) {
-    // height:0 forces scrollHeight to reflect full content regardless of overflow
+    const sy = window.scrollY;
     ta.style.height = "0px";
     ta.style.height = Math.max(56, ta.scrollHeight) + "px";
+    if (window.scrollY !== sy) window.scrollTo(0, sy);
   }
 
   // ---------- update syntax-highlight layer ----------
@@ -249,6 +250,7 @@
     el.dataset.nbId = id;
     el.innerHTML = `
       <div class="nb-cell-toolbar">
+        <button class="nb-btn-icon nb-btn-collapse" data-action="toggle-collapse" title="Encolher/expandir">&#9660;</button>
         <span class="nb-cell-type-badge">pseudo</span>
         <div class="nb-cell-actions">
           <button class="nb-btn-run" data-action="run" title="Ctrl+Enter">&#9654; Executar</button>
@@ -304,6 +306,7 @@
     el.dataset.nbId = id;
     el.innerHTML = `
       <div class="nb-cell-toolbar">
+        <button class="nb-btn-icon nb-btn-collapse" data-action="toggle-collapse" title="Encolher/expandir">&#9660;</button>
         <span class="nb-cell-type-badge nb-md-badge">texto</span>
         <div class="nb-cell-actions">
           <button class="nb-btn-icon" data-action="toggle-md" title="Editar">&#9998;</button>
@@ -387,6 +390,7 @@
       case "del":       _deleteCell(idx); break;
       case "toggle-md": _toggleMdEdit(_cells[idx].el); break;
       case "toggle-env": _toggleEnvMode(id); break;
+      case "toggle-collapse": _toggleCollapse(id); break;
     }
   }
 
@@ -403,6 +407,15 @@
     }
   }
 
+  function _toggleCollapse(id) {
+    const cell = _cells.find((c) => c.id === id);
+    if (!cell) return;
+    cell.collapsed = !cell.collapsed;
+    cell.el.classList.toggle("nb-cell-collapsed", cell.collapsed);
+    const btn = cell.el.querySelector(".nb-btn-collapse");
+    if (btn) btn.innerHTML = cell.collapsed ? "&#9654;" : "&#9660;";
+  }
+
   // ---------- CRUD ----------
   function _addCell(type, afterIdx) {
     const id = _nextId++;
@@ -410,7 +423,7 @@
       type === "markdown"
         ? _buildMdCell(id, "")
         : _buildCodeCell(id, "");
-    const cell = { id, type, el, envMode: false };
+    const cell = { id, type, el, envMode: false, collapsed: false };
     const container = _container();
 
     if (afterIdx !== undefined && afterIdx >= 0 && afterIdx < _cells.length) {
@@ -650,6 +663,7 @@
       }
       const obj = { tipo: cell.type, conteudo };
       if (cell.envMode) obj.env = true;
+      if (cell.collapsed) obj.collapsed = true;
       return obj;
     });
     return JSON.stringify({ versao: "1.0", titulo: title, celulas }, null, 2);
@@ -674,8 +688,14 @@
             ? _buildMdCell(id, c.conteudo || "")
             : _buildCodeCell(id, c.conteudo || "");
         const envMode = !!c.env;
+        const collapsed = !!c.collapsed;
         if (envMode) el.classList.add("nb-env-mode");
-        _cells.push({ id, type, el, envMode });
+        if (collapsed) {
+          el.classList.add("nb-cell-collapsed");
+          const btn = el.querySelector(".nb-btn-collapse");
+          if (btn) btn.innerHTML = "&#9654;";
+        }
+        _cells.push({ id, type, el, envMode, collapsed });
         container.appendChild(el);
       });
     }
