@@ -117,7 +117,8 @@ code {
 }
 .app-logo {
   display: block;
-  border-radius: 6px;
+  height: 28px;
+  width: auto;
   flex-shrink: 0;
 }
 .app-title {
