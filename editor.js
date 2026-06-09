@@ -247,13 +247,22 @@ function _expandChainedComps(code) {
     return s.length;
   }
 
+  // Advance past leading whitespace + statement keyword to get true expression start
+  function skipStmtKw(s, lp, until) {
+    let p = lp;
+    while (p < until && /[ \t]/.test(s[p])) p++;
+    const kw = s.slice(p, until).match(/^(retorno|lançar)\s+/);
+    return kw ? p + kw[0].length : p;
+  }
+
   // Rewrite right-to-left to preserve absolute positions of earlier chains
   let res = code;
   for (const chain of [...chains].reverse()) {
-    const lp = lBound(res, chain[0].i);
-    const rp = rBound(res, chain[chain.length - 1].end);
+    const lp  = lBound(res, chain[0].i);
+    const elp = skipStmtKw(res, lp, chain[0].i); // true expression start (after keyword)
+    const rp  = rBound(res, chain[chain.length - 1].end);
 
-    const segs = [res.slice(lp, chain[0].i).trim()];
+    const segs = [res.slice(elp, chain[0].i).trim()];
     for (let m = 0; m < chain.length - 1; m++)
       segs.push(res.slice(chain[m].end, chain[m + 1].i).trim());
     segs.push(res.slice(chain[chain.length - 1].end, rp).trim());
@@ -280,7 +289,8 @@ function _expandChainedComps(code) {
       const parts = ops.map((op, i) => `${all[i]}${op}${all[i + 1]}`);
       repl = `((${asns.join(',')}, ${parts.join(' && ')}))`;
     }
-    res = res.slice(0, lp) + repl + res.slice(rp);
+    // Preserve the prefix (indentation + statement keyword) before the rewritten expression
+    res = res.slice(0, elp) + repl + res.slice(rp);
   }
   return res;
 }
@@ -351,9 +361,18 @@ function _expandTernary(code) {
       if (ld === 0 && ch === '=' && !'<>=!'.includes(res[k - 1] || '')) { cStart = k + 1; break; }
     }
 
-    const cond = res.slice(cStart, q).trim();
+    // Skip leading whitespace + statement keyword so the keyword stays OUTSIDE _ternBool()
+    // e.g. `retorno 0<x&&x<1 ?` → retorno stays before, condition is `0<x&&x<1`
+    let exprStart = cStart;
+    {
+      let p = cStart;
+      while (p < q && /[ \t]/.test(res[p])) p++;
+      const kw = res.slice(p, q).match(/^(retorno|lançar)\s+/);
+      if (kw) exprStart = p + kw[0].length;
+    }
+    const cond = res.slice(exprStart, q).trim();
     if (cond.startsWith('_ternBool(')) continue; // already wrapped
-    res = res.slice(0, cStart) + `_ternBool(${cond}) ` + res.slice(q);
+    res = res.slice(0, exprStart) + `_ternBool(${cond}) ` + res.slice(q);
   }
   return res;
 }
