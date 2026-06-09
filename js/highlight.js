@@ -198,6 +198,11 @@
         html += `<span class="t-num">${esc(n)}</span>`;
         continue;
       }
+      if (ch === '?') {
+        html += `<span class="t-op">?</span>`;
+        i++;
+        continue;
+      }
       html += esc(ch);
       i++;
     }

@@ -144,6 +144,17 @@ function _pseudoLancar(tipo, mensagem, dadoEntrada, dadoEsperado) {
   return err;
 }
 
+/* ── Guarda booleano estrito para o operador ternário ────── */
+function _ternBool(v) {
+  if (typeof v !== 'boolean')
+    throw new TypeError(
+      `Operador ternário (?): condição deve ser booleano (verdadeiro/falso), mas recebeu ${
+        v === null ? 'vazio' : typeof v
+      }.`
+    );
+  return v;
+}
+
 /* ============================================================
    2. TRADUÇÃO DE ERROS JS → PT-BR
    ============================================================ */
