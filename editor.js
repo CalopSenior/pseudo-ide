@@ -85,7 +85,8 @@ function processarParametrosTipados(codigo, isDebug = false) {
         }
         validations.push(vb);
       } else {
-        jsParams.push(raw);
+        const cm = raw.match(/^([A-Za-zÀ-ÖØ-öø-ÿ_]\w*)\s*:\s*(.+)$/);
+        jsParams.push(cm ? `${cm[1]} = ${cm[2]}` : raw);
       }
     });
     out.push(codigo.slice(cursor, m.index));
@@ -173,7 +174,7 @@ function _isLinhaInjetada(t) {
 let _dbgPrefixLines = 0;
 
 /* ============================================================
-   ENCADEAMENTO DE COMPARAÇÕES   a < b < c  →  a<b && b<c
+   COMPARAÇÕES ENCADEADAS  a < b < c  →  a<b && b<c
    ============================================================ */
 function _expandChainedComps(code) {
   const S = '\x00';
@@ -188,7 +189,6 @@ function _expandChainedComps(code) {
     return j < 0 ? s.length : j + 1;
   }
 
-  // Advance past leading retorno/lançar keyword from `from` toward `until`
   function skipStmtKw(s, from, until) {
     let p = from;
     while (p < until && /[ \t]/.test(s[p])) p++;
@@ -196,20 +196,23 @@ function _expandChainedComps(code) {
     return kw ? p + kw[0].length : p;
   }
 
-  // True if the text between two consecutive operators breaks a chain.
-  // 'e'/'ou' alone means the keyword IS the segment (e.g. 1 < e < 10); with other
-  // content around it, it's a logical separator (e.g. "1 e 0" in a<1 e 0<b).
   function isBoundary(between) {
     const clean = between.replace(/\x00\d+\x00/g, '').trim();
     if (/[;{}\n]/.test(clean)) return true;
     if (/&&|\|\|/.test(clean)) return true;
-    if (/\?/.test(clean)) return true; // ternary ? crosses expression context
+    if (/\?/.test(clean)) return true;
+    // Bracket-depth check: unbalanced ) or comma at depth 0 = different scope
+    let d = 0;
+    for (const ch of clean) {
+      if ('([{'.includes(ch)) d++;
+      else if (')]}'.includes(ch)) { d--; if (d < 0) return true; }
+      else if (ch === ',' && d === 0) return true;
+    }
     const logicKw = /(?<![A-Za-zÀ-ÖØ-öø-ÿ_\d])(e|ou)(?![A-Za-zÀ-ÖØ-öø-ÿ_\d])/.test(clean);
     if (logicKw && clean !== 'e' && clean !== 'ou') return true;
     return false;
   }
 
-  // Stop position helper: is word at `pos` a standalone logical keyword?
   function _logicKwAt(s, pos) {
     if (!/[A-Za-z]/.test(s[pos])) return -1;
     let ks = pos, ke = pos + 1;
@@ -221,7 +224,6 @@ function _expandChainedComps(code) {
     return !/[A-Za-zÀ-ÖØ-öø-ÿ_\d]/.test(prev) ? ke : -1;
   }
 
-  // Collect all comparison operators with their positions and nesting depth
   const found = [];
   let depth = 0, i = 0;
   while (i < code.length) {
@@ -229,8 +231,7 @@ function _expandChainedComps(code) {
     if (ch === S) { i = skipFwd(code, i); continue; }
     if (ch === '(' || ch === '[' || ch === '{') { depth++; i++; continue; }
     if (ch === ')' || ch === ']' || ch === '}') { depth = Math.max(0, depth - 1); i++; continue; }
-    if (ch === '=' && code[i + 1] === '>') { i += 2; continue; } // arrow =>
-
+    if (ch === '=' && code[i + 1] === '>') { i += 2; continue; }
     let op = null;
     for (const o of CMPOPS) {
       if (code.startsWith(o, i)) {
@@ -244,7 +245,6 @@ function _expandChainedComps(code) {
 
   if (found.length < 2) return code;
 
-  // Group consecutive same-depth operators into chains
   const chains = [];
   let j = 0;
   while (j < found.length) {
@@ -262,13 +262,10 @@ function _expandChainedComps(code) {
   if (!chains.length) return code;
 
   let result = code;
-
-  // Process right-to-left to preserve earlier positions
   for (let ci = chains.length - 1; ci >= 0; ci--) {
     const ops = chains[ci].map(idx => found[idx]);
     const firstOp = ops[0], lastOp = ops[ops.length - 1];
 
-    // Validate chain direction
     const dirs = ops.map(o => dirOf(o.op));
     if (dirs.some(d => isNaN(d)))
       throw new Error("Encadeamento inválido: '!=' não pode ser encadeado. Use 'e' explícito.");
@@ -276,7 +273,6 @@ function _expandChainedComps(code) {
     if (uniqueDirs.size > 1)
       throw new Error("Encadeamento inválido: não misture < e > no mesmo encadeamento.");
 
-    // Left boundary: scan backward from firstOp.i
     let lp = firstOp.i - 1, ld = 0;
     while (lp >= 0) {
       const c = result[lp];
@@ -285,13 +281,10 @@ function _expandChainedComps(code) {
       if (c === '(' || c === '[' || c === '{') { ld--; if (ld < 0) { lp++; break; } lp--; continue; }
       if (ld === 0) {
         if (/[;,\n]/.test(c)) { lp++; break; }
-        // Stop at && / ||
         if (c === '&' && result[lp - 1] === '&') { lp += 1; break; }
         if (c === '&' && result[lp + 1] === '&') { lp += 2; break; }
         if (c === '|' && result[lp - 1] === '|') { lp += 1; break; }
         if (c === '|' && result[lp + 1] === '|') { lp += 2; break; }
-        // Stop at standalone 'e'/'ou' logical keyword; skip its trailing whitespace
-        // so the keyword itself stays in the "before" region with proper spacing
         let ke = _logicKwAt(result, lp);
         if (ke >= 0) { while (ke < result.length && /[ \t]/.test(result[ke])) ke++; lp = ke; break; }
       }
@@ -299,7 +292,6 @@ function _expandChainedComps(code) {
     }
     if (lp < 0) lp = 0;
 
-    // Right boundary: scan forward from lastOp.end
     let rp = lastOp.end, rd = 0;
     while (rp < result.length) {
       const c = result[rp];
@@ -320,17 +312,14 @@ function _expandChainedComps(code) {
       rp++;
     }
 
-    // Skip leading stmt keyword from left segment
     const elp = skipStmtKw(result, lp, firstOp.i);
     const prefix = result.slice(lp, elp);
 
-    // Extract segments
     const segs = [];
     let segStart = elp;
     for (const op of ops) { segs.push(result.slice(segStart, op.i).trim()); segStart = op.end; }
     segs.push(result.slice(segStart, rp).trim());
 
-    // Build && expansion; add space before result[rp] if it would abut directly
     const parts = [];
     for (let s = 0; s < ops.length; s++) parts.push(`${segs[s]}${ops[s].op}${segs[s + 1]}`);
     const trailSep = (rp < result.length && !/[\s)\]},;]/.test(result[rp])) ? ' ' : '';
@@ -341,7 +330,7 @@ function _expandChainedComps(code) {
 }
 
 /* ============================================================
-   OPERADOR TERNÁRIO  cond ? a : b  →  _ternBool(cond) ? a : b
+   OPERADOR TERNÁRIO ESTRITO  cond ? a : b  →  _ternBool(cond) ? a : b
    ============================================================ */
 function _expandTernary(code) {
   let result = code;
@@ -355,7 +344,6 @@ function _expandTernary(code) {
 
 function _processOneTernary(code) {
   const S = '\x00';
-  // Find rightmost ? that is not ?. or ??
   for (let i = code.length - 1; i >= 0; i--) {
     if (code[i] !== '?') continue;
     const nx = code[i + 1] || '';
@@ -363,7 +351,6 @@ function _processOneTernary(code) {
     if (nx === '.' || nx === '?' || pv === '?') continue;
     const q = i;
 
-    // Scan backward for condition start
     let cStart = q - 1, d = 0;
     while (cStart >= 0) {
       const c = code[cStart];
@@ -377,7 +364,6 @@ function _processOneTernary(code) {
     }
     if (cStart < 0) cStart = 0;
 
-    // Skip leading retorno/lançar
     let exprStart = cStart;
     {
       let p = cStart;
@@ -391,7 +377,6 @@ function _processOneTernary(code) {
     if (!cond || cond.startsWith('_ternBool(')) continue;
     const leadWS = condRaw.match(/^\s*/)[0];
 
-    // Check for matching colon; if absent insert `: null`
     let td = 1, pd = 0, colon = -1;
     for (let j = q + 1; j < code.length; j++) {
       const c = code[j];
@@ -460,7 +445,6 @@ function traduzirCodigo(fonte, isDebug = false) {
   c = c.replace(/'(?:[^'\\]|\\.)*'/g, p);
   c = c.replace(/\/\*[\s\S]*?\*\//g, p);
   c = c.replace(/\/\/.*/g, p);
-
   c = _expandChainedComps(c);
   c = _expandTernary(c);
 
