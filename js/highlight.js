@@ -32,11 +32,16 @@
     "norma", "normalizar", "transposta", "mult", "limite", "derivada",
     "integral", "fatorial", "combinacao", "arranjo", "media", "mediana",
     "moda", "variancia", "desvioPadrao", "agora", "milisegundos",
-    "medirExecucao", "testeStress", "plotar", "funcao", "dispersao",
-    "superficie3D", "sortearComPesos", "uniforme", "rolarDados",
-    "monteCarlo", "intervalo",
+    "medirExecucao", "testeStress",
+    // graficos
+    "plotar", "dispersao", "superficie3D", "plotarFuncao", "plotarMultiplas",
+    "grafico", "pontos", "conica", "relacao", "anotado", "interativo", "serie",
+    // probabilidade
+    "sortearComPesos", "uniforme", "rolarDados", "monteCarlo", "intervalo",
+    // tipos/guard
     "eNumero", "eInteiro", "eReal", "eTexto", "eBooleano", "eLista",
     "eMapa", "eConjunto", "eVetor", "eMatriz", "eVazio", "eIndefinido",
+    // algebra
     "vetorial", "angulo", "anguloDeg", "projecao", "saoParalelos",
     "saoOrtogonais", "identidade", "zeros", "determinante", "traco",
     "inversa", "resolverSistema", "distancia", "pontoMedio", "equacaoReta",
@@ -58,6 +63,10 @@
     if (KW_OP.has(word))     return `<span class="t-op">${esc(word)}</span>`;
     if (KW_IMPORT.has(word)) return `<span class="t-import">${esc(word)}</span>`;
     if (KW_FN.has(word))     return `<span class="t-fn">${esc(word)}</span>`;
+    if (window._userFnSet && window._userFnSet.has(word))
+      return `<span class="t-user-fn">${esc(word)}</span>`;
+    if (window._userVarSet && window._userVarSet.has(word))
+      return `<span class="t-user-var">${esc(word)}</span>`;
     return esc(word);
   }
 

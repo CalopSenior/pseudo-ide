@@ -35,6 +35,8 @@ const KW_CTRL = new Set([
   "para",
   "tentar",
   "capturar",
+  "lançar",
+  "erro",
   "funcao",
   "retorno",
   "quebrar",
@@ -51,81 +53,55 @@ const KW_VAL = new Set([
   "Infinito",
   "NegInfinito",
 ]);
-const KW_OP = new Set(["e", "ou", "nao", "mod"]);
+const KW_OP = new Set(["e", "ou", "nao", "mod", "em", "na", "no"]);
 const KW_IMPORT = new Set(["importar", "como"]);
 const KW_FN = new Set([
   // Nativas
-  "imprima",
-  "leia",
-  "raiz",
-  "expo",
-  // mat
-  "abs",
-  "arred",
-  "piso",
-  "teto",
-  "max",
-  "min",
-  "sen",
-  "cos",
-  "tan",
-  "ln",
-  "log2",
-  "log10",
-  "log",
-  "aleatorio",
-  "somatorio",
-  "produtorio",
+  "imprima", "leia", "raiz", "expo",
+  // mat — básico
+  "abs", "arred", "piso", "teto", "max", "min",
+  "sen", "cos", "tan", "arcsen", "arccos", "arctan", "arctan2",
+  "senh", "cosh", "tanh", "arcsenh", "arccosh", "arctanh",
+  "hipot", "truncar", "grauParaRad", "radParaGrau",
+  "ln", "log2", "log10", "log", "aleatorio", "somatorio", "produtorio",
   // tabular
-  "separador",
-  "tabela",
-  "progresso",
-  "tabelaVerdade",
-  // metodos
-  "caracter",
-  "lista",
-  "mapa",
-  "conjunto",
-  "numero",
-  // metodos.numero
-  "sinal",
-  "int",
-  "re",
-  "decimal",
-  "fatorar",
-  // metodos.lista / caracter
-  "adicionar",
-  "remover",
-  "obter",
-  "tamanho",
-  "ordenar",
-  "contem",
-  "maiusculo",
-  "minusculo",
-  "capitalizar",
-  "inverter",
-  "aparar",
-  "mesclar",
-  // conjunto
-  "uniao",
-  "intersecao",
-  "diferenca",
-  "tem",
-  // calculo
-  "limite",
-  "derivada",
-  "integral",
-  // estatistica
-  "fatorial",
-  "combinacao",
-  "arranjo",
-  "media",
-  "mediana",
-  "moda",
-  "variancia",
-  "desvioPadrao",
-  // mapa
+  "separador", "tabela", "progresso", "tabelaVerdade",
+  // metodos — estruturas
+  "caracter", "lista", "mapa", "conjunto", "numero", "vetor", "matriz",
+  // metodos — número
+  "sinal", "int", "re", "decimal", "fatorar",
+  // metodos — lista / string
+  "adicionar", "remover", "obter", "tamanho", "ordenar", "contem",
+  "maiusculo", "minusculo", "capitalizar", "inverter", "aparar", "mesclar",
+  "transformar", "filtrar", "reduzir", "percorrer",
+  // metodos — conjunto
+  "uniao", "intersecao", "diferenca", "tem",
+  // metodos — mapa
   "definir",
+  // metodos — vetor/matriz
+  "dimensao", "soma", "subtrair", "escalar", "ponto", "norma",
+  "normalizar", "transposta", "mult",
+  // calculo
+  "limite", "derivada", "integral",
+  // estatistica
+  "fatorial", "combinacao", "arranjo",
+  "media", "mediana", "moda", "variancia", "desvioPadrao",
+  // tempo
+  "agora", "milisegundos", "medirExecucao", "testeStress",
+  // graficos
+  "plotar", "dispersao", "superficie3D", "plotarFuncao", "plotarMultiplas",
+  "grafico", "pontos", "conica", "relacao", "anotado", "interativo", "serie",
+  // probabilidade
+  "sortearComPesos", "uniforme", "rolarDados", "monteCarlo", "intervalo",
+  // guards/tipo
+  "eNumero", "eInteiro", "eReal", "eTexto", "eBooleano", "eLista",
+  "eMapa", "eConjunto", "eVetor", "eMatriz", "eVazio", "eIndefinido",
+  // algebra
+  "vetorial", "angulo", "anguloDeg", "projecao", "saoParalelos", "saoOrtogonais",
+  "identidade", "zeros", "determinante", "traco", "inversa", "resolverSistema",
+  "distancia", "pontoMedio", "equacaoReta", "distPontoReta", "intersecaoRetas",
+  "areaTriangulo", "perimetroTriangulo", "areaCirculo", "perimetroCirculo",
+  "pontoCirculo", "equacaoPlano", "distPontoPlano", "saoColineares", "saoCoplanares",
 ]);
 
 function esc(s) {
@@ -139,6 +115,10 @@ function kwClass(word) {
   if (KW_OP.has(word)) return `<span class="t-op">${esc(word)}</span>`;
   if (KW_IMPORT.has(word)) return `<span class="t-import">${esc(word)}</span>`;
   if (KW_FN.has(word)) return `<span class="t-fn">${esc(word)}</span>`;
+  if (window._userFnSet && window._userFnSet.has(word))
+    return `<span class="t-user-fn">${esc(word)}</span>`;
+  if (window._userVarSet && window._userVarSet.has(word))
+    return `<span class="t-user-var">${esc(word)}</span>`;
   return esc(word);
 }
 
@@ -584,28 +564,82 @@ const COMPLETIONS = [
     detail: "tabular — tabela-verdade",
     insert: "t.tabelaVerdade(",
   },
-  // metodos
-  {
-    label: "m.lista()",
-    detail: "metodos — lista dinâmica",
-    insert: "m.lista(",
-  },
+  // metodos — estruturas
+  { label: "m.lista()", detail: "metodos — lista dinâmica", insert: "m.lista(" },
   { label: "m.mapa()", detail: "metodos — dicionário", insert: "m.mapa()" },
-  {
-    label: "m.conjunto()",
-    detail: "metodos — conjunto único",
-    insert: "m.conjunto()",
-  },
-  {
-    label: "m.numero()",
-    detail: "metodos — objeto numérico",
-    insert: "m.numero(",
-  },
-  {
-    label: "m.caracter()",
-    detail: "metodos — objeto texto",
-    insert: "m.caracter(",
-  },
+  { label: "m.conjunto()", detail: "metodos — conjunto único", insert: "m.conjunto()" },
+  { label: "m.numero()", detail: "metodos — objeto numérico", insert: "m.numero(" },
+  { label: "m.caracter()", detail: "metodos — objeto texto", insert: "m.caracter(" },
+  { label: "m.vetor()", detail: "metodos — vetor matemático", insert: "m.vetor(" },
+  { label: "m.matriz()", detail: "metodos — matriz bidimensional", insert: "m.matriz(" },
+  // metodos — métodos de lista
+  { label: ".adicionar()", detail: "lista — adiciona elemento", insert: ".adicionar(" },
+  { label: ".remover()", detail: "lista — remove por índice/valor", insert: ".remover(" },
+  { label: ".obter()", detail: "lista/mapa — obtém valor", insert: ".obter(" },
+  { label: ".tamanho()", detail: "lista/string — comprimento", insert: ".tamanho()" },
+  { label: ".ordenar()", detail: "lista — ordena in-place", insert: ".ordenar()" },
+  { label: ".contem()", detail: "lista — verifica presença", insert: ".contem(" },
+  { label: ".inverter()", detail: "lista — inverte ordem", insert: ".inverter()" },
+  { label: ".transformar()", detail: "lista — map funcional", insert: ".transformar(" },
+  { label: ".filtrar()", detail: "lista — filter funcional", insert: ".filtrar(" },
+  { label: ".reduzir()", detail: "lista — reduce funcional", insert: ".reduzir(" },
+  { label: ".percorrer()", detail: "lista — forEach funcional", insert: ".percorrer(" },
+  { label: ".definir()", detail: "mapa — define chave/valor", insert: ".definir(" },
+  // graficos
+  { label: "importar graficos como g", detail: "snippet", insert: "importar graficos como g;" },
+  { label: "importar graficos.interativo como g", detail: "snippet", insert: "importar graficos.interativo como g;" },
+  { label: "g.plotar()", detail: "graficos — plota dados ou função", insert: "g.plotar(" },
+  { label: "g.plotarFuncao()", detail: "graficos — plota uma função", insert: "g.plotarFuncao(" },
+  { label: "g.plotarMultiplas()", detail: "graficos — plota várias funções", insert: "g.plotarMultiplas(" },
+  { label: "g.dispersao()", detail: "graficos — gráfico de dispersão", insert: "g.dispersao(" },
+  { label: "g.superficie3D()", detail: "graficos — superfície 3D", insert: "g.superficie3D(" },
+  { label: "g.grafico()", detail: "graficos — gráfico composto", insert: "g.grafico(" },
+  { label: "g.pontos()", detail: "graficos — plota lista de pontos", insert: "g.pontos(" },
+  { label: "g.conica()", detail: "graficos — cônica Ax²+Bxy+Cy²+…", insert: "g.conica(" },
+  { label: "g.relacao()", detail: "graficos — relação implícita", insert: "g.relacao(" },
+  { label: "g.anotado()", detail: "graficos — função com marcadores", insert: "g.anotado(" },
+  { label: "g.interativo.plotar()", detail: "interativo — descreve curva ou pontos", insert: "g.interativo.plotar(" },
+  { label: "g.interativo.serie()", detail: "interativo — série discreta em x inteiros", insert: "g.interativo.serie(" },
+  { label: "g.interativo.grafico()", detail: "interativo — canvas 2D pan/zoom", insert: "g.interativo.grafico(" },
+  // algebra
+  { label: "importar algebra como al", detail: "snippet", insert: "importar algebra como al;" },
+  { label: "al.vetor()", detail: "algebra — cria vetor", insert: "al.vetor(" },
+  { label: "al.matriz()", detail: "algebra — cria matriz", insert: "al.matriz(" },
+  { label: "al.soma()", detail: "algebra — soma vetores/matrizes", insert: "al.soma(" },
+  { label: "al.subtrair()", detail: "algebra — subtrai vetores/matrizes", insert: "al.subtrair(" },
+  { label: "al.escalar()", detail: "algebra — produto por escalar", insert: "al.escalar(" },
+  { label: "al.ponto()", detail: "algebra — produto escalar", insert: "al.ponto(" },
+  { label: "al.vetorial()", detail: "algebra — produto vetorial 3D", insert: "al.vetorial(" },
+  { label: "al.norma()", detail: "algebra — norma de vetor", insert: "al.norma(" },
+  { label: "al.normalizar()", detail: "algebra — vetor unitário", insert: "al.normalizar(" },
+  { label: "al.transposta()", detail: "algebra — transposta de matriz", insert: "al.transposta(" },
+  { label: "al.determinante()", detail: "algebra — det(A)", insert: "al.determinante(" },
+  { label: "al.inversa()", detail: "algebra — A⁻¹", insert: "al.inversa(" },
+  { label: "al.resolverSistema()", detail: "algebra — resolve Ax=b", insert: "al.resolverSistema(" },
+  { label: "al.distancia()", detail: "algebra — distância euclidiana", insert: "al.distancia(" },
+  { label: "al.angulo()", detail: "algebra — ângulo entre vetores (rad)", insert: "al.angulo(" },
+  { label: "al.anguloDeg()", detail: "algebra — ângulo entre vetores (graus)", insert: "al.anguloDeg(" },
+  // tempo
+  { label: "importar tempo como tp", detail: "snippet", insert: "importar tempo como tp;" },
+  { label: "tp.agora()", detail: "tempo — timestamp atual (ms)", insert: "tp.agora()" },
+  { label: "tp.milisegundos()", detail: "tempo — ms desde epoch", insert: "tp.milisegundos()" },
+  { label: "tp.medirExecucao()", detail: "tempo — cronometra uma função", insert: "tp.medirExecucao(" },
+  // probabilidade
+  { label: "importar probabilidade como p", detail: "snippet", insert: "importar probabilidade como p;" },
+  { label: "p.sortearComPesos()", detail: "prob — sorteia com pesos", insert: "p.sortearComPesos(" },
+  { label: "p.uniforme()", detail: "prob — sorteia uniforme [a,b]", insert: "p.uniforme(" },
+  { label: "p.rolarDados()", detail: "prob — simula dado de N faces", insert: "p.rolarDados(" },
+  { label: "p.monteCarlo()", detail: "prob — simulação Monte Carlo", insert: "p.monteCarlo(" },
+  { label: "p.intervalo()", detail: "prob — intervalo de confiança", insert: "p.intervalo(" },
+  // mat — funções extras
+  { label: "m.arcsen()", detail: "mat — arcosseno", insert: "m.arcsen(" },
+  { label: "m.arccos()", detail: "mat — arcocosseno", insert: "m.arccos(" },
+  { label: "m.arctan()", detail: "mat — arcotangente", insert: "m.arctan(" },
+  { label: "m.arctan2()", detail: "mat — atan2(y, x)", insert: "m.arctan2(" },
+  { label: "m.hipot()", detail: "mat — hipotenusa √(a²+b²)", insert: "m.hipot(" },
+  { label: "m.truncar()", detail: "mat — trunca casas decimais", insert: "m.truncar(" },
+  { label: "m.grauParaRad()", detail: "mat — converte graus→rad", insert: "m.grauParaRad(" },
+  { label: "m.radParaGrau()", detail: "mat — converte rad→graus", insert: "m.radParaGrau(" },
 ];
 
 let acList = [],
@@ -666,6 +700,14 @@ function extrairSimbolosDoCodigo() {
   // Remove duplicatas (caso o usuário tenha digitado o mesmo nome duas vezes em escopos diferentes)
   window.simbolosDinamicos = Array.from(
     new Map(novosSimbolos.map((item) => [item.label, item])).values(),
+  );
+
+  // Sets para highlight de símbolos do usuário
+  window._userFnSet = new Set(window.assinaturasDinamicas.keys());
+  window._userVarSet = new Set(
+    novosSimbolos
+      .filter((s) => !window.assinaturasDinamicas.has(s.label))
+      .map((s) => s.label),
   );
 }
 
@@ -1144,19 +1186,94 @@ window.addEventListener("keydown", (e) => {
      ==========================================================*/
 const sigPopup = document.getElementById("signature-popup");
 
-// Um pequeno dicionário com as assinaturas das funções nativas mais usadas
 const ASSINATURAS_NATIVAS = {
+  // nativas
   imprima: ["conteudo"],
   leia: ["mensagem"],
   raiz: ["x"],
   expo: ["base", "expoente"],
-  "m.aleatorio": ["min", "max"],
+  // mat
+  "m.abs": ["x"],
+  "m.arred": ["x", "casas?"],
+  "m.piso": ["x"],
+  "m.teto": ["x"],
+  "m.max": ["a", "b"],
+  "m.min": ["a", "b"],
+  "m.sen": ["x"],
+  "m.cos": ["x"],
+  "m.tan": ["x"],
+  "m.arcsen": ["x"],
+  "m.arccos": ["x"],
+  "m.arctan": ["x"],
+  "m.arctan2": ["y", "x"],
+  "m.hipot": ["a", "b"],
+  "m.ln": ["x"],
+  "m.log2": ["x"],
+  "m.log10": ["x"],
   "m.log": ["x", "base"],
+  "m.truncar": ["x", "casas?"],
+  "m.grauParaRad": ["graus"],
+  "m.radParaGrau": ["rad"],
+  "m.aleatorio": ["min", "max"],
+  "m.somatorio": ["funcao", "inicio", "fim"],
+  "m.produtorio": ["funcao", "inicio", "fim"],
+  // calculo
   "c.limite": ["funcao", "ponto"],
-  "c.derivada": ["funcao", "ponto", "ordem"],
+  "c.derivada": ["funcao", "ponto", "ordem?"],
   "c.integral": ["funcao", "a", "b"],
+  // estatistica
+  "e.fatorial": ["n"],
+  "e.combinacao": ["n", "k"],
+  "e.arranjo": ["n", "k"],
+  "e.media": ["lista"],
+  "e.mediana": ["lista"],
+  "e.moda": ["lista"],
+  "e.variancia": ["lista"],
+  "e.desvioPadrao": ["lista"],
+  // tabular
+  "t.tabela": ["dados", "opcoes?"],
+  "t.separador": [],
   "t.progresso": ["valor", "max"],
-  "t.tabelaVerdade": ["expressoes", "variaveis", "mostrarIntermediarias"],
+  "t.tabelaVerdade": ["expressoes", "variaveis", "mostrarIntermediarias?"],
+  // graficos
+  "g.plotar": ["dados", "config?"],
+  "g.plotarFuncao": ["fn", "intervalo?", "opcoes?"],
+  "g.plotarMultiplas": ["listaFuncoes", "intervalo?", "opcoes?"],
+  "g.dispersao": ["pontos", "opcoes?"],
+  "g.superficie3D": ["fn", "opcoes?"],
+  "g.grafico": ["funcoes", "opcoes?"],
+  "g.pontos": ["lista", "opcoes?"],
+  "g.conica": ["A", "B", "C", "D", "E", "F", "opcoes?"],
+  "g.relacao": ["rel", "opcoes?"],
+  "g.anotado": ["f", "marcadores", "opcoes?"],
+  // graficos.interativo
+  "g.interativo.plotar": ["dado", "opcoes?"],
+  "g.interativo.serie": ["funcao", "opcoes?"],
+  "g.interativo.grafico": ["plotaveis", "cfg?"],
+  // algebra
+  "al.vetor": ["componentes"],
+  "al.soma": ["a", "b"],
+  "al.subtrair": ["a", "b"],
+  "al.escalar": ["k", "v"],
+  "al.ponto": ["a", "b"],
+  "al.vetorial": ["a", "b"],
+  "al.norma": ["v"],
+  "al.normalizar": ["v"],
+  "al.angulo": ["a", "b"],
+  "al.anguloDeg": ["a", "b"],
+  "al.distancia": ["p1", "p2"],
+  "al.determinante": ["m"],
+  "al.inversa": ["m"],
+  "al.transposta": ["m"],
+  "al.resolverSistema": ["A", "b"],
+  // probabilidade
+  "p.sortearComPesos": ["itens", "pesos"],
+  "p.uniforme": ["a", "b"],
+  "p.rolarDados": ["faces", "qtd?"],
+  "p.monteCarlo": ["n", "funcao"],
+  "p.intervalo": ["dados", "confianca?"],
+  // tempo
+  "tp.medirExecucao": ["funcao"],
 };
 
 function verificarBalaoAssinatura() {

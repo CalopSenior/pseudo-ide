@@ -635,6 +635,13 @@ section {
 .t-fn {
   color: var(--syn-fn);
 }
+.t-user-fn {
+  color: #e879f9;
+  font-style: italic;
+}
+.t-user-var {
+  color: #fbbf24;
+}
 .t-val {
   color: var(--syn-val);
   font-style: italic;

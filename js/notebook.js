@@ -36,10 +36,45 @@
   function _updateHL(ta, hlLayer) {
     if (!hlLayer || typeof window.aplicarHighlight !== "function") return;
     const txt = ta.value;
-    // trailing newline needs a trailing space so the last line renders
     hlLayer.innerHTML = window.aplicarHighlight(
       txt.endsWith("\n") ? txt + " " : txt
     );
+  }
+
+  // ---------- extract user symbols across all cells (for highlight) ----------
+  let _extractSymTimer = null;
+  function _scheduleExtractSymbols() {
+    clearTimeout(_extractSymTimer);
+    _extractSymTimer = setTimeout(_extractNbSymbols, 400);
+  }
+
+  function _extractNbSymbols() {
+    const texto = _cells
+      .filter((c) => c.type === "codigo")
+      .map((c) => {
+        const ta = c.el && c.el.querySelector(".nb-cell-editor");
+        return ta ? ta.value : "";
+      })
+      .join("\n");
+
+    const fnSet = new Set();
+    const varSet = new Set();
+    const fnRegex = /\bfuncao\s+([A-Za-zÀ-ÖØ-öø-ÿ_][A-Za-zÀ-ÖØ-öø-ÿ0-9_]*)\s*\(/g;
+    const varRegex = /\b(inteiro|real|caracter|booleano|super)\s+([A-Za-zÀ-ÖØ-öø-ÿ_][A-Za-zÀ-ÖØ-öø-ÿ0-9_]*)/g;
+    let m;
+    while ((m = fnRegex.exec(texto)) !== null) fnSet.add(m[1]);
+    while ((m = varRegex.exec(texto)) !== null) if (!fnSet.has(m[2])) varSet.add(m[2]);
+
+    window._userFnSet = fnSet;
+    window._userVarSet = varSet;
+
+    // Re-render all highlight layers with updated symbol info
+    _cells.forEach((c) => {
+      if (c.type !== "codigo") return;
+      const ta = c.el && c.el.querySelector(".nb-cell-editor");
+      const hl = c.el && c.el.querySelector(".nb-hl-layer");
+      if (ta && hl) _updateHL(ta, hl);
+    });
   }
 
   // ---------- minimal markdown renderer ----------
@@ -316,6 +351,7 @@
     function _refresh() {
       _autoResize(ta);
       _updateHL(ta, hlLayer);
+      _scheduleExtractSymbols();
     }
 
     ta.value = content || "";
