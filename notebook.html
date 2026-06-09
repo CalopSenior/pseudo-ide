@@ -91,10 +91,28 @@
         </svg>Exportar HTML
       </button>
       <button class="nb-guide-btn" onclick="nbGuideOpen()" title="Guia do Notebook">?</button>
+      <button class="nb-env-toggle-btn" onclick="nbEnvPanelToggle()" title="Visualizador de variáveis ambiente (amb)">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+          stroke-linecap="round" style="vertical-align:-1px;margin-right:4px">
+          <circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12M2 12h3M19 12h3M4.22 19.78l2.12-2.12M17.66 6.34l2.12-2.12"/>
+        </svg>Vars
+      </button>
     </div>
   </header>
 
-  <!-- ===== MAIN CONTENT ===== -->
+  <!-- ===== ENV PANEL (left sidebar) ===== -->
+  <aside class="nb-env-panel" id="nb-env-panel">
+    <div class="nb-env-panel-hd">
+      <span class="nb-env-panel-title">Variáveis Ambiente</span>
+      <button class="nb-env-panel-close" onclick="nbEnvPanelClose()" title="Fechar">&#215;</button>
+    </div>
+    <div class="nb-env-list" id="nb-env-list">
+      <div class="nb-env-empty">Nenhuma variável.<br>Execute células com <strong>amb</strong> ativo.</div>
+    </div>
+    <div class="nb-env-panel-ft">
+      <button class="nb-env-clear-btn" onclick="nbEnvClear()">Limpar env</button>
+    </div>
+  </aside>
   <main class="nb-main">
     <!-- Cells container — notebook.js populates this -->
     <div id="nb-cells" class="nb-cells"></div>
