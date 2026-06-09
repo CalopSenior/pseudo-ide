@@ -25,17 +25,103 @@
   <!-- ===== HEADER ===== -->
   <header class="nb-header">
     <div class="nb-header-left">
-      <a href="index.html" class="nb-back" title="Voltar para a IDE">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-          stroke-linecap="round" style="vertical-align:-2px;margin-right:4px">
-          <polyline points="15 18 9 12 15 6" />
-        </svg>IDE
-      </a>
-      <span class="nb-app-name">Pseudo Notebook</span>
+      <div class="app-brand">
+        <img src="logo-horizontal.svg" class="app-logo" alt="Pseudo-IDE">
+        <span class="app-title">Pseudo Notebook</span>
+      </div>
       <input id="nb-title" class="nb-title-input" value="sem título" title="Clique para renomear" />
     </div>
+
     <div class="nb-header-right">
-      <!-- Run-All dropdown group -->
+
+      <!-- ── Guias dropdown ── -->
+      <div class="hdr-dd" id="hdr-dd-nb-guias">
+        <button class="btn-icon hdr-dd-trigger" onclick="toggleHdrDd('hdr-dd-nb-guias')" title="Guias">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect>
+            <rect x="3" y="14" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect>
+          </svg>
+          Guias
+          <svg class="hdr-dd-arrow" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
+        </button>
+        <div class="hdr-dd-menu">
+          <a href="index.html" class="hdr-dd-item">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            IDE
+          </a>
+          <a href="docs-api.html" class="hdr-dd-item">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+            Referência API
+          </a>
+          <a href="importador.html" class="hdr-dd-item">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+            Importar dados
+          </a>
+          <div class="hdr-dd-sep"></div>
+          <button class="hdr-dd-item" onclick="nbGuideOpen(); toggleHdrDd('hdr-dd-nb-guias')">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+            Guia do Notebook
+          </button>
+        </div>
+      </div>
+
+      <!-- ── Arquivo ── -->
+      <div class="btn-group">
+        <button class="btn-icon" onclick="nbLoad()" title="Abrir arquivo .pseudonb">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+          </svg>
+          Abrir
+        </button>
+        <button class="btn-icon" onclick="nbSave()" title="Salvar como .pseudonb">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+            <polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline>
+          </svg>
+          Salvar
+        </button>
+      </div>
+
+      <!-- ── Adicionar células ── -->
+      <div class="btn-group">
+        <button class="btn-icon" onclick="nbAddCell('codigo')" title="Adicionar célula de código no fim">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+          </svg>
+          Código
+        </button>
+        <button class="btn-icon" onclick="nbAddCell('markdown')" title="Adicionar célula de texto no fim">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+          </svg>
+          Texto
+        </button>
+      </div>
+
+      <!-- ── Exportar ── -->
+      <button class="btn-icon" onclick="nbExportHTML()" title="Exportar como HTML estático">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <polyline points="16 18 22 12 16 6" /><polyline points="8 6 2 12 8 18" />
+        </svg>
+        Exportar
+      </button>
+
+      <!-- ── Variáveis ── -->
+      <button class="btn-icon nb-env-toggle-btn" onclick="nbEnvPanelToggle()" title="Visualizador de variáveis ambiente (amb)">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+          <circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12M2 12h3M19 12h3M4.22 19.78l2.12-2.12M17.66 6.34l2.12-2.12"/>
+        </svg>
+        Vars
+      </button>
+
+      <!-- ── Autosave ── -->
+      <button id="nb-btn-autosave" class="btn-icon" onclick="nbToggleAutosave()" title="Autosave">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+        Autosave
+      </button>
+
+      <!-- ── Executar Tudo ── -->
       <div class="nb-run-group" id="nb-run-group">
         <button class="nb-btn-run-all" id="nb-run-all-btn" onclick="nbRunDefault()"
           title="Executar todas as células (Ctrl+Shift+Enter)">
@@ -58,46 +144,6 @@
         </div>
       </div>
 
-      <button onclick="nbAddCell('codigo')" title="Adicionar célula de código no fim">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-          stroke-linecap="round" style="vertical-align:-2px;margin-right:4px">
-          <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
-        </svg>Código
-      </button>
-      <button onclick="nbAddCell('markdown')" title="Adicionar célula de texto no fim">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-          stroke-linecap="round" style="vertical-align:-2px;margin-right:4px">
-          <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
-        </svg>Texto
-      </button>
-      <button id="nb-btn-autosave" onclick="nbToggleAutosave()" title="Autosave" style="font-size:11px;">💾 Autosave</button>
-      <button onclick="nbSave()" title="Salvar como .pseudonb">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-          stroke-linecap="round" style="vertical-align:-2px;margin-right:4px">
-          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-          <polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" />
-        </svg>Salvar
-      </button>
-      <button onclick="nbLoad()" title="Abrir arquivo .pseudonb">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-          stroke-linecap="round" style="vertical-align:-2px;margin-right:4px">
-          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-          <polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" />
-        </svg>Abrir
-      </button>
-      <button onclick="nbExportHTML()" title="Exportar como HTML estático">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-          stroke-linecap="round" style="vertical-align:-2px;margin-right:4px">
-          <polyline points="16 18 22 12 16 6" /><polyline points="8 6 2 12 8 18" />
-        </svg>Exportar HTML
-      </button>
-      <button class="nb-guide-btn" onclick="nbGuideOpen()" title="Guia do Notebook">?</button>
-      <button class="nb-env-toggle-btn" onclick="nbEnvPanelToggle()" title="Visualizador de variáveis ambiente (amb)">
-        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
-          stroke-linecap="round" style="vertical-align:-1px;margin-right:4px">
-          <circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12M2 12h3M19 12h3M4.22 19.78l2.12-2.12M17.66 6.34l2.12-2.12"/>
-        </svg>Vars
-      </button>
     </div>
   </header>
 

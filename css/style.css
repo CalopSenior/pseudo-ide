@@ -117,7 +117,8 @@ code {
 }
 .app-logo {
   display: block;
-  border-radius: 6px;
+  height: 28px;
+  width: auto;
   flex-shrink: 0;
 }
 .app-title {
@@ -253,15 +254,18 @@ code {
 .btn-run:active {
   transform: translateY(0);
 }
-#btn-autosave {
+#btn-autosave,
+#nb-btn-autosave {
   font-size: 11px;
   color: var(--text-muted);
   border-color: transparent;
 }
-#btn-autosave.as-on {
+#btn-autosave.as-on,
+#nb-btn-autosave.as-on {
   color: var(--green);
 }
-#btn-autosave:hover {
+#btn-autosave:hover,
+#nb-btn-autosave:hover {
   background: var(--bg-hover);
   color: var(--text);
   border-color: var(--border-light);
