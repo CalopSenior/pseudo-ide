@@ -173,6 +173,192 @@ function _isLinhaInjetada(t) {
 let _dbgPrefixLines = 0;
 
 /* ============================================================
+   COMPARAÇÕES ENCADEADAS  a < b < c  →  a<b && b<c
+   ============================================================ */
+function _expandChainedComps(code) {
+  const S = '\x00';
+  const CMPOPS = ['<=', '>=', '==', '!=', '<', '>'];
+  const dirOf = op =>
+    op === '<' || op === '<=' ?  1 :
+    op === '>' || op === '>=' ? -1 :
+    op === '==' ? 0 : NaN;
+
+  function skipFwd(s, i) { const j = s.indexOf(S, i + 1); return j < 0 ? s.length : j + 1; }
+
+  // Collect all CMP operators with position + nesting depth
+  const found = [];
+  let d = 0;
+  for (let i = 0; i < code.length; ) {
+    const ch = code[i];
+    if (ch === S) { i = skipFwd(code, i); continue; }
+    if ('([{'.includes(ch)) { d++; i++; continue; }
+    if (')]}'.includes(ch)) { d--; i++; continue; }
+    let hit = false;
+    for (const op of CMPOPS) {
+      if (code.startsWith(op, i)) {
+        found.push({ i, end: i + op.length, op, d });
+        i += op.length; hit = true; break;
+      }
+    }
+    if (!hit) i++;
+  }
+  if (found.length < 2) return code;
+
+  // Group consecutive same-depth CMPs with no statement boundary between them into chains
+  const BOUND = /[;{}\n]/;
+  const chains = [];
+  let j = 0;
+  while (j < found.length) {
+    const chain = [found[j]];
+    while (
+      j + 1 < found.length &&
+      found[j + 1].d === found[j].d &&
+      !BOUND.test(code.slice(found[j].end, found[j + 1].i).replace(/\x00\d+\x00/g, ''))
+    ) chain.push(found[++j]);
+    if (chain.length >= 2) chains.push(chain);
+    j++;
+  }
+  if (!chains.length) return code;
+
+  // Scan backward from pos to expression start (stops at unambiguous boundary at local depth 0)
+  function lBound(s, pos) {
+    let ld = 0;
+    for (let k = pos - 1; k >= 0; k--) {
+      const ch = s[k];
+      if (ch === S) continue;
+      if (')]}'.includes(ch)) { ld++; continue; }
+      if ('([{'.includes(ch)) { if (ld === 0) return k + 1; ld--; continue; }
+      if (ld === 0 && /[,;(\[{\n?:]/.test(ch)) return k + 1;
+      if (ld === 0 && ch === '=' && !'<>=!'.includes(s[k - 1] || '')) return k + 1;
+    }
+    return 0;
+  }
+
+  // Scan forward from pos to expression end (stops at depth-0 boundary)
+  function rBound(s, pos) {
+    let rd = 0;
+    for (let k = pos; k < s.length; k++) {
+      const ch = s[k];
+      if (ch === S) { k = skipFwd(s, k) - 1; continue; }
+      if ('([{'.includes(ch)) { rd++; continue; }
+      if (')]}'.includes(ch)) { if (rd === 0) return k; rd--; continue; }
+      if (rd === 0 && /[?:;,)\]}\n]/.test(ch)) return k;
+    }
+    return s.length;
+  }
+
+  // Rewrite right-to-left to preserve absolute positions of earlier chains
+  let res = code;
+  for (const chain of [...chains].reverse()) {
+    const lp = lBound(res, chain[0].i);
+    const rp = rBound(res, chain[chain.length - 1].end);
+
+    const segs = [res.slice(lp, chain[0].i).trim()];
+    for (let m = 0; m < chain.length - 1; m++)
+      segs.push(res.slice(chain[m].end, chain[m + 1].i).trim());
+    segs.push(res.slice(chain[chain.length - 1].end, rp).trim());
+    const ops = chain.map(c => c.op);
+    const dirs = ops.map(dirOf);
+
+    if (dirs.some(isNaN))
+      throw new Error("Comparação encadeada: '!=' não pode ser encadeado.");
+    const nonEq = dirs.filter(d => d !== 0);
+    if (nonEq.length && !nonEq.every(d => d === nonEq[0]))
+      throw new Error(
+        `Comparação encadeada inválida: '${ops.join(' ')}' mistura direções opostas. Use 'e' explícito.`
+      );
+
+    const mids = segs.slice(1, -1);
+    let repl;
+    if (!mids.some(s => s.includes('('))) {
+      repl = ops.map((op, i) => `${segs[i]}${op}${segs[i + 1]}`).join(' && ');
+    } else {
+      let n = 0;
+      const tmps = mids.map(s => s.includes('(') ? `__c${n++}` : null);
+      const asns = mids.map((s, i) => tmps[i] ? `${tmps[i]}=${s}` : null).filter(Boolean);
+      const all = [segs[0], ...mids.map((s, i) => tmps[i] || s), segs[segs.length - 1]];
+      const parts = ops.map((op, i) => `${all[i]}${op}${all[i + 1]}`);
+      repl = `((${asns.join(',')}, ${parts.join(' && ')}))`;
+    }
+    res = res.slice(0, lp) + repl + res.slice(rp);
+  }
+  return res;
+}
+
+/* ============================================================
+   OPERADOR TERNÁRIO  cond ? a : b  →  _ternBool(cond) ? a : b
+                      cond ? a       →  _ternBool(cond) ? a : null
+   ============================================================ */
+function _expandTernary(code) {
+  const S = '\x00';
+  function skipFwd(s, i) { const j = s.indexOf(S, i + 1); return j < 0 ? s.length : j + 1; }
+
+  // Collect positions of all ? (not ?. optional chaining)
+  const qPos = [];
+  let d = 0;
+  for (let i = 0; i < code.length; ) {
+    const ch = code[i];
+    if (ch === S) { i = skipFwd(code, i); continue; }
+    if ('([{'.includes(ch)) { d++; i++; continue; }
+    if (')]}'.includes(ch)) { d--; i++; continue; }
+    if (ch === '?' && code[i + 1] !== '.') qPos.push(i);
+    i++;
+  }
+  if (!qPos.length) return code;
+
+  let res = code;
+  for (const q of [...qPos].reverse()) {
+    // Find matching : with ternary-depth tracking
+    let pd = 0, td = 0, colonPos = -1;
+    for (let i = q + 1; i < res.length; ) {
+      const ch = res[i];
+      if (ch === S) { i = skipFwd(res, i); continue; }
+      if ('([{'.includes(ch)) { pd++; i++; continue; }
+      if (')]}'.includes(ch)) { if (pd === 0) break; pd--; i++; continue; }
+      if (pd === 0 && /[;}\n]/.test(ch)) break;
+      if (pd === 0 && ch === '?') { td++; i++; continue; }
+      if (pd === 0 && ch === ':') {
+        if (td === 0) { colonPos = i; break; }
+        td--; i++; continue;
+      }
+      i++;
+    }
+
+    // No colon found — insert ': null' at end of true branch
+    if (colonPos === -1) {
+      let bd = 0, td2 = 0, end = q + 1;
+      while (end < res.length) {
+        const ch = res[end];
+        if (ch === S) { end = skipFwd(res, end); continue; }
+        if ('([{'.includes(ch)) { bd++; end++; continue; }
+        if (')]}'.includes(ch)) { if (bd === 0) break; bd--; end++; continue; }
+        if (bd === 0 && ch === '?') { td2++; end++; continue; }
+        if (bd === 0 && ch === ':') { if (td2 === 0) break; td2--; end++; continue; }
+        if (bd === 0 && /[;,)\]}\n]/.test(ch)) break;
+        end++;
+      }
+      res = res.slice(0, end) + ' : null' + res.slice(end);
+    }
+
+    // Find condition start (scan backward from q, stops at boundary at local depth 0)
+    let ld = 0, cStart = 0;
+    for (let k = q - 1; k >= 0; k--) {
+      const ch = res[k];
+      if (ch === S) continue;
+      if (')]}'.includes(ch)) { ld++; continue; }
+      if ('([{'.includes(ch)) { if (ld === 0) { cStart = k + 1; break; } ld--; continue; }
+      if (ld === 0 && /[,;(\[{\n?]/.test(ch)) { cStart = k + 1; break; }
+      if (ld === 0 && ch === '=' && !'<>=!'.includes(res[k - 1] || '')) { cStart = k + 1; break; }
+    }
+
+    const cond = res.slice(cStart, q).trim();
+    if (cond.startsWith('_ternBool(')) continue; // already wrapped
+    res = res.slice(0, cStart) + `_ternBool(${cond}) ` + res.slice(q);
+  }
+  return res;
+}
+
+/* ============================================================
    TRADUTOR  pseudo → JavaScript
    ============================================================ */
 function traduzirCodigo(fonte, isDebug = false) {
@@ -217,6 +403,10 @@ function traduzirCodigo(fonte, isDebug = false) {
   c = c.replace(/'(?:[^'\\]|\\.)*'/g, p);
   c = c.replace(/\/\*[\s\S]*?\*\//g, p);
   c = c.replace(/\/\/.*/g, p);
+
+  /* COMPARAÇÕES ENCADEADAS E OPERADOR TERNÁRIO */
+  c = _expandChainedComps(c);
+  c = _expandTernary(c);
 
   /* INJEÇÃO DO DEPURADOR VISUAL */
   let dbgInjetor = "";
