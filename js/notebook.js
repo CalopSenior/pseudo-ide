@@ -36,10 +36,43 @@
   function _updateHL(ta, hlLayer) {
     if (!hlLayer || typeof window.aplicarHighlight !== "function") return;
     const txt = ta.value;
-    // trailing newline needs a trailing space so the last line renders
     hlLayer.innerHTML = window.aplicarHighlight(
       txt.endsWith("\n") ? txt + " " : txt
     );
+  }
+
+  // ---------- extract user symbols across all cells (for highlight) ----------
+  let _extractSymTimer = null;
+  function _scheduleExtractSymbols() {
+    clearTimeout(_extractSymTimer);
+    _extractSymTimer = setTimeout(_extractNbSymbols, 400);
+  }
+
+  function _extractNbSymbols() {
+    const texto = _cells
+      .filter((c) => c.type === "codigo")
+      .map((c) => {
+        const ta = c.el && c.el.querySelector(".nb-cell-editor");
+        return ta ? ta.value : "";
+      })
+      .join("\n");
+
+    const fnSet = new Set();
+    const varSet = new Set();
+    const fnRegex = /\bfuncao\s+([A-Za-zÀ-ÖØ-öø-ÿ_][A-Za-zÀ-ÖØ-öø-ÿ0-9_]*)\s*\(/g;
+    const varRegex = /\b(inteiro|real|caracter|booleano|super)\s+([A-Za-zÀ-ÖØ-öø-ÿ_][A-Za-zÀ-ÖØ-öø-ÿ0-9_]*)/g;
+    let m;
+    while ((m = fnRegex.exec(texto)) !== null) fnSet.add(m[1]);
+    while ((m = varRegex.exec(texto)) !== null) if (!fnSet.has(m[2])) varSet.add(m[2]);
+
+    window._userFnSet = fnSet;
+    window._userVarSet = varSet;
+    _cells.forEach((c) => {
+      if (c.type !== "codigo") return;
+      const ta = c.el && c.el.querySelector(".nb-cell-editor");
+      const hl = c.el && c.el.querySelector(".nb-hl-layer");
+      if (ta && hl) _updateHL(ta, hl);
+    });
   }
 
   // ---------- minimal markdown renderer ----------
@@ -316,6 +349,8 @@
     function _refresh() {
       _autoResize(ta);
       _updateHL(ta, hlLayer);
+      _scheduleExtractSymbols();
+      _nbAsSchedule();
     }
 
     ta.value = content || "";
@@ -1210,6 +1245,32 @@
     }).join("");
   }
 
+  // ---------- autosave ----------
+  const NB_AS_KEY    = "pseudo_nb_autosave_v1";
+  const NB_AS_EN_KEY = "pseudo_nb_autosave_enabled";
+  let _nbAsTimer     = null;
+
+  function _nbAsEnabled() { return localStorage.getItem(NB_AS_EN_KEY) !== "0"; }
+
+  function _nbAsSave() {
+    if (!_nbAsEnabled()) return;
+    localStorage.setItem(NB_AS_KEY, JSON.stringify({ nb: _toJSON(), ts: Date.now() }));
+  }
+
+  function _nbAsSchedule() {
+    clearTimeout(_nbAsTimer);
+    _nbAsTimer = setTimeout(_nbAsSave, 2000);
+  }
+
+  function _nbAsUpdateBtn() {
+    const btn = document.getElementById("nb-btn-autosave");
+    if (!btn) return;
+    const on = _nbAsEnabled();
+    btn.title  = on ? "Autosave ativo — clique para desativar" : "Autosave inativo — clique para ativar";
+    btn.classList.toggle("as-on", on);
+    btn.textContent = on ? "💾 Autosave" : "💾 Autosave";
+  }
+
   // ---------- init ----------
   function _init() {
     _addCell("codigo");
@@ -1273,6 +1334,28 @@
 
     // Apply default run mode visual state
     _setRunMode("amb");
+
+    window.nbToggleAutosave = function () {
+      const on = _nbAsEnabled();
+      localStorage.setItem(NB_AS_EN_KEY, on ? "0" : "1");
+      _nbAsUpdateBtn();
+      if (!on) _nbAsSave();
+    };
+
+    _nbAsUpdateBtn();
+
+    // Restaurar autosave se habilitado e houver dados salvos
+    if (_nbAsEnabled()) {
+      try {
+        const saved = JSON.parse(localStorage.getItem(NB_AS_KEY) || "null");
+        if (saved && saved.nb) {
+          const dt = new Date(saved.ts).toLocaleString("pt-BR");
+          if (confirm(`Há um notebook salvo automaticamente (${dt}).\nDeseja restaurá-lo?`)) {
+            _fromJSON(saved.nb);
+          }
+        }
+      } catch (_) {}
+    }
   }
 
   document.addEventListener("DOMContentLoaded", _init);

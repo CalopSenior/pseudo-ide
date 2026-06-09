@@ -203,6 +203,19 @@ code {
 .btn-run:active {
   transform: translateY(0);
 }
+#btn-autosave {
+  font-size: 11px;
+  color: var(--text-muted);
+  border-color: transparent;
+}
+#btn-autosave.as-on {
+  color: var(--green);
+}
+#btn-autosave:hover {
+  background: var(--bg-hover);
+  color: var(--text);
+  border-color: var(--border-light);
+}
 .btn-group {
   display: flex;
   border: 1px solid var(--border);
@@ -635,6 +648,13 @@ section {
 .t-fn {
   color: var(--syn-fn);
 }
+.t-user-fn {
+  color: #e879f9;
+  font-style: italic;
+}
+.t-user-var {
+  color: #fbbf24;
+}
 .t-val {
   color: var(--syn-val);
   font-style: italic;
@@ -655,6 +675,13 @@ section {
 }
 .t-import {
   color: var(--syn-import);
+}
+.t-user-fn {
+  color: #e879f9;
+  font-style: italic;
+}
+.t-user-var {
+  color: #fbbf24;
 }
 .t-marker {
   color: #f59e0b;

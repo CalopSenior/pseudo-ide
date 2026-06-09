@@ -137,6 +137,9 @@
                 title="Depurar Passo-a-Passo (F9)">
                 Depurar
             </button>
+            <button id="btn-autosave" class="btn-icon" onclick="toggleAutosave()" title="Autosave">
+                💾 Autosave
+            </button>
             <button class="btn-run" onclick="executarCodigo()" title="Executar (Ctrl+S)">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
                     <polygon points="5 3 19 12 5 21 5 3" />
@@ -2299,6 +2302,86 @@ g.anotado(f, [[<span class="ex-num">1</span>,<span class="ex-num">0</span>], rai
     legendas: [<span class="ex-str">"ponto avulso"</span>, <span class="ex-str">"raízes"</span>, <span class="ex-str">"críticos"</span>],
     intervalo: [-<span class="ex-num">3</span>, <span class="ex-num">3</span>]
 });</pre>
+
+                    <!-- ════════════════════════════════════════
+                         g.interativo  (sub-biblioteca)
+                         ════════════════════════════════════════ -->
+                    <hr style="border:none;border-top:1px solid var(--border);margin:2rem 0 1.5rem">
+                    <h3 style="color:var(--accent);margin-bottom:.6rem">graficos.interativo</h3>
+                    <p class="tab-intro">Sub-biblioteca que cria gráficos 2D <strong>interativos</strong> via Canvas: suporte a arrastar (pan), zoom com scroll, toque, e tooltip de hover com o par ordenado.
+                    Ao contrário das funções estáticas acima, o resultado é um widget embutido na saída da célula que pode ser explorado livremente.</p>
+                    <p class="tab-intro">Importe diretamente: <code>importar graficos.interativo como g;</code> — ou use via namespace: <code>graficos.interativo.grafico(...)</code>.</p>
+
+                    <!-- grafico -->
+                    <h4>g.grafico(plotaveis, cfg?)</h4>
+                    <p class="tab-intro">Ponto de entrada principal. Aceita uma função, uma lista de pontos <em>ou</em> uma lista mista de plotáveis (funções, listas, descritores <code>plotar</code>/<code>serie</code>). Cores são atribuídas automaticamente por índice. O domínio e a escala são detectados a partir dos dados.</p>
+                    <table class="doc-table">
+                        <thead><tr><th>Campo de cfg</th><th>Padrão</th><th>Descrição</th></tr></thead>
+                        <tbody>
+                            <tr><td><code>largura</code></td><td>560</td><td>Largura do canvas em px</td></tr>
+                            <tr><td><code>altura</code></td><td>360</td><td>Altura do canvas em px</td></tr>
+                        </tbody>
+                    </table>
+                    <pre class="code-example"><span class="ex-kw">importar</span> graficos.interativo <span class="ex-kw">como</span> g;
+
+<span class="ex-cmt">// Caso mais simples — uma função</span>
+<span class="ex-kw">funcao</span> f(x) { <span class="ex-kw">retorno</span> x*x - <span class="ex-num">2</span>; }
+g.grafico(f);
+
+<span class="ex-cmt">// Múltiplos objetos — cores automáticas</span>
+<span class="ex-kw">funcao</span> g2(x) { <span class="ex-kw">retorno</span> x**<span class="ex-num">3</span> - x; }
+super pts = m.lista({x: <span class="ex-num">0</span>, y: <span class="ex-num">0</span>}, {x: <span class="ex-num">1</span>, y: <span class="ex-num">1</span>}, {x: <span class="ex-num">-1</span>, y: <span class="ex-num">-1</span>});
+g.grafico([f, g2, pts]);</pre>
+
+                    <!-- plotar -->
+                    <h4>g.plotar(dado, opcoes?)</h4>
+                    <p class="tab-intro">Cria um <em>descritor</em> a partir de uma função ou lista de pontos. Use quando quiser personalizar cor, rótulo de legenda ou raio antes de passar ao <code>grafico</code>. Se nenhuma opção for necessária, passe o objeto diretamente ao <code>grafico</code> sem usar <code>plotar</code>.</p>
+                    <table class="doc-table">
+                        <thead><tr><th>Campo de opcoes</th><th>Padrão</th><th>Descrição</th></tr></thead>
+                        <tbody>
+                            <tr><td><code>cor</code></td><td>automático</td><td>Cor hex da curva/pontos</td></tr>
+                            <tr><td><code>rotulo</code></td><td>—</td><td>Texto na legenda do canvas</td></tr>
+                            <tr><td><code>raio</code></td><td>4</td><td>Raio dos pontos (apenas para listas)</td></tr>
+                        </tbody>
+                    </table>
+                    <pre class="code-example"><span class="ex-kw">importar</span> graficos.interativo <span class="ex-kw">como</span> g;
+
+<span class="ex-kw">funcao</span> f(x) { <span class="ex-kw">retorno</span> m.sen(x); }
+super pts = m.lista({x: <span class="ex-num">0</span>, y: <span class="ex-num">0</span>}, {x: <span class="ex-num">3.14</span>, y: <span class="ex-num">0</span>});
+
+<span class="ex-cmt">// Sem plotar: tudo automático</span>
+g.grafico([f, pts]);
+
+<span class="ex-cmt">// Com plotar: personalizado</span>
+super curva = g.plotar(f,   { cor: <span class="ex-str">"#f87171"</span>, rotulo: <span class="ex-str">"sen(x)"</span> });
+super zeros = g.plotar(pts, { cor: <span class="ex-str">"#4ade80"</span>, raio: <span class="ex-num">6</span>, rotulo: <span class="ex-str">"zeros"</span> });
+g.grafico([curva, zeros]);</pre>
+
+                    <!-- serie -->
+                    <h4>g.serie(funcao, opcoes?)</h4>
+                    <p class="tab-intro">Cria um descritor de <strong>série discreta</strong>: avalia <code>funcao(n)</code> apenas em valores inteiros de x visíveis no canvas a cada frame. Ideal para sequências, progressões e funções de domínio discreto. Os pontos são redesenhados ao arrastar/zoom conforme o domínio muda.</p>
+                    <table class="doc-table">
+                        <thead><tr><th>Campo de opcoes</th><th>Padrão</th><th>Descrição</th></tr></thead>
+                        <tbody>
+                            <tr><td><code>cor</code></td><td>automático</td><td>Cor hex dos pontos</td></tr>
+                            <tr><td><code>rotulo</code></td><td>—</td><td>Texto na legenda</td></tr>
+                            <tr><td><code>raio</code></td><td>4</td><td>Raio dos pontos em px</td></tr>
+                            <tr><td><code>linha</code></td><td>verdadeiro</td><td>Conecta pontos com segmento de reta</td></tr>
+                        </tbody>
+                    </table>
+                    <pre class="code-example"><span class="ex-kw">importar</span> graficos.interativo <span class="ex-kw">como</span> g;
+
+<span class="ex-cmt">// Fibonacci (usando memoização manual)</span>
+<span class="ex-kw">funcao</span> fib(n) {
+    <span class="ex-kw">se</span> (n &lt;= <span class="ex-num">1</span>) { <span class="ex-kw">retorno</span> n; }
+    <span class="ex-kw">retorno</span> fib(n-<span class="ex-num">1</span>) + fib(n-<span class="ex-num">2</span>);
+}
+
+<span class="ex-cmt">// Função contínua + pontos inteiros</span>
+<span class="ex-kw">funcao</span> f(x) { <span class="ex-kw">retorno</span> x*x; }
+super curva = g.plotar(f,    { rotulo: <span class="ex-str">"x²"</span> });
+super pontos = g.serie(f,    { rotulo: <span class="ex-str">"inteiros"</span>, linha: falso });
+g.grafico([curva, pontos]);</pre>
 
                 </div><!-- /tab-graficos -->
 
