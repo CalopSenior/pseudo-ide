@@ -615,6 +615,7 @@
       outputs.forEach((o) => { if (o.hasChildNodes()) _setOutputVisible(o, true); });
       if (execOk) _setStatus("executado com sucesso ✓");
       if (runBtn) runBtn.disabled = false;
+      _updateEnvPanel();
     }
   }
 
@@ -670,6 +671,7 @@
     } finally {
       if (outputEl.hasChildNodes()) _setOutputVisible(outputEl, true);
       if (runBtn) runBtn.classList.remove("nb-running");
+      _updateEnvPanel();
     }
   }
 
@@ -1108,6 +1110,7 @@
     if (execOk) _setStatus("executado (amb) ✓");
     else _setStatus("erro de execução", true);
     if (runBtn) runBtn.disabled = false;
+    _updateEnvPanel();
   }
 
   // ---------- run-mode selector ----------
@@ -1140,6 +1143,72 @@
       });
     }
   });
+
+  // ---------- env panel ----------
+  function _inferType(v) {
+    if (v === null || v === undefined) return { label: "null", cls: "env-t-null" };
+    if (typeof v === "function") return { label: "func", cls: "env-t-func" };
+    if (typeof v === "number") return { label: "núm", cls: "env-t-num" };
+    if (typeof v === "boolean") return { label: "bool", cls: "env-t-bool" };
+    if (typeof v === "string") return { label: "txt", cls: "env-t-str" };
+    if (typeof v === "object") {
+      if (v && Array.isArray(v._v)) return { label: `lista·${v._v.length}`, cls: "env-t-list" };
+      if (Array.isArray(v)) return { label: `arr·${v.length}`, cls: "env-t-list" };
+      return { label: "obj", cls: "env-t-obj" };
+    }
+    return { label: "?", cls: "" };
+  }
+
+  function _previewVal(v) {
+    if (v === null || v === undefined) return String(v);
+    if (typeof v === "function") {
+      const h = v.toString().split("\n")[0].trim();
+      return h.length > 42 ? h.slice(0, 42) + "…" : h;
+    }
+    if (typeof v === "string") {
+      const s = v.length > 38 ? v.slice(0, 38) + "…" : v;
+      return `"${s}"`;
+    }
+    if (typeof v === "number" || typeof v === "boolean") return String(v);
+    if (typeof v === "object") {
+      if (v && Array.isArray(v._v)) {
+        const prev = v._v.slice(0, 6).map(x => { try { return JSON.stringify(x); } catch (_) { return "?"; } }).join(", ");
+        return `[${prev}${v._v.length > 6 ? ", …" : ""}]`;
+      }
+      try {
+        const s = JSON.stringify(v);
+        return s && s.length > 44 ? s.slice(0, 44) + "…" : (s || String(v));
+      } catch (_) { return "[objeto]"; }
+    }
+    return String(v);
+  }
+
+  function _escHtml(s) {
+    return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+
+  function _updateEnvPanel() {
+    const list = document.getElementById("nb-env-list");
+    if (!list) return;
+    const env = window._nbEnv || {};
+    const keys = Object.keys(env);
+    if (!keys.length) {
+      list.innerHTML = '<div class="nb-env-empty">Nenhuma variável.<br>Execute células com <strong>amb</strong> ativo.</div>';
+      return;
+    }
+    list.innerHTML = keys.map(k => {
+      const v = env[k];
+      const { label, cls } = _inferType(v);
+      const preview = _previewVal(v);
+      return `<div class="nb-env-row">
+        <div class="nb-env-row-head">
+          <span class="nb-env-name">${_escHtml(k)}</span>
+          <span class="nb-env-type ${cls}">${label}</span>
+        </div>
+        <div class="nb-env-val">${_escHtml(preview)}</div>
+      </div>`;
+    }).join("");
+  }
 
   // ---------- init ----------
   function _init() {
@@ -1176,6 +1245,19 @@
     window.nbGuideClose = () => {
       const el = document.getElementById("nb-guide-overlay");
       if (el) el.style.display = "none";
+    };
+    window.nbEnvPanelToggle = () => {
+      const panel = document.getElementById("nb-env-panel");
+      if (!panel) return;
+      const open = panel.classList.toggle("nb-env-panel-open");
+      if (open) _updateEnvPanel();
+    };
+    window.nbEnvPanelClose = () => {
+      document.getElementById("nb-env-panel")?.classList.remove("nb-env-panel-open");
+    };
+    window.nbEnvClear = () => {
+      window._nbEnv = {};
+      _updateEnvPanel();
     };
     window.nbSave = _save;
     window.nbLoad = _load;
