@@ -1720,6 +1720,7 @@ codeEditor.addEventListener("input", () => {
   showAutocomplete();
   verificarBalaoAssinatura();
   _scheduleSnap();
+  _asSchedule();
 });
 codeEditor.addEventListener("click", verificarBalaoAssinatura);
 codeEditor.addEventListener("click", (e) => {
@@ -2382,6 +2383,12 @@ window.addEventListener("load", async () => {
   _UNDO_STACK.push({ value: "", ss: 0, se: 0 });
   extrairSimbolosDoCodigo();
   atualizarEditor();
+  _asUpdateBtn();
+  const saved = localStorage.getItem(AS_KEY);
+  if (saved && saved.trim() && saved !== codeEditor.value) {
+    const restore = confirm("Autosave encontrou código da última sessão. Restaurar?");
+    if (restore) { codeEditor.value = saved; foldState.clear(); atualizarEditor(); }
+  }
 
   const urlParams = new URLSearchParams(window.location.search);
 

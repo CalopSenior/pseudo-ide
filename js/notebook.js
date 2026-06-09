@@ -1373,14 +1373,3 @@ document.addEventListener("click", (e) => {
   document.addEventListener("DOMContentLoaded", _init);
 })();
 
-/* Header dropdown toggle (notebook doesn't load runtime.js) */
-window.toggleHdrDd = function (id) {
-  const all = document.querySelectorAll(".hdr-dd");
-  all.forEach((dd) => { if (dd.id !== id) dd.classList.remove("hdr-dd-open"); });
-  document.getElementById(id)?.classList.toggle("hdr-dd-open");
-};
-document.addEventListener("click", (e) => {
-  if (!e.target.closest(".hdr-dd")) {
-    document.querySelectorAll(".hdr-dd").forEach((dd) => dd.classList.remove("hdr-dd-open"));
-  }
-});
