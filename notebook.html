@@ -223,7 +223,14 @@ imprima(f"Montante: {resultado:.2f}")</code></pre></div>
               <tr><td><code>$$formula$$</code></td><td>LaTeX em bloco</td></tr>
               <tr><td><code>---</code></td><td>Linha divisória</td></tr>
               <tr><td><code>&gt; texto</code></td><td>Citação/nota</td></tr>
+              <tr><td><code>| A | B |</code></td><td>Tabela</td></tr>
             </table>
+            <p><strong>Tabelas</strong> — sintaxe GFM com alinhamento por coluna:</p>
+            <pre class="nb-gc-pre"><code>| Nome   | Nota | Média  |
+|--------|:----:|-------:|
+| Ana    |  9   | 8,5    |
+| Bruno  |  7   | 7,2    |</code></pre>
+            <p>Delimitador: <code>---</code> esquerda, <code>:---:</code> centro, <code>---:</code> direita.</p>
             <p>Blocos de <strong>alinhamento</strong> — use <code>:::</code> como abertura e fechamento:</p>
             <pre class="nb-gc-pre"><code>:::center
 Este parágrafo fica **centralizado**.

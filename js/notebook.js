@@ -50,6 +50,7 @@
     let inList = false, listOl = false;
     let inMath = false, mathBuf = [], mathCloser = "", mathIncludeClose = false;
     let inAlign = false, alignBuf = [], alignDir = "";
+    let tableRows = [];
 
     function flushList() {
       if (!inList) return;
@@ -61,6 +62,40 @@
       if (!inAlign) return;
       out.push(`<div class="md-align-${alignDir}">${_renderMd(alignBuf.join("\n"))}</div>`);
       inAlign = false; alignBuf = []; alignDir = "";
+    }
+
+    function _parseTableRow(line) {
+      return line.replace(/^\s*\|/, "").replace(/\|\s*$/, "").split("|").map(s => s.trim());
+    }
+
+    function flushTable() {
+      if (!tableRows.length) return;
+      const rows = tableRows; tableRows = [];
+      // validate: need at least header + separator, separator must be only dashes/colons
+      const sepOk = rows.length >= 2 &&
+        /^[\s|:\-]+$/.test(rows[1]) &&
+        rows[1].includes("-");
+      if (!sepOk) { rows.forEach(r => out.push(`<p>${inline(r)}</p>`)); return; }
+      const headers = _parseTableRow(rows[0]);
+      const aligns = _parseTableRow(rows[1]).map(s => {
+        const t = s.trim();
+        if (/^:-+:$/.test(t)) return "center";
+        if (/^-+:$/.test(t)) return "right";
+        return "left";
+      });
+      let html = '<table class="md-table"><thead><tr>';
+      headers.forEach((h, ci) =>
+        html += `<th style="text-align:${aligns[ci] || "left"}">${inline(h)}</th>`);
+      html += '</tr></thead><tbody>';
+      rows.slice(2).forEach(row => {
+        const cells = _parseTableRow(row);
+        html += '<tr>';
+        aligns.forEach((al, ci) =>
+          html += `<td style="text-align:${al}">${inline(cells[ci] || "")}</td>`);
+        html += '</tr>';
+      });
+      html += '</tbody></table>';
+      out.push(html);
     }
 
     function _katexBlock(tex) {
@@ -158,6 +193,11 @@
         continue;
       }
 
+      // table row detection (flush table when a non-table line is encountered)
+      const isTableRow = /^\s*\|/.test(line);
+      if (tableRows.length && !isTableRow) flushTable();
+      if (isTableRow) { flushList(); tableRows.push(line); continue; }
+
       // block math: $$ (single or multi-line)
       if (/^\$\$/.test(line)) {
         const single = line.match(/^\$\$(.+)\$\$\s*$/);
@@ -235,6 +275,7 @@
     }
     flushList();
     flushAlign();
+    flushTable();
     if (inMath && mathBuf.length) out.push(_katexBlock(mathBuf.join("\n")));
     if (inCode && codeBuf.length) {
       const esc = codeBuf.join("\n").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -844,6 +885,10 @@
     .exp-md-body .md-align-center{text-align:center}
     .exp-md-body .md-align-right{text-align:right}
     .exp-md-body .md-align-justify{text-align:justify}
+    .exp-md-body .md-table{border-collapse:collapse;width:100%;margin:10px 0;font-size:13px}
+    .exp-md-body .md-table th,.exp-md-body .md-table td{border:1px solid var(--border);padding:5px 12px}
+    .exp-md-body .md-table th{background:rgba(124,131,255,.1);color:#7dd3fc;font-weight:600}
+    .exp-md-body .md-table tr:nth-child(even) td{background:rgba(255,255,255,.03)}
     .console-line{padding:2px 0;display:flex;align-items:baseline;gap:6px}
     .console-line-arrow{color:var(--muted)}
     .console-error{color:var(--red);padding:3px 0}

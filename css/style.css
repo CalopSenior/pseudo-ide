@@ -1827,6 +1827,19 @@ section {
 .nb-md-preview .md-align-right  { text-align: right; }
 .nb-md-preview .md-align-left   { text-align: left; }
 .nb-md-preview .md-align-justify { text-align: justify; }
+.nb-md-preview .md-table {
+  border-collapse: collapse; width: 100%; margin: 10px 0; font-size: 13px;
+}
+.nb-md-preview .md-table th,
+.nb-md-preview .md-table td {
+  border: 1px solid var(--border); padding: 5px 12px;
+}
+.nb-md-preview .md-table th {
+  background: var(--bg-tab); color: var(--accent); font-weight: 600;
+}
+.nb-md-preview .md-table tr:nth-child(even) td {
+  background: rgba(124,131,255,0.04);
+}
 
 /* Add-cell bar */
 .nb-add-bar {
