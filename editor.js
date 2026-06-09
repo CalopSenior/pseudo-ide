@@ -173,7 +173,7 @@ function _isLinhaInjetada(t) {
 let _dbgPrefixLines = 0;
 
 /* ============================================================
-   COMPARAÇÕES ENCADEADAS  a < b < c  →  a<b && b<c
+   ENCADEAMENTO DE COMPARAÇÕES   a < b < c  →  a<b && b<c
    ============================================================ */
 function _expandChainedComps(code) {
   const S = '\x00';
@@ -183,198 +183,236 @@ function _expandChainedComps(code) {
     op === '>' || op === '>=' ? -1 :
     op === '==' ? 0 : NaN;
 
-  function skipFwd(s, i) { const j = s.indexOf(S, i + 1); return j < 0 ? s.length : j + 1; }
-
-  // Collect all CMP operators with position + nesting depth
-  const found = [];
-  let d = 0;
-  for (let i = 0; i < code.length; ) {
-    const ch = code[i];
-    if (ch === S) { i = skipFwd(code, i); continue; }
-    if ('([{'.includes(ch)) { d++; i++; continue; }
-    if (')]}'.includes(ch)) { d--; i++; continue; }
-    let hit = false;
-    for (const op of CMPOPS) {
-      if (code.startsWith(op, i)) {
-        found.push({ i, end: i + op.length, op, d });
-        i += op.length; hit = true; break;
-      }
-    }
-    if (!hit) i++;
-  }
-  if (found.length < 2) return code;
-
-  // Group consecutive same-depth CMPs with no statement boundary between them into chains
-  const BOUND = /[;{}\n]/;
-  const chains = [];
-  let j = 0;
-  while (j < found.length) {
-    const chain = [found[j]];
-    while (
-      j + 1 < found.length &&
-      found[j + 1].d === found[j].d &&
-      !BOUND.test(code.slice(found[j].end, found[j + 1].i).replace(/\x00\d+\x00/g, ''))
-    ) chain.push(found[++j]);
-    if (chain.length >= 2) chains.push(chain);
-    j++;
-  }
-  if (!chains.length) return code;
-
-  // Scan backward from pos to expression start (stops at unambiguous boundary at local depth 0)
-  function lBound(s, pos) {
-    let ld = 0;
-    for (let k = pos - 1; k >= 0; k--) {
-      const ch = s[k];
-      if (ch === S) continue;
-      if (')]}'.includes(ch)) { ld++; continue; }
-      if ('([{'.includes(ch)) { if (ld === 0) return k + 1; ld--; continue; }
-      if (ld === 0 && /[,;(\[{\n?:]/.test(ch)) return k + 1;
-      if (ld === 0 && ch === '=' && !'<>=!'.includes(s[k - 1] || '')) return k + 1;
-    }
-    return 0;
+  function skipFwd(s, i) {
+    const j = s.indexOf(S, i + 1);
+    return j < 0 ? s.length : j + 1;
   }
 
-  // Scan forward from pos to expression end (stops at depth-0 boundary)
-  function rBound(s, pos) {
-    let rd = 0;
-    for (let k = pos; k < s.length; k++) {
-      const ch = s[k];
-      if (ch === S) { k = skipFwd(s, k) - 1; continue; }
-      if ('([{'.includes(ch)) { rd++; continue; }
-      if (')]}'.includes(ch)) { if (rd === 0) return k; rd--; continue; }
-      if (rd === 0 && /[?:;,)\]}\n]/.test(ch)) return k;
-    }
-    return s.length;
-  }
-
-  // Advance past leading whitespace + statement keyword to get true expression start
-  function skipStmtKw(s, lp, until) {
-    let p = lp;
+  // Advance past leading retorno/lançar keyword from `from` toward `until`
+  function skipStmtKw(s, from, until) {
+    let p = from;
     while (p < until && /[ \t]/.test(s[p])) p++;
     const kw = s.slice(p, until).match(/^(retorno|lançar)\s+/);
     return kw ? p + kw[0].length : p;
   }
 
-  // Rewrite right-to-left to preserve absolute positions of earlier chains
-  let res = code;
-  for (const chain of [...chains].reverse()) {
-    const lp  = lBound(res, chain[0].i);
-    const elp = skipStmtKw(res, lp, chain[0].i); // true expression start (after keyword)
-    const rp  = rBound(res, chain[chain.length - 1].end);
-
-    const segs = [res.slice(elp, chain[0].i).trim()];
-    for (let m = 0; m < chain.length - 1; m++)
-      segs.push(res.slice(chain[m].end, chain[m + 1].i).trim());
-    segs.push(res.slice(chain[chain.length - 1].end, rp).trim());
-    const ops = chain.map(c => c.op);
-    const dirs = ops.map(dirOf);
-
-    if (dirs.some(isNaN))
-      throw new Error("Comparação encadeada: '!=' não pode ser encadeado.");
-    const nonEq = dirs.filter(d => d !== 0);
-    if (nonEq.length && !nonEq.every(d => d === nonEq[0]))
-      throw new Error(
-        `Comparação encadeada inválida: '${ops.join(' ')}' mistura direções opostas. Use 'e' explícito.`
-      );
-
-    const mids = segs.slice(1, -1);
-    let repl;
-    if (!mids.some(s => s.includes('('))) {
-      repl = ops.map((op, i) => `${segs[i]}${op}${segs[i + 1]}`).join(' && ');
-    } else {
-      let n = 0;
-      const tmps = mids.map(s => s.includes('(') ? `__c${n++}` : null);
-      const asns = mids.map((s, i) => tmps[i] ? `${tmps[i]}=${s}` : null).filter(Boolean);
-      const all = [segs[0], ...mids.map((s, i) => tmps[i] || s), segs[segs.length - 1]];
-      const parts = ops.map((op, i) => `${all[i]}${op}${all[i + 1]}`);
-      repl = `((${asns.join(',')}, ${parts.join(' && ')}))`;
-    }
-    // Preserve the prefix (indentation + statement keyword) before the rewritten expression
-    res = res.slice(0, elp) + repl + res.slice(rp);
+  // True if the text between two consecutive operators breaks a chain.
+  // 'e'/'ou' alone means the keyword IS the segment (e.g. 1 < e < 10); with other
+  // content around it, it's a logical separator (e.g. "1 e 0" in a<1 e 0<b).
+  function isBoundary(between) {
+    const clean = between.replace(/\x00\d+\x00/g, '').trim();
+    if (/[;{}\n]/.test(clean)) return true;
+    if (/&&|\|\|/.test(clean)) return true;
+    if (/\?/.test(clean)) return true; // ternary ? crosses expression context
+    const logicKw = /(?<![A-Za-zÀ-ÖØ-öø-ÿ_\d])(e|ou)(?![A-Za-zÀ-ÖØ-öø-ÿ_\d])/.test(clean);
+    if (logicKw && clean !== 'e' && clean !== 'ou') return true;
+    return false;
   }
-  return res;
+
+  // Stop position helper: is word at `pos` a standalone logical keyword?
+  function _logicKwAt(s, pos) {
+    if (!/[A-Za-z]/.test(s[pos])) return -1;
+    let ks = pos, ke = pos + 1;
+    while (ks > 0 && /[A-Za-zÀ-ÖØ-öø-ÿ_\d]/.test(s[ks - 1])) ks--;
+    while (ke < s.length && /[A-Za-zÀ-ÖØ-öø-ÿ_\d]/.test(s[ke])) ke++;
+    const kw = s.slice(ks, ke);
+    if (kw !== 'e' && kw !== 'ou') return -1;
+    const prev = ks > 0 ? s[ks - 1] : ' ';
+    return !/[A-Za-zÀ-ÖØ-öø-ÿ_\d]/.test(prev) ? ke : -1;
+  }
+
+  // Collect all comparison operators with their positions and nesting depth
+  const found = [];
+  let depth = 0, i = 0;
+  while (i < code.length) {
+    const ch = code[i];
+    if (ch === S) { i = skipFwd(code, i); continue; }
+    if (ch === '(' || ch === '[' || ch === '{') { depth++; i++; continue; }
+    if (ch === ')' || ch === ']' || ch === '}') { depth = Math.max(0, depth - 1); i++; continue; }
+    if (ch === '=' && code[i + 1] === '>') { i += 2; continue; } // arrow =>
+
+    let op = null;
+    for (const o of CMPOPS) {
+      if (code.startsWith(o, i)) {
+        if ((o === '==' || o === '!=') && code[i + o.length] === '=') { i += o.length + 1; op = null; break; }
+        op = o; break;
+      }
+    }
+    if (op) { found.push({ i, op, depth, end: i + op.length }); i += op.length; }
+    else i++;
+  }
+
+  if (found.length < 2) return code;
+
+  // Group consecutive same-depth operators into chains
+  const chains = [];
+  let j = 0;
+  while (j < found.length) {
+    const grp = [j];
+    for (let k = j + 1; k < found.length; k++) {
+      const prev = found[grp[grp.length - 1]], cur = found[k];
+      if (cur.depth !== prev.depth) break;
+      if (isBoundary(code.slice(prev.end, cur.i))) break;
+      grp.push(k);
+    }
+    if (grp.length >= 2) chains.push(grp);
+    j = grp[grp.length - 1] + 1;
+  }
+
+  if (!chains.length) return code;
+
+  let result = code;
+
+  // Process right-to-left to preserve earlier positions
+  for (let ci = chains.length - 1; ci >= 0; ci--) {
+    const ops = chains[ci].map(idx => found[idx]);
+    const firstOp = ops[0], lastOp = ops[ops.length - 1];
+
+    // Validate chain direction
+    const dirs = ops.map(o => dirOf(o.op));
+    if (dirs.some(d => isNaN(d)))
+      throw new Error("Encadeamento inválido: '!=' não pode ser encadeado. Use 'e' explícito.");
+    const uniqueDirs = new Set(dirs.filter(d => d !== 0));
+    if (uniqueDirs.size > 1)
+      throw new Error("Encadeamento inválido: não misture < e > no mesmo encadeamento.");
+
+    // Left boundary: scan backward from firstOp.i
+    let lp = firstOp.i - 1, ld = 0;
+    while (lp >= 0) {
+      const c = result[lp];
+      if (c === S) { const o = result.lastIndexOf(S, lp - 1); lp = o < 0 ? -1 : o - 1; continue; }
+      if (c === ')' || c === ']' || c === '}') { ld++; lp--; continue; }
+      if (c === '(' || c === '[' || c === '{') { ld--; if (ld < 0) { lp++; break; } lp--; continue; }
+      if (ld === 0) {
+        if (/[;,\n]/.test(c)) { lp++; break; }
+        // Stop at && / ||
+        if (c === '&' && result[lp - 1] === '&') { lp += 1; break; }
+        if (c === '&' && result[lp + 1] === '&') { lp += 2; break; }
+        if (c === '|' && result[lp - 1] === '|') { lp += 1; break; }
+        if (c === '|' && result[lp + 1] === '|') { lp += 2; break; }
+        // Stop at standalone 'e'/'ou' logical keyword; skip its trailing whitespace
+        // so the keyword itself stays in the "before" region with proper spacing
+        let ke = _logicKwAt(result, lp);
+        if (ke >= 0) { while (ke < result.length && /[ \t]/.test(result[ke])) ke++; lp = ke; break; }
+      }
+      lp--;
+    }
+    if (lp < 0) lp = 0;
+
+    // Right boundary: scan forward from lastOp.end
+    let rp = lastOp.end, rd = 0;
+    while (rp < result.length) {
+      const c = result[rp];
+      if (c === S) { rp = skipFwd(result, rp); continue; }
+      if (c === '(' || c === '[') { rd++; rp++; continue; }
+      if (c === ')' || c === ']') { if (rd <= 0) break; rd--; rp++; continue; }
+      if (c === '{') { rd++; rp++; continue; }
+      if (c === '}') { if (rd <= 0) break; rd--; rp++; continue; }
+      if (rd === 0) {
+        if (/[;,\n?]/.test(c)) break;
+        if (/[A-Za-z]/.test(c)) {
+          const prev = rp > 0 ? result[rp - 1] : ' ';
+          if (!/[A-Za-zÀ-ÖØ-öø-ÿ_\d]/.test(prev) &&
+              /^(?:e|ou)(?![A-Za-zÀ-ÖØ-öø-ÿ_\d])/.test(result.slice(rp))) break;
+        }
+        if (result.startsWith('&&', rp) || result.startsWith('||', rp)) break;
+      }
+      rp++;
+    }
+
+    // Skip leading stmt keyword from left segment
+    const elp = skipStmtKw(result, lp, firstOp.i);
+    const prefix = result.slice(lp, elp);
+
+    // Extract segments
+    const segs = [];
+    let segStart = elp;
+    for (const op of ops) { segs.push(result.slice(segStart, op.i).trim()); segStart = op.end; }
+    segs.push(result.slice(segStart, rp).trim());
+
+    // Build && expansion; add space before result[rp] if it would abut directly
+    const parts = [];
+    for (let s = 0; s < ops.length; s++) parts.push(`${segs[s]}${ops[s].op}${segs[s + 1]}`);
+    const trailSep = (rp < result.length && !/[\s)\]},;]/.test(result[rp])) ? ' ' : '';
+    result = result.slice(0, lp) + prefix + parts.join(' && ') + trailSep + result.slice(rp);
+  }
+
+  return result;
 }
 
 /* ============================================================
    OPERADOR TERNÁRIO  cond ? a : b  →  _ternBool(cond) ? a : b
-                      cond ? a       →  _ternBool(cond) ? a : null
    ============================================================ */
 function _expandTernary(code) {
-  const S = '\x00';
-  function skipFwd(s, i) { const j = s.indexOf(S, i + 1); return j < 0 ? s.length : j + 1; }
-
-  // Collect positions of all ? (not ?. optional chaining)
-  const qPos = [];
-  let d = 0;
-  for (let i = 0; i < code.length; ) {
-    const ch = code[i];
-    if (ch === S) { i = skipFwd(code, i); continue; }
-    if ('([{'.includes(ch)) { d++; i++; continue; }
-    if (')]}'.includes(ch)) { d--; i++; continue; }
-    if (ch === '?' && code[i + 1] !== '.') qPos.push(i);
-    i++;
+  let result = code;
+  for (let iter = 0; iter < 100; iter++) {
+    const next = _processOneTernary(result);
+    if (next === result) break;
+    result = next;
   }
-  if (!qPos.length) return code;
+  return result;
+}
 
-  let res = code;
-  for (const q of [...qPos].reverse()) {
-    // Find matching : with ternary-depth tracking
-    let pd = 0, td = 0, colonPos = -1;
-    for (let i = q + 1; i < res.length; ) {
-      const ch = res[i];
-      if (ch === S) { i = skipFwd(res, i); continue; }
-      if ('([{'.includes(ch)) { pd++; i++; continue; }
-      if (')]}'.includes(ch)) { if (pd === 0) break; pd--; i++; continue; }
-      if (pd === 0 && /[;}\n]/.test(ch)) break;
-      if (pd === 0 && ch === '?') { td++; i++; continue; }
-      if (pd === 0 && ch === ':') {
-        if (td === 0) { colonPos = i; break; }
-        td--; i++; continue;
-      }
-      i++;
+function _processOneTernary(code) {
+  const S = '\x00';
+  // Find rightmost ? that is not ?. or ??
+  for (let i = code.length - 1; i >= 0; i--) {
+    if (code[i] !== '?') continue;
+    const nx = code[i + 1] || '';
+    const pv = code[i - 1] || '';
+    if (nx === '.' || nx === '?' || pv === '?') continue;
+    const q = i;
+
+    // Scan backward for condition start
+    let cStart = q - 1, d = 0;
+    while (cStart >= 0) {
+      const c = code[cStart];
+      if (c === S) { const o = code.lastIndexOf(S, cStart - 1); if (o < 0) { cStart = 0; break; } cStart = o - 1; continue; }
+      if (c === ')' || c === ']' || c === '}') { d++; cStart--; continue; }
+      if (c === '(' || c === '[' || c === '{') { d--; if (d < 0) { cStart++; break; } cStart--; continue; }
+      if (d === 0 && /[,;:\n]/.test(c)) { cStart++; break; }
+      if (d === 0 && c === '?' && !/[.?]/.test(code[cStart + 1] || '') && code[cStart - 1] !== '?') { cStart++; break; }
+      if (d === 0 && c === '=' && !/[<>=!]/.test(code[cStart - 1] || '') && !/[<>=!]/.test(code[cStart + 1] || '')) { cStart++; break; }
+      cStart--;
     }
+    if (cStart < 0) cStart = 0;
 
-    // No colon found — insert ': null' at end of true branch
-    if (colonPos === -1) {
-      let bd = 0, td2 = 0, end = q + 1;
-      while (end < res.length) {
-        const ch = res[end];
-        if (ch === S) { end = skipFwd(res, end); continue; }
-        if ('([{'.includes(ch)) { bd++; end++; continue; }
-        if (')]}'.includes(ch)) { if (bd === 0) break; bd--; end++; continue; }
-        if (bd === 0 && ch === '?') { td2++; end++; continue; }
-        if (bd === 0 && ch === ':') { if (td2 === 0) break; td2--; end++; continue; }
-        if (bd === 0 && /[;,)\]}\n]/.test(ch)) break;
-        end++;
-      }
-      res = res.slice(0, end) + ' : null' + res.slice(end);
-    }
-
-    // Find condition start (scan backward from q, stops at boundary at local depth 0)
-    let ld = 0, cStart = 0;
-    for (let k = q - 1; k >= 0; k--) {
-      const ch = res[k];
-      if (ch === S) continue;
-      if (')]}'.includes(ch)) { ld++; continue; }
-      if ('([{'.includes(ch)) { if (ld === 0) { cStart = k + 1; break; } ld--; continue; }
-      if (ld === 0 && /[,;(\[{\n?]/.test(ch)) { cStart = k + 1; break; }
-      if (ld === 0 && ch === '=' && !'<>=!'.includes(res[k - 1] || '')) { cStart = k + 1; break; }
-    }
-
-    // Skip leading whitespace + statement keyword so the keyword stays OUTSIDE _ternBool()
-    // e.g. `retorno 0<x&&x<1 ?` → retorno stays before, condition is `0<x&&x<1`
+    // Skip leading retorno/lançar
     let exprStart = cStart;
     {
       let p = cStart;
-      while (p < q && /[ \t]/.test(res[p])) p++;
-      const kw = res.slice(p, q).match(/^(retorno|lançar)\s+/);
+      while (p < q && /[ \t]/.test(code[p])) p++;
+      const kw = code.slice(p, q).match(/^(retorno|lançar)\s+/);
       if (kw) exprStart = p + kw[0].length;
     }
-    const cond = res.slice(exprStart, q).trim();
-    if (cond.startsWith('_ternBool(')) continue; // already wrapped
-    res = res.slice(0, exprStart) + `_ternBool(${cond}) ` + res.slice(q);
+
+    const condRaw = code.slice(exprStart, q);
+    const cond = condRaw.trim();
+    if (!cond || cond.startsWith('_ternBool(')) continue;
+    const leadWS = condRaw.match(/^\s*/)[0];
+
+    // Check for matching colon; if absent insert `: null`
+    let td = 1, pd = 0, colon = -1;
+    for (let j = q + 1; j < code.length; j++) {
+      const c = code[j];
+      if (c === S) { const e = code.indexOf(S, j + 1); if (e >= 0) j = e; continue; }
+      if (c === '(' || c === '[') pd++;
+      else if (c === ')' || c === ']') pd--;
+      else if (pd === 0) {
+        if (c === '?') td++;
+        else if (c === ':') { td--; if (td === 0) { colon = j; break; } }
+        else if (c === ';' || c === '\n') break;
+      }
+    }
+    if (colon < 0) {
+      let eol = code.indexOf('\n', q);
+      if (eol < 0) eol = code.length;
+      code = code.slice(0, eol) + ' : null' + code.slice(eol);
+    }
+
+    return code.slice(0, exprStart) + leadWS + `_ternBool(${cond}) ` + code.slice(q);
   }
-  return res;
+  return code;
 }
 
 /* ============================================================
@@ -423,7 +461,6 @@ function traduzirCodigo(fonte, isDebug = false) {
   c = c.replace(/\/\*[\s\S]*?\*\//g, p);
   c = c.replace(/\/\/.*/g, p);
 
-  /* COMPARAÇÕES ENCADEADAS E OPERADOR TERNÁRIO */
   c = _expandChainedComps(c);
   c = _expandTernary(c);
 

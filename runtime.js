@@ -433,6 +433,11 @@ function aplicarHighlight(texto) {
       html += `<span class="t-num">${esc(n)}</span>`;
       continue;
     }
+    if (ch === '?') {
+      html += `<span class="t-op">?</span>`;
+      i++;
+      continue;
+    }
     html += esc(ch);
     i++;
   }
@@ -1477,6 +1482,7 @@ codeEditor.addEventListener("input", () => {
   showAutocomplete();
   verificarBalaoAssinatura();
   _scheduleSnap();
+  _asSchedule();
 });
 codeEditor.addEventListener("click", verificarBalaoAssinatura);
 codeEditor.addEventListener("click", (e) => {
@@ -2053,6 +2059,53 @@ function _decodeShareToken(token) {
 }
 
 /* ============================================================
+   HEADER DROPDOWNS
+   ============================================================ */
+window.toggleHdrDd = function (id) {
+  const all = document.querySelectorAll(".hdr-dd");
+  all.forEach((dd) => { if (dd.id !== id) dd.classList.remove("hdr-dd-open"); });
+  document.getElementById(id)?.classList.toggle("hdr-dd-open");
+};
+document.addEventListener("click", (e) => {
+  if (!e.target.closest(".hdr-dd")) {
+    document.querySelectorAll(".hdr-dd").forEach((dd) => dd.classList.remove("hdr-dd-open"));
+  }
+});
+
+/* ============================================================
+   AUTOSAVE
+   ============================================================ */
+const AS_KEY    = "pseudo_ide_autosave";
+const AS_EN_KEY = "pseudo_ide_autosave_on";
+let _asTimer = null;
+
+function _asSave() {
+  if (localStorage.getItem(AS_EN_KEY) !== "1") return;
+  try { localStorage.setItem(AS_KEY, codeEditor.value); } catch (e) { /* quota */ }
+}
+
+function _asSchedule() {
+  if (localStorage.getItem(AS_EN_KEY) !== "1") return;
+  clearTimeout(_asTimer);
+  _asTimer = setTimeout(_asSave, 2000);
+}
+
+function _asUpdateBtn() {
+  const on = localStorage.getItem(AS_EN_KEY) === "1";
+  const btn = document.getElementById("btn-autosave");
+  if (!btn) return;
+  btn.classList.toggle("active", on);
+  btn.title = on ? "Autosave ativo (clique para desativar)" : "Autosave inativo (clique para ativar)";
+}
+
+window.toggleAutosave = function () {
+  const on = localStorage.getItem(AS_EN_KEY) !== "1";
+  localStorage.setItem(AS_EN_KEY, on ? "1" : "0");
+  _asUpdateBtn();
+  if (on) _asSave();
+};
+
+/* ============================================================
    ATALHOS GLOBAIS + INIT
    ============================================================ */
 window.addEventListener("keydown", (e) => {
@@ -2146,6 +2199,18 @@ window.addEventListener("load", async () => {
         }
       }
     } catch (_) {}
+  }
+
+  // Autosave: restore btn state + prompt if saved content differs
+  _asUpdateBtn();
+  const saved = localStorage.getItem(AS_KEY);
+  if (saved && saved.trim() && saved !== codeEditor.value) {
+    const restore = confirm("Autosave encontrou código da última sessão. Restaurar?");
+    if (restore) {
+      codeEditor.value = saved;
+      foldState.clear();
+      atualizarEditor();
+    }
   }
 
   const urlParams = new URLSearchParams(window.location.search);
