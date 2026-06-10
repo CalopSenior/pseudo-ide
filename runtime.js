@@ -1933,7 +1933,8 @@ function salvarArquivo() {
   const codigo = codeEditor.value;
   const m = extrairMarcadores(codigo);
 
-  // Se for uma biblioteca, exporta como pacote .idelib injetável
+  // Se for uma biblioteca COM funções exportáveis, salva como pacote .idelib injetável.
+  // Se a compilação falhar (ex: só funções internas), cai no salvamento normal como .pseudo.
   if (m.biblioteca) {
     try {
       const codigoCompilado = window.compilarParaBiblioteca(
@@ -1957,10 +1958,10 @@ function salvarArquivo() {
       a.click();
       URL.revokeObjectURL(url);
       imprima(`✓ Biblioteca local compilada: ${m.biblioteca}.idelib!`);
-    } catch (e) {
-      _imprimaErro(e);
+      return;
+    } catch (_) {
+      // Sem funções exportáveis ou outro erro de compilação: salva fonte como .pseudo
     }
-    return;
   }
 
   // Salvamento normal de script
