@@ -738,13 +738,6 @@ section {
 .t-import {
   color: var(--syn-import);
 }
-.t-user-fn {
-  color: #e879f9;
-  font-style: italic;
-}
-.t-user-var {
-  color: #fbbf24;
-}
 .t-marker {
   color: #f59e0b;
   font-weight: 700;

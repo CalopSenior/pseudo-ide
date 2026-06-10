@@ -312,12 +312,14 @@ function esc(s) {
 }
 
 function kwClass(word) {
-  if (KW_TYPE.has(word)) return `<span class="t-type">${esc(word)}</span>`;
-  if (KW_CTRL.has(word)) return `<span class="t-ctrl">${esc(word)}</span>`;
-  if (KW_VAL.has(word)) return `<span class="t-val">${esc(word)}</span>`;
-  if (KW_OP.has(word)) return `<span class="t-op">${esc(word)}</span>`;
+  if (KW_TYPE.has(word))   return `<span class="t-type">${esc(word)}</span>`;
+  if (KW_CTRL.has(word))   return `<span class="t-ctrl">${esc(word)}</span>`;
+  if (KW_VAL.has(word))    return `<span class="t-val">${esc(word)}</span>`;
+  if (KW_OP.has(word))     return `<span class="t-op">${esc(word)}</span>`;
   if (KW_IMPORT.has(word)) return `<span class="t-import">${esc(word)}</span>`;
-  if (KW_FN.has(word)) return `<span class="t-fn">${esc(word)}</span>`;
+  if (KW_FN.has(word))     return `<span class="t-fn">${esc(word)}</span>`;
+  if (window._userFnSet  && window._userFnSet.has(word))  return `<span class="t-user-fn">${esc(word)}</span>`;
+  if (window._userVarSet && window._userVarSet.has(word)) return `<span class="t-user-var">${esc(word)}</span>`;
   return esc(word);
 }
 
@@ -1359,6 +1361,10 @@ function extrairSimbolosDoCodigo() {
   }
   window.simbolosDinamicos = Array.from(
     new Map(novos.map((item) => [item.label, item])).values(),
+  );
+  window._userFnSet  = new Set(window.assinaturasDinamicas.keys());
+  window._userVarSet = new Set(
+    novos.filter((s) => s.detail.startsWith("variável")).map((s) => s.label),
   );
 }
 
