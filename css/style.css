@@ -2815,3 +2815,158 @@ section {
   padding: 10px 12px;
   min-height: 200px;
 }
+
+/* ============================================================
+   PROTOCOL TABLE  (teacher modal)
+   ============================================================ */
+.proto-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  margin: 0.8rem 0 1.4rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.proto-table th {
+  padding: 7px 12px;
+  text-align: left;
+  background: var(--bg-tab);
+  color: var(--text-muted);
+  font-weight: 700;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid var(--border);
+}
+.proto-table th + th,
+.proto-table td + td { border-left: 1px solid var(--border); }
+.proto-table td {
+  padding: 8px 12px;
+  vertical-align: middle;
+  color: var(--text);
+  line-height: 1.5;
+  border-bottom: 1px solid rgba(42,45,64,0.6);
+}
+.proto-table tr:last-child td { border-bottom: none; }
+.proto-table tr:nth-child(even) td { background: rgba(255,255,255,0.02); }
+.proto-method {
+  display: inline-block;
+  font-family: var(--font-code);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 9px;
+  border-radius: 4px;
+  letter-spacing: 0.04em;
+}
+.proto-method-get {
+  background: rgba(74,222,128,0.12);
+  color: var(--green);
+  border: 1px solid rgba(74,222,128,0.3);
+}
+.proto-method-post {
+  background: var(--accent-glow);
+  color: var(--accent);
+  border: 1px solid var(--accent-dim);
+}
+
+/* ============================================================
+   THEME SETTINGS MODAL
+   ============================================================ */
+.theme-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 22px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--border);
+}
+.theme-preset-btn {
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  padding: 5px 16px;
+  border-radius: 20px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 120ms;
+}
+.theme-preset-btn:hover {
+  border-color: var(--accent-dim);
+  color: var(--accent);
+  background: var(--accent-glow);
+}
+.theme-group { margin-bottom: 22px; }
+.theme-group-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+}
+.theme-vars-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 5px 20px;
+}
+.theme-var-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 2px 0;
+}
+.theme-swatch-wrap {
+  position: relative;
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+.theme-swatch-wrap input[type="color"] {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+  border: none;
+  padding: 0;
+}
+.theme-swatch {
+  display: block;
+  width: 26px;
+  height: 26px;
+  border-radius: 5px;
+  border: 1px solid var(--border-light);
+  pointer-events: none;
+  transition: border-color 100ms;
+}
+.theme-swatch-wrap:hover .theme-swatch { border-color: var(--accent); }
+.theme-hex-input {
+  font-family: var(--font-code);
+  font-size: 11px;
+  background: var(--bg-tab);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 3px 7px;
+  border-radius: 4px;
+  width: 76px;
+  flex-shrink: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.theme-hex-input:focus {
+  outline: none;
+  border-color: var(--accent-dim);
+  background: var(--bg-editor);
+}
+.theme-var-lbl {
+  font-size: 11px;
+  color: var(--text-dim);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
