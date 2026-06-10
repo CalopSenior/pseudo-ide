@@ -2972,7 +2972,154 @@ minhaBiblioteca() {
     }
 }</pre>
 
-                <h4>4. Servidor de Bibliotecas com Versionamento (Google Apps Script)</h4>
+                <h4>4. Protocolo de Requisições — Referência Completa</h4>
+                <p>O Pseudo-IDE realiza apenas <strong>quatro tipos de requisição HTTP</strong>. Todas usam a mesma URL
+                    configurada no botão <strong>⚙ API</strong>. O campo <code>tipo</code> no corpo discrimina a
+                    operação. Se quiser usar um back-end próprio (Node.js, Python, Deno, etc.) em vez do modelo
+                    Google Apps Script, implemente os quatro contratos abaixo.</p>
+
+                <div class="doc-note">
+                    <strong>Por que <code>Content-Type: text/plain</code> no POST?</strong> Servidores serverless
+                    (Google Apps Script, Cloudflare Workers, etc.) exigem que o preflight CORS seja evitado.
+                    Requisições com <code>Content-Type: application/json</code> disparam um preflight
+                    <code>OPTIONS</code> que esses servidores rejeitam. Usando <code>text/plain</code> o navegador
+                    envia a requisição diretamente (same-origin mode simples). O corpo continua sendo JSON válido —
+                    o back-end só precisa fazer <code>JSON.parse(body)</code> antes de usar.
+                </div>
+
+                <table style="width:100%;border-collapse:collapse;font-size:0.82rem;margin:0.8rem 0 1.2rem">
+                  <thead>
+                    <tr style="background:var(--doc-head,#e8eaf6)">
+                      <th style="padding:6px 10px;text-align:left;border:1px solid #ccc">Método</th>
+                      <th style="padding:6px 10px;text-align:left;border:1px solid #ccc">Quando ocorre</th>
+                      <th style="padding:6px 10px;text-align:left;border:1px solid #ccc">URL / Corpo</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td style="padding:6px 10px;border:1px solid #ccc"><code>GET</code></td>
+                      <td style="padding:6px 10px;border:1px solid #ccc">Baixar biblioteca na execução de <code>importar bib</code></td>
+                      <td style="padding:6px 10px;border:1px solid #ccc"><code>{API}?nome=bib[&amp;versao=1.0.0]</code></td>
+                    </tr>
+                    <tr style="background:#fafafa">
+                      <td style="padding:6px 10px;border:1px solid #ccc"><code>GET</code></td>
+                      <td style="padding:6px 10px;border:1px solid #ccc">Carregar snippet ao abrir link compartilhado (<code>?c=token</code>)</td>
+                      <td style="padding:6px 10px;border:1px solid #ccc"><code>{API}?nome=snp_&lt;token&gt;</code></td>
+                    </tr>
+                    <tr>
+                      <td style="padding:6px 10px;border:1px solid #ccc"><code>POST</code></td>
+                      <td style="padding:6px 10px;border:1px solid #ccc">Publicar biblioteca (<em>Publicar na nuvem</em>)</td>
+                      <td style="padding:6px 10px;border:1px solid #ccc">Corpo JSON com <code>tipo:"biblioteca"</code> (ver abaixo)</td>
+                    </tr>
+                    <tr style="background:#fafafa">
+                      <td style="padding:6px 10px;border:1px solid #ccc"><code>POST</code></td>
+                      <td style="padding:6px 10px;border:1px solid #ccc">Criar link de compartilhamento (<em>Gerar link</em>)</td>
+                      <td style="padding:6px 10px;border:1px solid #ccc">Corpo JSON com <code>tipo:"snippet"</code> (ver abaixo)</td>
+                    </tr>
+                  </tbody>
+                </table>
+
+                <p><strong>Contrato de resposta do GET (biblioteca ou snippet):</strong></p>
+                <pre class="code-example"><span class="ex-cmt">// Resposta esperada para GET ?nome=minhaLib  (ou ?nome=minhaLib&versao=2.0.0)</span>
+{
+  "codigoInjetor": <span class="ex-str">"Bibliotecas['minhaLib'] = { ... };"</span>
+  <span class="ex-cmt">// string de JS que, ao ser avaliada com eval(), registra a biblioteca</span>
+}
+
+<span class="ex-cmt">// Resposta esperada para GET ?nome=snp_abc123  (snippet compartilhado)</span>
+{
+  "codigoInjetor": <span class="ex-str">"// código Pseudo original do usuário"</span>
+}</pre>
+
+                <p><strong>Corpo do POST — publicar biblioteca:</strong></p>
+                <pre class="code-example"><span class="ex-cmt">// Content-Type: text/plain  (corpo é JSON, mas cabeçalho deve ser text/plain)</span>
+{
+  "tipo":         <span class="ex-str">"biblioteca"</span>,
+  "nome":         <span class="ex-str">"minhaLib"</span>,
+  "autor":        <span class="ex-str">"Nome do Autor"</span>,
+  "versao":       <span class="ex-str">"1.0.0"</span>,
+  "codigoInjetor":<span class="ex-str">"Bibliotecas['minhaLib'] = { funcaoA: ..., funcaoB: ... };"</span>
+}
+
+<span class="ex-cmt">// Resposta esperada (texto simples ou JSON, a IDE ignora o corpo):</span>
+<span class="ex-str">"OK"</span>  <span class="ex-cmt">// qualquer resposta 2xx é considerada sucesso</span></pre>
+
+                <p><strong>Corpo do POST — criar link de compartilhamento:</strong></p>
+                <pre class="code-example"><span class="ex-cmt">// Content-Type: text/plain</span>
+{
+  "tipo":         <span class="ex-str">"snippet"</span>,
+  "nome":         <span class="ex-str">"snp_abc123"</span>,   <span class="ex-cmt">// token gerado pela IDE (8 chars aleatórios)</span>
+  "codigoInjetor":<span class="ex-str">"// código Pseudo do usuário (texto puro)"</span>
+}
+
+<span class="ex-cmt">// Resposta esperada:</span>
+<span class="ex-str">"OK"</span></pre>
+
+                <p><strong>Exemplo mínimo — Node.js / Express:</strong></p>
+                <pre class="code-example">const express = require(<span class="ex-str">'express'</span>);
+const app = express();
+const db = {};   <span class="ex-cmt">// substitua por banco real</span>
+
+app.use((_req, res, next) => {
+  res.setHeader(<span class="ex-str">'Access-Control-Allow-Origin'</span>, <span class="ex-str">'*'</span>);
+  res.setHeader(<span class="ex-str">'Access-Control-Allow-Headers'</span>, <span class="ex-str">'Content-Type'</span>);
+  next();
+});
+
+app.get(<span class="ex-str">'/'</span>, (req, res) => {
+  const { nome, versao } = req.query;
+  const key = versao ? `${nome}@${versao}` : nome;
+  const entry = db[key] || db[nome];        <span class="ex-cmt">// fallback para última versão</span>
+  if (!entry) return res.status(<span class="ex-num">404</span>).json({ erro: <span class="ex-str">'não encontrado'</span> });
+  res.json({ codigoInjetor: entry.codigoInjetor });
+});
+
+app.post(<span class="ex-str">'/'</span>, express.text(), (req, res) => {
+  const payload = JSON.parse(req.body);
+  const key = payload.versao ? `${payload.nome}@${payload.versao}` : payload.nome;
+  db[key] = payload;
+  res.send(<span class="ex-str">'OK'</span>);
+});
+
+app.listen(<span class="ex-num">3000</span>);</pre>
+
+                <p><strong>Exemplo mínimo — Python / Flask:</strong></p>
+                <pre class="code-example">from flask import Flask, request, jsonify
+import json
+
+app = Flask(__name__)
+db = {}   <span class="ex-cmt"># substitua por banco real</span>
+
+@app.after_request
+def cors(r):
+    r.headers[<span class="ex-str">'Access-Control-Allow-Origin'</span>] = <span class="ex-str">'*'</span>
+    r.headers[<span class="ex-str">'Access-Control-Allow-Headers'</span>] = <span class="ex-str">'Content-Type'</span>
+    return r
+
+@app.route(<span class="ex-str">'/'</span>, methods=[<span class="ex-str">'GET'</span>])
+def get_item():
+    nome   = request.args.get(<span class="ex-str">'nome'</span>)
+    versao = request.args.get(<span class="ex-str">'versao'</span>)
+    key    = f<span class="ex-str">"{nome}@{versao}"</span> if versao else nome
+    entry  = db.get(key) or db.get(nome)
+    if not entry:
+        return jsonify({<span class="ex-str">'erro'</span>: <span class="ex-str">'não encontrado'</span>}), <span class="ex-num">404</span>
+    return jsonify({<span class="ex-str">'codigoInjetor'</span>: entry[<span class="ex-str">'codigoInjetor'</span>]})
+
+@app.route(<span class="ex-str">'/'</span>, methods=[<span class="ex-str">'POST'</span>, <span class="ex-str">'OPTIONS'</span>])
+def post_item():
+    if request.method == <span class="ex-str">'OPTIONS'</span>:
+        return <span class="ex-str">''</span>, <span class="ex-num">204</span>
+    payload = json.loads(request.get_data(as_text=True))
+    nome    = payload[<span class="ex-str">'nome'</span>]
+    versao  = payload.get(<span class="ex-str">'versao'</span>)
+    key     = f<span class="ex-str">"{nome}@{versao}"</span> if versao else nome
+    db[key] = payload
+    return <span class="ex-str">'OK'</span>
+
+app.run(port=<span class="ex-num">3000</span>)</pre>
+
+                <h4>5. Servidor de Bibliotecas com Versionamento (Google Apps Script)</h4>
                 <p>Backend completo que substitui o exemplo simples acima. Suporta múltiplas versões da mesma
                     biblioteca, busca por versão específica e listagem do catálogo completo.</p>
 
@@ -3060,7 +3207,7 @@ function doGet(e) {
   return _json({ ok: false, erro: msg });
 }</pre>
 
-                <h4>5. Servidor de Compartilhamento de Códigos (Google Apps Script)</h4>
+                <h4>6. Servidor de Compartilhamento de Códigos (Google Apps Script)</h4>
                 <p>Permite salvar e recuperar trechos de código via um ID curto de 8 caracteres.
                     Ideal para o professor distribuir gabaritos, exercícios-modelo e exemplos prontos —
                     sem precisar enviar arquivos por e-mail.</p>
