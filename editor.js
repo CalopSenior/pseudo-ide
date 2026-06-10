@@ -471,7 +471,7 @@ function traduzirCodigo(fonte, isDebug = false) {
       /\b(inteiro|real|caracter|booleano)\s*\(\s*([A-Za-zÀ-ÖØ-öø-ÿ_]\w*)/g;
     const fnRe = /\bfuncao\s+([A-Za-zÀ-ÖØ-öø-ÿ_]\w*)/g;
     const importRe =
-      /\bimportar\s+([A-Za-z_]\w*)(?:\.([A-Za-z_]\w*))?(?:\s+como\s+([A-Za-z_]\w*))?\s*;?/g;
+      /\bimportar\s+([A-Za-z_]\w*)(?:\.([A-Za-z_]\w*))?(?:\s*\{[^}]*\})?(?:\s+como\s+([A-Za-z_]\w*))?\s*;?/g;
 
     let m;
     while ((m = varRe.exec(c)) !== null) vars.add(m[2]);
@@ -535,11 +535,18 @@ function traduzirCodigo(fonte, isDebug = false) {
   c = c.replace(/\b(\w+)\s*\.\.\.\s*(\w+)\b/g, "_pseudoRange($1, $2)");
 
   c = c.replace(
-    /\bimportar\s+([A-Za-z_]\w*)(?:\.([A-Za-z_]\w*))?(?:\s+como\s+([A-Za-z_]\w*))?\s*;?/g,
-    (_, bib, sub, alias) => {
+    /\bimportar\s+([A-Za-z_]\w*)(?:\.([A-Za-z_]\w*))?(?:\s*\{\s*(\x00\d+\x00)\s*\})?(?:\s+como\s+([A-Za-z_]\w*))?\s*;?/g,
+    (_, bib, sub, versTok, alias) => {
       const obj = sub ? `['${bib}']['${sub}']` : `['${bib}']`;
       const aliasStr = alias || sub || bib;
-      return `if (!Bibliotecas['${bib}']) { await window._baixarDaNuvem('${bib}'); }\nvar ${aliasStr}=Bibliotecas${obj};`;
+      let versaoArg = '';
+      if (versTok) {
+        const idx = parseInt(versTok.replace(/\x00/g, ''));
+        const raw = tks[idx] || '';
+        const versao = raw.replace(/^['"`]|['"`]$/g, '');
+        if (versao) versaoArg = `, '${versao}'`;
+      }
+      return `if (!Bibliotecas['${bib}']) { await window._baixarDaNuvem('${bib}'${versaoArg}); }\nvar ${aliasStr}=Bibliotecas${obj};`;
     },
   );
 
@@ -760,38 +767,38 @@ window.compilarParaBiblioteca = function (codigo, nomeBib) {
 `;
 };
 
-window._baixarDaNuvem = async function (nomeBib) {
+window._baixarDaNuvem = async function (nomeBib, versao) {
   const url = localStorage.getItem("pseudo_ide_cloud_url");
   if (!url)
     throw new Error(
       `Servidor de Nuvem não configurado. Vá no botão 'API' no cabeçalho.`,
     );
 
+  const label = versao ? `'${nomeBib}' v${versao}` : `'${nomeBib}'`;
   if (typeof imprima === "function")
-    imprima(`⏳ Baixando pacote '${nomeBib}' da nuvem...`);
+    imprima(`⏳ Baixando pacote ${label} da nuvem...`);
 
   try {
     const char = url.includes("?") ? "&" : "?";
-    const res = await fetch(`${url}${char}nome=${nomeBib}`);
+    const qVersao = versao ? `&versao=${encodeURIComponent(versao)}` : '';
+    const res = await fetch(`${url}${char}nome=${nomeBib}${qVersao}`);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
     const libData = await res.json();
 
-    // A blindagem de integridade!
     if (!libData || !libData.codigoInjetor) {
       throw new Error(
-        `O servidor respondeu, mas o pacote '${nomeBib}' veio vazio ou não existe no banco de dados.`,
+        `O servidor respondeu, mas o pacote ${label} veio vazio ou não existe no banco de dados.`,
       );
     }
 
-    // O await eval garante que a biblioteca tenha tempo de carregar as próprias dependências
     await eval(libData.codigoInjetor);
 
     if (typeof imprima === "function")
-      imprima(`✓ Biblioteca '${nomeBib}' carregada com sucesso!`);
+      imprima(`✓ Biblioteca ${label} carregada com sucesso!`);
   } catch (e) {
     throw new Error(
-      `Falha ao carregar a biblioteca '${nomeBib}': ${e.message}`,
+      `Falha ao carregar a biblioteca ${label}: ${e.message}`,
     );
   }
 };
