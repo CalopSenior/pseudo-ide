@@ -11,6 +11,7 @@
     rel="stylesheet">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="css/style.css">
+  <script src="theme.js"></script>
   <style>
     /* overrides for notebook page */
     html, body {
@@ -105,6 +106,16 @@
           <polyline points="16 18 22 12 16 6" /><polyline points="8 6 2 12 8 18" />
         </svg>
         Exportar HTML
+      </button>
+
+      <!-- ── Aparência ── -->
+      <button class="btn-icon" onclick="window._openThemeModal()" title="Configurações de Aparência">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" style="vertical-align:-2px;margin-right:4px">
+          <circle cx="12" cy="12" r="4"/>
+          <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>
+        </svg>
+        Aparência
       </button>
 
       <!-- ── Run-All dropdown group ── -->

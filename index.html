@@ -11,6 +11,7 @@
         rel="stylesheet">
     <link rel="icon" href="favicon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="css/style.css">
+    <script src="theme.js"></script>
 </head>
 
 <body>
@@ -116,6 +117,16 @@
             <button id="btn-autosave" class="btn-icon" onclick="toggleAutosave()" title="Autosave">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
                 Autosave
+            </button>
+
+            <!-- ── Aparência ── -->
+            <button class="btn-icon" onclick="window._openThemeModal()" title="Configurações de Aparência">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="4"/>
+                    <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>
+                </svg>
+                Aparência
             </button>
 
             <!-- ── Console ── -->
@@ -2987,34 +2998,34 @@ minhaBiblioteca() {
                     o back-end só precisa fazer <code>JSON.parse(body)</code> antes de usar.
                 </div>
 
-                <table style="width:100%;border-collapse:collapse;font-size:0.82rem;margin:0.8rem 0 1.2rem">
+                <table class="proto-table">
                   <thead>
-                    <tr style="background:var(--doc-head,#e8eaf6)">
-                      <th style="padding:6px 10px;text-align:left;border:1px solid #ccc">Método</th>
-                      <th style="padding:6px 10px;text-align:left;border:1px solid #ccc">Quando ocorre</th>
-                      <th style="padding:6px 10px;text-align:left;border:1px solid #ccc">URL / Corpo</th>
+                    <tr>
+                      <th>Método</th>
+                      <th>Quando ocorre</th>
+                      <th>URL / Corpo</th>
                     </tr>
                   </thead>
                   <tbody>
                     <tr>
-                      <td style="padding:6px 10px;border:1px solid #ccc"><code>GET</code></td>
-                      <td style="padding:6px 10px;border:1px solid #ccc">Baixar biblioteca na execução de <code>importar bib</code></td>
-                      <td style="padding:6px 10px;border:1px solid #ccc"><code>{API}?nome=bib[&amp;versao=1.0.0]</code></td>
-                    </tr>
-                    <tr style="background:#fafafa">
-                      <td style="padding:6px 10px;border:1px solid #ccc"><code>GET</code></td>
-                      <td style="padding:6px 10px;border:1px solid #ccc">Carregar snippet ao abrir link compartilhado (<code>?c=token</code>)</td>
-                      <td style="padding:6px 10px;border:1px solid #ccc"><code>{API}?nome=snp_&lt;token&gt;</code></td>
+                      <td><span class="proto-method proto-method-get">GET</span></td>
+                      <td>Baixar biblioteca na execução de <code>importar bib</code></td>
+                      <td><code>{API}?nome=bib[&amp;versao=1.0.0]</code></td>
                     </tr>
                     <tr>
-                      <td style="padding:6px 10px;border:1px solid #ccc"><code>POST</code></td>
-                      <td style="padding:6px 10px;border:1px solid #ccc">Publicar biblioteca (<em>Publicar na nuvem</em>)</td>
-                      <td style="padding:6px 10px;border:1px solid #ccc">Corpo JSON com <code>tipo:"biblioteca"</code> (ver abaixo)</td>
+                      <td><span class="proto-method proto-method-get">GET</span></td>
+                      <td>Carregar snippet ao abrir link compartilhado (<code>?c=token</code>)</td>
+                      <td><code>{API}?nome=snp_&lt;token&gt;</code></td>
                     </tr>
-                    <tr style="background:#fafafa">
-                      <td style="padding:6px 10px;border:1px solid #ccc"><code>POST</code></td>
-                      <td style="padding:6px 10px;border:1px solid #ccc">Criar link de compartilhamento (<em>Gerar link</em>)</td>
-                      <td style="padding:6px 10px;border:1px solid #ccc">Corpo JSON com <code>tipo:"snippet"</code> (ver abaixo)</td>
+                    <tr>
+                      <td><span class="proto-method proto-method-post">POST</span></td>
+                      <td>Publicar biblioteca (<em>Publicar na nuvem</em>)</td>
+                      <td>JSON com <code>tipo:"biblioteca"</code> (ver abaixo)</td>
+                    </tr>
+                    <tr>
+                      <td><span class="proto-method proto-method-post">POST</span></td>
+                      <td>Criar link de compartilhamento (<em>Gerar link</em>)</td>
+                      <td>JSON com <code>tipo:"snippet"</code> (ver abaixo)</td>
                     </tr>
                   </tbody>
                 </table>
