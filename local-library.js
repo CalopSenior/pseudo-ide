@@ -553,6 +553,8 @@ window.LocalLib = (function () {
       try {
         var injector = compilarParaBiblioteca(entry.codigo, libNome);
         /* jshint evil:true */ eval(injector); /* jshint evil:false */
+        if (typeof window._registerLibForIDE === 'function')
+          window._registerLibForIDE(libNome);
         var ta = document.getElementById('code-editor');
         if (ta) {
           var importLine = 'importar ' + libNome + ' como ' + libNome + ';\n';
