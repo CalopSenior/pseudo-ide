@@ -1393,16 +1393,17 @@ function _splitParams(s) {
 function _extractFnParams(fn) {
   try {
     const src = fn.toString().trim();
+    const strip = (p) => (p.startsWith("__p_") ? p.slice(4) : p);
     let m;
     // async function name(...) / function name(...)
     m = src.match(/^(?:async\s+)?function[^(]*\(([^)]*)\)/);
-    if (m) return _splitParams(m[1]);
+    if (m) return _splitParams(m[1]).map(strip);
     // (...) => or async (...) =>
     m = src.match(/^(?:async\s+)?\(([^)]*)\)\s*=>/);
-    if (m) return _splitParams(m[1]);
+    if (m) return _splitParams(m[1]).map(strip);
     // name => (single param arrow)
     m = src.match(/^(?:async\s+)?([A-Za-z_]\w*)\s*=>/);
-    if (m) return [m[1]];
+    if (m) return [strip(m[1])];
     return [];
   } catch (e) { return []; }
 }
