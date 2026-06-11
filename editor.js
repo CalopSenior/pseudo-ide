@@ -6,7 +6,7 @@
 /* ============================================================
    PRÉ-PROCESSADOR — PARÂMETROS TIPADOS
    ============================================================ */
-function _splitParams(str) {
+function _splitRawParams(str) {
   const parts = [];
   let depth = 0,
     cur = "";
@@ -57,7 +57,7 @@ function processarParametrosTipados(codigo, isDebug = false) {
       _FUNCAO_HEADER_RE.lastIndex = cursor;
       continue;
     }
-    const params = _splitParams(paramStr);
+    const params = _splitRawParams(paramStr);
     const jsParams = [],
       validations = [];
     params.forEach((raw) => {
