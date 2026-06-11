@@ -75,14 +75,38 @@
           </svg>
           Abrir
         </button>
-        <button class="btn-icon" onclick="nbSave()" title="Salvar como .pseudonb">
+      </div>
+
+      <!-- ── Salvar dropdown ── -->
+      <div class="hdr-dd" id="hdr-dd-nb-salvar">
+        <button class="btn-icon hdr-dd-trigger" onclick="toggleHdrDd('hdr-dd-nb-salvar')" title="Salvar">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
             <polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline>
           </svg>
           Salvar
+          <svg class="hdr-dd-arrow" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
         </button>
+        <div class="hdr-dd-menu">
+          <button class="hdr-dd-item" onclick="nbSave(); toggleHdrDd('hdr-dd-nb-salvar')">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+            Salvar Como <span style="color:var(--text-muted);font-size:10px">(.pseudonb)</span>
+          </button>
+          <button class="hdr-dd-item" onclick="LocalLib.saveNotebook(); toggleHdrDd('hdr-dd-nb-salvar')">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+            Salvar Local <span style="color:var(--text-muted);font-size:10px">(IndexedDB)</span>
+          </button>
+        </div>
       </div>
+
+      <!-- ── Biblioteca ── -->
+      <button class="btn-icon" onclick="LocalLib.openModal('notebook')" title="Biblioteca de notebooks local">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+          <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+        </svg>
+        Biblioteca
+      </button>
 
       <!-- ── Adicionar células ── -->
       <div class="btn-group">
@@ -358,6 +382,7 @@ $$</code></pre>
   <script src="editor.js"></script>
   <script src="js/highlight.js"></script>
   <script src="js/notebook.js"></script>
+  <script src="local-library.js"></script>
 
 </body>
 
