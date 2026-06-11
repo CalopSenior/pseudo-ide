@@ -796,6 +796,16 @@ window._baixarDaNuvem = async function (nomeBib, versao) {
 
     if (typeof imprima === "function")
       imprima(`✓ Biblioteca ${label} carregada com sucesso!`);
+
+    // Inject into autocomplete / highlight / arg-hints
+    if (typeof window._registerLibForIDE === "function")
+      window._registerLibForIDE(nomeBib);
+
+    // Auto-print ajuda() if the library exposes it
+    const bib = Bibliotecas[nomeBib];
+    if (bib && typeof bib.ajuda === "function") {
+      try { bib.ajuda(); } catch (e) { /* silently skip */ }
+    }
   } catch (e) {
     throw new Error(
       `Falha ao carregar a biblioteca ${label}: ${e.message}`,

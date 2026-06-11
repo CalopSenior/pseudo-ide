@@ -320,6 +320,7 @@ function kwClass(word) {
   if (KW_FN.has(word))     return `<span class="t-fn">${esc(word)}</span>`;
   if (window._userFnSet  && window._userFnSet.has(word))  return `<span class="t-user-fn">${esc(word)}</span>`;
   if (window._userVarSet && window._userVarSet.has(word)) return `<span class="t-user-var">${esc(word)}</span>`;
+  if (window._libMethodSet && window._libMethodSet.has(word)) return `<span class="t-fn">${esc(word)}</span>`;
   return esc(word);
 }
 
@@ -1329,12 +1330,16 @@ let acList = [],
 const acPopup = document.getElementById("autocomplete-popup");
 
 function getWordBefore(pos) {
-  const m = codeEditor.value.slice(0, pos).match(/[A-Za-zÀ-ÖØ-öø-ÿ_]\w*$/);
+  // Supports dot-notation for library method autocomplete: "fb.aj" → "fb.aj"
+  const m = codeEditor.value.slice(0, pos)
+    .match(/[A-Za-zÀ-ÖØ-öø-ÿ_]\w*(?:\.[A-Za-zÀ-ÖØ-öø-ÿ_]\w*)*\.?$/);
   return m ? m[0] : "";
 }
 
 window.simbolosDinamicos = [];
 window.assinaturasDinamicas = new Map();
+window._libDynamicMethods = {};   // libName → { props, methods }
+window._libMethodSet = new Set(); // all method names for highlight
 
 function extrairSimbolosDoCodigo() {
   const texto = codeEditor.value;
@@ -1368,6 +1373,86 @@ function extrairSimbolosDoCodigo() {
   );
 }
 
+/* ── Library IDE integration helpers ── */
+
+function _parseImportAliases(texto) {
+  const aliases = {};
+  const re = /\bimportar\s+([\w.]+)\s+como\s+([A-Za-zÀ-ÖØ-öø-ÿ_]\w*)/g;
+  let m;
+  while ((m = re.exec(texto)) !== null) aliases[m[2]] = m[1];
+  return aliases;
+}
+
+function _splitParams(s) {
+  if (!s.trim()) return [];
+  return s.split(",")
+    .map((p) => p.trim().replace(/\s*=[\s\S]*$/, "").replace(/\.\.\./g, "").trim())
+    .filter(Boolean);
+}
+
+function _extractFnParams(fn) {
+  try {
+    const src = fn.toString().trim();
+    let m;
+    // async function name(...) / function name(...)
+    m = src.match(/^(?:async\s+)?function[^(]*\(([^)]*)\)/);
+    if (m) return _splitParams(m[1]);
+    // (...) => or async (...) =>
+    m = src.match(/^(?:async\s+)?\(([^)]*)\)\s*=>/);
+    if (m) return _splitParams(m[1]);
+    // name => (single param arrow)
+    m = src.match(/^(?:async\s+)?([A-Za-z_]\w*)\s*=>/);
+    if (m) return [m[1]];
+    return [];
+  } catch (e) { return []; }
+}
+
+function _buildDynLibCompletions(aliasMap) {
+  const items = [];
+  for (const [alias, libName] of Object.entries(aliasMap)) {
+    const lib = window._libDynamicMethods[libName];
+    if (!lib) continue;
+    (lib.props || []).forEach((p) =>
+      items.push({ label: `${alias}.${p.name}`, detail: `${libName} — ${p.detail}`, insert: `${alias}.${p.name}` })
+    );
+    (lib.methods || []).forEach((md) =>
+      items.push({ label: `${alias}.${md.name}()`, detail: `${libName} — ${md.detail}`, insert: `${alias}.${md.name}(` })
+    );
+  }
+  return items;
+}
+
+function _buildDynLibSignatures(aliasMap) {
+  const sigs = {};
+  for (const [alias, libName] of Object.entries(aliasMap)) {
+    const lib = window._libDynamicMethods[libName];
+    if (!lib) continue;
+    (lib.methods || []).forEach((md) => {
+      sigs[`${alias}.${md.name}`] = md.args;
+    });
+  }
+  return sigs;
+}
+
+/* Called after any library is loaded (cloud, .idelib, or local compile). */
+window._registerLibForIDE = function (libName) {
+  if (typeof Bibliotecas === "undefined") return;
+  const bib = Bibliotecas[libName];
+  if (!bib) return;
+  const props = [], methods = [];
+  for (const [key, val] of Object.entries(bib)) {
+    if (key.startsWith("_")) continue;
+    if (typeof val === "function") {
+      const args = _extractFnParams(val);
+      methods.push({ name: key, args, detail: key + "(" + args.join(", ") + ")" });
+      window._libMethodSet.add(key);
+    } else {
+      props.push({ name: key, detail: String(val).slice(0, 40) });
+    }
+  }
+  window._libDynamicMethods[libName] = { props, methods };
+};
+
 function showAutocomplete() {
   const pos = codeEditor.selectionStart;
   const word = getWordBefore(pos);
@@ -1375,7 +1460,8 @@ function showAutocomplete() {
     hideAutocomplete();
     return;
   }
-  const all = [...window.simbolosDinamicos, ...COMPLETIONS];
+  const dynLibItems = _buildDynLibCompletions(_parseImportAliases(codeEditor.value));
+  const all = [...window.simbolosDinamicos, ...COMPLETIONS, ...dynLibItems];
   acList = all.filter((c) =>
     c.label.toLowerCase().startsWith(word.toLowerCase()),
   );
@@ -1500,8 +1586,9 @@ function verificarBalaoAssinatura() {
     sigPopup.classList.add("hidden");
     return;
   }
+  const dynSigs = _buildDynLibSignatures(_parseImportAliases(codeEditor.value));
   const params =
-    window.assinaturasDinamicas.get(fnName) || ASSINATURAS_NATIVAS[fnName];
+    window.assinaturasDinamicas.get(fnName) || ASSINATURAS_NATIVAS[fnName] || dynSigs[fnName];
   if (!params) {
     sigPopup.classList.add("hidden");
     return;
@@ -1996,15 +2083,10 @@ function _onFileImport(e) {
         if (libData.tipo === "biblioteca" && libData.codigoInjetor) {
           eval(libData.codigoInjetor);
           imprima(
-            `📦 Biblioteca '${libData.nome}' (v${libData.versao}) instalada localmente!`,
+            `📦 Biblioteca '${libData.nome}' (v${libData.versao || "?"}) instalada localmente!`,
           );
-          Object.keys(Bibliotecas[libData.nome]).forEach((funcName) => {
-            COMPLETIONS.push({
-              label: `... .${funcName}()`,
-              detail: `bib: ${libData.nome}`,
-              insert: `${funcName}(`,
-            });
-          });
+          if (typeof window._registerLibForIDE === "function")
+            window._registerLibForIDE(libData.nome);
         }
       } catch (err) {
         _imprimaErro("O arquivo .idelib parece estar corrompido.");
